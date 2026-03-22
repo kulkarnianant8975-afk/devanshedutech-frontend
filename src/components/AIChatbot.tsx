@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Send, X, Minus, Maximize2, Bot, User, Loader2, Sparkles } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 
 const AIChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +35,7 @@ const AIChatbot = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('/api/chat', {
+      const response = await api.post('/chat', {
         message: userMessage,
         history: currentHistory
       });
