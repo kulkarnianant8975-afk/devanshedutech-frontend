@@ -1,0 +1,135 @@
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MessageCircle, ArrowUp } from 'lucide-react';
+
+// Components
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import AIChatbot from './components/AIChatbot';
+import WhatsAppButton from './components/WhatsAppButton';
+
+// Pages
+import Home from './pages/Home';
+import About from './pages/About';
+import AllCourses from './pages/AllCourses';
+import Contact from './pages/Contact';
+import Admin from './pages/Admin';
+
+import Logo from './components/Logo';
+import EnrollmentModal from './components/EnrollmentModal';
+
+// Scroll to top component
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
+const AppContent = () => {
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<string | undefined>();
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    
+    // Listen for global enroll event
+    const handleEnrollEvent = (e: any) => {
+      setSelectedCourse(e.detail?.courseName);
+      setIsEnrollModalOpen(true);
+    };
+    window.addEventListener('open-enrollment', handleEnrollEvent);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('open-enrollment', handleEnrollEvent);
+    };
+  }, []);
+
+  return (
+    <div className={`flex flex-col ${!isAdmin ? 'min-h-screen' : ''}`}>
+      <ScrollToTop />
+      {!isAdmin && <Navbar />}
+      <main className={!isAdmin ? "flex-grow" : ""}>
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/courses" element={<AllCourses />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/admin" element={<Admin />} />
+          </Routes>
+        </AnimatePresence>
+      </main>
+      {!isAdmin && <Footer />}
+
+      {!isAdmin && (
+        <>
+          <EnrollmentModal 
+            isOpen={isEnrollModalOpen} 
+            onClose={() => setIsEnrollModalOpen(false)} 
+            courseName={selectedCourse}
+          />
+          <WhatsAppButton />
+          <AIChatbot />
+          <AnimatePresence>
+            {showBackToTop && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="fixed bottom-6 right-6 z-50 bg-primary text-white p-4 rounded-full shadow-2xl hover:bg-orange-600 transition-colors"
+              >
+                <ArrowUp size={24} />
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+    </div>
+  );
+};
+
+const App = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center">
+        <div className="relative flex flex-col items-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            className="w-24 h-24 border-4 border-primary/20 border-t-primary rounded-full"
+          />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <Logo className="scale-75 opacity-80" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+};
+
+export default App;

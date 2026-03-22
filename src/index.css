@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #FF6A00;
+  --color-secondary: #111111;
+  --color-background: #F8FAFC;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-secondary font-sans;
+  }
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #FF6A00 0%, #FF8C33 100%);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
