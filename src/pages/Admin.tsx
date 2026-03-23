@@ -232,6 +232,18 @@ const Admin = () => {
             <span>Sign in with Google</span>
           </button>
 
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => {
+                setIsRegisterMode(!isRegisterMode);
+                setAuthError('');
+              }}
+              className="text-primary hover:text-orange-600 font-bold transition-colors"
+            >
+              {isRegisterMode ? 'Already have an account? Sign In' : 'Need an account? Create one'}
+            </button>
+          </div>
+
           <div className="mt-10 pt-6 border-t border-gray-100 flex flex-col items-center space-y-4">
             <button 
               onClick={async () => {
