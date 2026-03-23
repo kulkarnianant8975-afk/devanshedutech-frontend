@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from './api';
 
 export interface Mentor {
   id: string;
@@ -18,25 +18,25 @@ export interface MentorRequest {
   linkedinUrl: string;
 }
 
-const API_URL = '/api/mentors';
+const API_URL = '/mentors';
 
 export const mentorService = {
   getAll: async () => {
-    const response = await axios.get<Mentor[]>(API_URL);
+    const response = await api.get<Mentor[]>(API_URL);
     return response.data;
   },
 
   create: async (data: MentorRequest) => {
-    const response = await axios.post<Mentor>(API_URL, data);
+    const response = await api.post<Mentor>(API_URL, data);
     return response.data;
   },
 
   update: async (id: string, data: MentorRequest) => {
-    const response = await axios.put<Mentor>(`${API_URL}/${id}`, data);
+    const response = await api.put<Mentor>(`${API_URL}/${id}`, data);
     return response.data;
   },
 
   delete: async (id: string) => {
-    await axios.delete(`${API_URL}/${id}`);
+    await api.delete(`${API_URL}/${id}`);
   }
 };

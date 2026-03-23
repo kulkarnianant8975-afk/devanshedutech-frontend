@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Send, CheckCircle, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 
 interface BrochureModalProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ const BrochureModal: React.FC<BrochureModalProps> = ({ isOpen, onClose, courseTi
 
     setStatus('submitting');
     try {
-      await axios.post('/api/leads', {
+      await api.post('/leads', {
         ...formData,
         courseInterested: courseTitle || 'General',
       });

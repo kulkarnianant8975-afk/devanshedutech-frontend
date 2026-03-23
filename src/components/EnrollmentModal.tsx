@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, GraduationCap, Phone, Mail, MapPin, Send, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 
 interface EnrollmentModalProps {
   isOpen: boolean;
@@ -54,7 +54,7 @@ const EnrollmentModal: React.FC<EnrollmentModalProps> = ({ isOpen, onClose, cour
 
     setIsSubmitting(true);
     try {
-      await axios.post('/api/leads', {
+      await api.post('/leads', {
         fullName: formData.fullName,
         email: formData.email,
         mobileNumber: formData.mobile,

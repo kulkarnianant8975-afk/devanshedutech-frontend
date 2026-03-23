@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, X, BookOpen } from 'lucide-react';
 import { courses as staticCourses } from '../data/courses';
 import CourseCard from '../components/CourseCard';
-import axios from 'axios';
+import api from '../services/api';
 
 const AllCourses = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,7 +14,7 @@ const AllCourses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get('/api/courses');
+        const response = await api.get('/courses');
         if (response.data && response.data.length > 0) {
           const data = response.data.map((course: any) => ({ 
             ...course,

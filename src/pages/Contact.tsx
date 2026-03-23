@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, Send, Clock, Globe, Instagram, Loader2, CheckCircle } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -18,7 +18,7 @@ const Contact = () => {
     setIsSubmitting(true);
     
     try {
-      await axios.post('/api/messages', {
+      await api.post('/messages', {
         ...formData,
       });
       setIsSuccess(true);

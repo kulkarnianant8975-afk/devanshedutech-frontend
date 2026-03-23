@@ -8,7 +8,7 @@ import { courses as staticCourses } from '../data/courses';
 import CourseCard from '../components/CourseCard';
 import InstagramFeed from '../components/InstagramFeed';
 import HiringSection from '../components/HiringSection';
-import axios from 'axios';
+import api from '../services/api';
 import { AnimatePresence } from 'framer-motion';
 
 const Home = () => {
@@ -21,7 +21,7 @@ const Home = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get('/api/courses?limit=4');
+        const response = await api.get('/courses?limit=4');
         if (response.data && response.data.length > 0) {
           const data = response.data.map((course: any) => ({ 
             ...course,
