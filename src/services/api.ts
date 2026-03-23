@@ -59,7 +59,7 @@ export const authService = {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
     
     return window.open(
-      `${backendUrl}/auth/google`,
+      `${backendUrl}/oauth2/authorization/google`,
       'google_oauth',
       `width=${width},height=${height},left=${left},top=${top}`
     );
