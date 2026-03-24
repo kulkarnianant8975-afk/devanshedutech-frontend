@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Send, CheckCircle, AlertCircle } from 'lucide-react';
-import api from '../services/api';
+import api, { backendUrl } from '../services/api';
 
 interface BrochureModalProps {
   isOpen: boolean;
@@ -77,7 +77,12 @@ const BrochureModal: React.FC<BrochureModalProps> = ({ isOpen, onClose, courseTi
 
         if (result && result.downloadUrl) {
           const link = document.createElement('a');
-          link.href = result.downloadUrl;
+          // Ensure the download URL is absolute
+          const fullUrl = result.downloadUrl.startsWith('/') 
+            ? `${backendUrl}${result.downloadUrl}` 
+            : result.downloadUrl;
+          
+          link.href = fullUrl;
           link.download = courseTitle ? `${courseTitle.replace(/\s+/g, '_')}_Brochure.pdf` : 'Devansh_Course_Brochure.pdf';
           document.body.appendChild(link);
           link.click();

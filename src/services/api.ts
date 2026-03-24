@@ -9,7 +9,7 @@ import {
   HiringResponseDTO
 } from '../dtos';
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+export const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
 
 const api = axios.create({
   baseURL: backendUrl ? `${backendUrl}/api` : '/api',
@@ -55,8 +55,6 @@ export const authService = {
     const height = 700;
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
-    
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
     
     return window.open(
       `${backendUrl}/oauth2/authorization/google`,
