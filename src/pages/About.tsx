@@ -4,11 +4,18 @@ import { Target, Eye, Lightbulb, Users, CheckCircle2, Linkedin, X } from 'lucide
 import { mentorService } from '../services/mentorService';
 import { MentorResponseDTO as Mentor } from '../dtos';
 import { AnimatePresence } from 'framer-motion';
+import { backendUrl } from '../services/api';
 
 const About = () => {
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const getImageUrl = (url?: string) => {
+    if (!url) return undefined;
+    if (url.startsWith('/')) return `${backendUrl}${url}`;
+    return url;
+  };
 
   useEffect(() => {
     const fetchMentors = async () => {
@@ -184,10 +191,10 @@ const About = () => {
                 >
                   <div 
                     className="h-64 overflow-hidden cursor-zoom-in"
-                    onClick={() => setSelectedImage(mentor.imageUrl || `https://picsum.photos/seed/${mentor.id}/800/1000`)}
+                    onClick={() => setSelectedImage(getImageUrl(mentor.imageUrl) || `https://picsum.photos/seed/${mentor.id}/800/1000`)}
                   >
                     <img
-                      src={mentor.imageUrl || `https://picsum.photos/seed/${mentor.id}/400/500`}
+                      src={getImageUrl(mentor.imageUrl) || `https://picsum.photos/seed/${mentor.id}/400/500`}
                       alt={mentor.name}
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                       referrerPolicy="no-referrer"

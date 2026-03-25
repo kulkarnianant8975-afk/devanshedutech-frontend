@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Clock, Download, ArrowRight } from 'lucide-react';
 import { Course } from '../data/courses';
 import BrochureModal from './BrochureModal';
+import { backendUrl } from '../services/api';
 
 interface CourseCardProps {
   course: Course;
@@ -11,6 +12,12 @@ interface CourseCardProps {
 const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   const [isBrochureModalOpen, setIsBrochureModalOpen] = useState(false);
   const Icon = course.icon;
+
+  const getImageUrl = (url?: string) => {
+    if (!url) return undefined;
+    if (url.startsWith('/')) return `${backendUrl}${url}`;
+    return url;
+  };
 
   return (
     <>
@@ -21,7 +28,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       <div className="relative h-48 overflow-hidden">
         {course.image ? (
           <img 
-            src={course.image} 
+            src={getImageUrl(course.image)} 
             alt={course.name} 
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />

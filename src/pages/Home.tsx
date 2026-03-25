@@ -8,7 +8,7 @@ import { courses as staticCourses } from '../data/courses';
 import CourseCard from '../components/CourseCard';
 import InstagramFeed from '../components/InstagramFeed';
 import HiringSection from '../components/HiringSection';
-import api from '../services/api';
+import api, { backendUrl } from '../services/api';
 import { AnimatePresence } from 'framer-motion';
 
 const Home = () => {
@@ -17,6 +17,12 @@ const Home = () => {
   const [successStories, setSuccessStories] = useState<PlacedStudent[]>([]);
   const [loadingStories, setLoadingStories] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const getImageUrl = (url?: string) => {
+    if (!url) return undefined;
+    if (url.startsWith('/')) return `${backendUrl}${url}`;
+    return url;
+  };
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -230,10 +236,10 @@ const Home = () => {
                 >
                   <div 
                     className="h-64 overflow-hidden relative cursor-zoom-in"
-                    onClick={() => setSelectedImage(story.imageUrl || `https://i.pravatar.cc/1000?u=${story.id}`)}
+                    onClick={() => setSelectedImage(getImageUrl(story.imageUrl) || `https://i.pravatar.cc/1000?u=${story.id}`)}
                   >
                     <img 
-                      src={story.imageUrl || `https://i.pravatar.cc/150?u=${story.id}`} 
+                      src={getImageUrl(story.imageUrl) || `https://i.pravatar.cc/150?u=${story.id}`} 
                       alt={story.name} 
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                       referrerPolicy="no-referrer"
