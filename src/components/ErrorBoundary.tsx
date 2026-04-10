@@ -28,7 +28,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public render() {
-    if (this.state.hasError) {
+    if ((this as any).state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
           <motion.div 
@@ -42,15 +42,15 @@ class ErrorBoundary extends Component<Props, State> {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong.</h1>
             <p className="text-gray-600 mb-6 text-sm">
               We've encountered an unexpected error. Our system monitors have been notified!
-              {this.state.error?.message && (
+              {(this as any).state.error?.message && (
                 <span className="block mt-4 font-mono text-xs text-red-500 bg-red-50 p-2 rounded max-h-32 overflow-y-auto">
-                  {this.state.error.message}
+                  {(this as any).state.error.message}
                 </span>
               )}
             </p>
             <button
               onClick={() => {
-                this.setState({ hasError: false });
+                (this as any).setState({ hasError: false });
                 window.location.reload();
               }}
               className="flex items-center justify-center w-full gap-2 bg-primary hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-xl transition-colors"
@@ -63,7 +63,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return (this as any).props.children;
   }
 }
 
