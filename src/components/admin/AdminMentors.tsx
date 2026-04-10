@@ -13,7 +13,7 @@ import {
 import { mentorService } from '../../services/mentorService';
 import { MentorResponseDTO as Mentor } from '../../dtos';
 import { motion, AnimatePresence } from 'framer-motion';
-import { compressImage, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
+import { compressImage, resolveImageUrl, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
 
 const AdminMentors = () => {
   const [mentors, setMentors] = useState<Mentor[]>([]);
@@ -136,7 +136,7 @@ const AdminMentors = () => {
             >
               <div className="h-48 overflow-hidden relative">
                 <img 
-                  src={mentor.imageUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'} 
+                  src={resolveImageUrl(mentor.imageUrl) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'} 
                   alt={mentor.name} 
                   className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                   referrerPolicy="no-referrer"
@@ -291,7 +291,7 @@ const AdminMentors = () => {
                       
                       {formData.imageUrl && (
                         <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-lg">
-                           <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                           <img src={resolveImageUrl(formData.imageUrl)} alt="Preview" className="w-full h-full object-cover" />
                            <button 
                              type="button"
                              onClick={() => setFormData({ ...formData, imageUrl: '' })}

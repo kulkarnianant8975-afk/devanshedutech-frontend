@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { courseService } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { compressImage, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
+import { compressImage, resolveImageUrl, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
 
 const AdminCourses = () => {
   const [courses, setCourses] = useState<any[]>([]);
@@ -146,9 +146,9 @@ const AdminCourses = () => {
             <div key={course.id} className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-500">
               <div className="relative h-48 overflow-hidden">
                 <img 
-                  src={course.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=800'} 
-                  alt={course.name} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  src={resolveImageUrl(course.image) || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400'} 
+                  alt={course.title} 
+                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute top-4 right-4 flex space-x-2">
@@ -374,7 +374,7 @@ const AdminCourses = () => {
                       
                       {formData.image && (
                         <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-lg">
-                           <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                           <img src={resolveImageUrl(formData.image)} alt="Preview" className="w-full h-full object-cover" />
                            <button 
                              type="button"
                              onClick={() => setFormData({ ...formData, image: '' })}

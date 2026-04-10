@@ -15,7 +15,7 @@ import {
 import { placedStudentService } from '../../services/placedStudentService';
 import { PlacedStudentResponseDTO as PlacedStudent } from '../../dtos';
 import { motion, AnimatePresence } from 'framer-motion';
-import { compressImage, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
+import { compressImage, resolveImageUrl, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
 
 const AdminPlacedStudents = () => {
   const [students, setStudents] = useState<PlacedStudent[]>([]);
@@ -137,7 +137,7 @@ const AdminPlacedStudents = () => {
             <div key={student.id} className="bg-white rounded-[40px] border border-gray-100 shadow-sm relative group hover:shadow-xl transition-all duration-500 overflow-hidden flex flex-col h-full">
               <div className="h-48 overflow-hidden relative">
                 <img 
-                  src={student.imageUrl || `https://i.pravatar.cc/150?u=${student.id}`} 
+                  src={resolveImageUrl(student.imageUrl) || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400'} 
                   alt={student.name} 
                   className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                   referrerPolicy="no-referrer"
@@ -319,7 +319,7 @@ const AdminPlacedStudents = () => {
                       
                       {formData.imageUrl && (
                         <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-lg">
-                           <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                           <img src={resolveImageUrl(formData.imageUrl)} alt="Preview" className="w-full h-full object-cover" />
                            <button 
                              type="button"
                              onClick={() => setFormData({ ...formData, imageUrl: '' })}

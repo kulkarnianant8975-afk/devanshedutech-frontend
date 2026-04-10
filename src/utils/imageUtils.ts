@@ -51,5 +51,13 @@ export const compressImage = (
   });
 };
 
+import { backendUrl } from '../services/api';
+
+export const resolveImageUrl = (url: string | undefined): string => {
+  if (!url) return '';
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  return backendUrl ? `${backendUrl}${url}` : url;
+};
+
 export const MAX_IMAGE_SIZE_MB = 50;
 export const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
