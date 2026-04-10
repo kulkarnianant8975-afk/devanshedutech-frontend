@@ -22,6 +22,8 @@ const AdminPlacedStudents = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<PlacedStudent | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     company: '',
@@ -49,6 +51,8 @@ const AdminPlacedStudents = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
     try {
       if (editingStudent) {
         await placedStudentService.update(editingStudent.id, formData);
@@ -59,13 +63,17 @@ const AdminPlacedStudents = () => {
       setEditingStudent(null);
       setFormData({ name: '', company: '', role: '', salaryPackage: '', testimonial: '', imageUrl: '' });
       fetchStudents();
-    } catch (error) {
-      console.error("Error saving student:", error);
+    } catch (err: any) {
+      console.error("Error saving student:", err);
+      setError(err?.response?.data?.error || err?.response?.data?.message || err.message || "Failed to save student. Try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleEdit = (student: PlacedStudent) => {
     setEditingStudent(student);
+    setError(null);
     setFormData({
       name: student.name,
       company: student.company,
@@ -103,6 +111,7 @@ const AdminPlacedStudents = () => {
         <button 
           onClick={() => {
             setEditingStudent(null);
+            setError(null);
             setFormData({ name: '', company: '', role: '', salaryPackage: '', testimonial: '', imageUrl: '' });
             setIsModalOpen(true);
           }}
@@ -203,6 +212,11 @@ const AdminPlacedStudents = () => {
               </div>
               
               <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
+                {error && (
+                  <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 text-sm font-medium">
+                    {error}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Student Name</label>
@@ -334,10 +348,11 @@ const AdminPlacedStudents = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-8 py-3 bg-primary text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 flex items-center space-x-2"
+                    disabled={isSubmitting}
+                    className="px-8 py-3 bg-primary text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 flex items-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    <Save size={20} />
-                    <span>{editingStudent ? 'Update Story' : 'Save Story'}</span>
+                    {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                    <span>{isSubmitting ? 'Saving...' : editingStudent ? 'Update Story' : 'Save Story'}</span>
                   </button>
                 </div>
               </form>

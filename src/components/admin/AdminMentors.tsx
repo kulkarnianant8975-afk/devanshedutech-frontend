@@ -20,6 +20,8 @@ const AdminMentors = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMentor, setEditingMentor] = useState<Mentor | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     role: '',
@@ -46,6 +48,8 @@ const AdminMentors = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
     try {
       if (editingMentor) {
         await mentorService.update(editingMentor.id, formData);
@@ -56,13 +60,17 @@ const AdminMentors = () => {
       setEditingMentor(null);
       setFormData({ name: '', role: '', description: '', imageUrl: '', linkedinUrl: '' });
       fetchMentors();
-    } catch (error) {
-      console.error("Error saving mentor:", error);
+    } catch (err: any) {
+      console.error("Error saving mentor:", err);
+      setError(err?.response?.data?.error || err?.response?.data?.message || err.message || "Failed to save mentor. Try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleEdit = (mentor: Mentor) => {
     setEditingMentor(mentor);
+    setError(null);
     setFormData({
       name: mentor.name,
       role: mentor.role,
@@ -99,6 +107,7 @@ const AdminMentors = () => {
         <button 
           onClick={() => {
             setEditingMentor(null);
+            setError(null);
             setFormData({ name: '', role: '', description: '', imageUrl: '', linkedinUrl: '' });
             setIsModalOpen(true);
           }}
@@ -201,6 +210,11 @@ const AdminMentors = () => {
               </div>
               
               <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
+                {error && (
+                  <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 text-sm font-medium">
+                    {error}
+                  </div>
+                )}
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
@@ -319,10 +333,11 @@ const AdminMentors = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-8 py-3 bg-primary text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 flex items-center space-x-2"
+                    disabled={isSubmitting}
+                    className="px-8 py-3 bg-primary text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 flex items-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    <Save size={20} />
-                    <span>{editingMentor ? 'Update Mentor' : 'Save Mentor'}</span>
+                    {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                    <span>{isSubmitting ? 'Saving...' : editingMentor ? 'Update Mentor' : 'Save Mentor'}</span>
                   </button>
                 </div>
               </form>

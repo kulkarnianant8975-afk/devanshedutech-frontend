@@ -18,6 +18,8 @@ import Admin from './pages/Admin';
 
 import Logo from './components/Logo';
 import EnrollmentModal from './components/EnrollmentModal';
+import { useAnalytics } from './lib/useAnalytics';
+import { usePersistedState } from './lib/usePersistedState';
 
 // Scroll to top component
 const ScrollToTop = () => {
@@ -30,9 +32,13 @@ const ScrollToTop = () => {
 
 const AppContent = () => {
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<string | undefined>();
+  
+  // Edge Case: Use Persisted State to prevent user progress loss on refresh/crash
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = usePersistedState('isEnrollModalOpen', false);
+  const [selectedCourse, setSelectedCourse] = usePersistedState<string | undefined>('selectedCourse', undefined);
+  
   const location = useLocation();
+  const { trackEvent } = useAnalytics();
   const isAdmin = location.pathname.startsWith('/admin');
 
   useEffect(() => {
@@ -43,8 +49,11 @@ const AppContent = () => {
     
     // Listen for global enroll event
     const handleEnrollEvent = (e: any) => {
-      setSelectedCourse(e.detail?.courseName);
+      const course = e.detail?.courseName;
+      setSelectedCourse(course);
       setIsEnrollModalOpen(true);
+      // Track Analytics
+      trackEvent('enrollment_modal_opened', { course });
     };
     window.addEventListener('open-enrollment', handleEnrollEvent);
     
