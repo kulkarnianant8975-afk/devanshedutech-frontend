@@ -166,7 +166,7 @@ const AdminPlacedStudents = () => {
                 <p className="text-primary font-bold text-xs mb-4 uppercase tracking-widest">{student.company}</p>
 
                 <div className="flex-grow mb-6">
-                  <p className="text-gray-500 text-xs italic line-clamp-3">
+                  <p className="text-gray-500 text-xs italic">
                     "{student.testimonial}"
                   </p>
                 </div>
