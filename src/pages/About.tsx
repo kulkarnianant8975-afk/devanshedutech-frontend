@@ -10,10 +10,26 @@ const About = () => {
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [expandedMentors, setExpandedMentors] = useState<Set<string>>(new Set());
+
+  const toggleMentor = (id: string) => {
+    const newExpanded = new Set(expandedMentors);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedMentors(newExpanded);
+  };
 
   const getImageUrl = (url?: string) => {
     if (!url) return undefined;
-    if (url.startsWith('/')) return `${backendUrl}${url}`;
+    // Resolve relative backend paths to absolute production URL if necessary
+    if (url.startsWith('/api')) {
+      return backendUrl ? `${backendUrl}${url}` : url;
+    }
+    // Handle paths starting with / (relative to public folder)
+    if (url.startsWith('/') && !url.startsWith('/api')) return url;
     return url;
   };
 
@@ -205,9 +221,19 @@ const About = () => {
                     <h4 className="font-bold text-secondary text-xl mb-1">{mentor.name}</h4>
                     <p className="text-primary font-bold text-sm mb-4 uppercase tracking-wider">{mentor.role}</p>
                     
-                    <p className="text-gray-500 text-sm leading-relaxed line-clamp-3 mb-6">
-                      {mentor.description}
-                    </p>
+                    <div className="relative">
+                      <p className={`text-gray-500 text-sm leading-relaxed mb-4 ${!expandedMentors.has(mentor.id) ? 'line-clamp-3' : ''}`}>
+                        {mentor.description}
+                      </p>
+                      {mentor.description && mentor.description.length > 120 && (
+                        <button
+                          onClick={() => toggleMentor(mentor.id)}
+                          className="text-primary text-xs font-bold hover:underline focus:outline-none mb-4"
+                        >
+                          {expandedMentors.has(mentor.id) ? 'Show Less' : 'See More'}
+                        </button>
+                      )}
+                    </div>
 
                     <div className="mt-auto flex items-center justify-center space-x-6">
                       {mentor.linkedinUrl && (

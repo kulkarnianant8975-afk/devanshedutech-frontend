@@ -17,10 +17,26 @@ const Home = () => {
   const [successStories, setSuccessStories] = useState<PlacedStudent[]>([]);
   const [loadingStories, setLoadingStories] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [expandedStories, setExpandedStories] = useState<Set<string>>(new Set());
+
+  const toggleStory = (id: string) => {
+    const newExpanded = new Set(expandedStories);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedStories(newExpanded);
+  };
 
   const getImageUrl = (url?: string) => {
     if (!url) return undefined;
-    if (url.startsWith('/')) return `${backendUrl}${url}`;
+    // Resolve relative backend paths to absolute production URL if necessary
+    if (url.startsWith('/api')) {
+      return backendUrl ? `${backendUrl}${url}` : url;
+    }
+    // Handle paths starting with / (relative to public folder)
+    if (url.startsWith('/') && !url.startsWith('/api')) return url;
     return url;
   };
 
@@ -253,9 +269,19 @@ const Home = () => {
                     <h4 className="font-extrabold text-secondary text-xl mb-1">{story.name}</h4>
                     <span className="text-primary font-bold text-sm uppercase tracking-widest mb-4 inline-block">{story.company}</span>
                     
-                    <p className="text-gray-500 italic text-sm leading-relaxed line-clamp-4 mb-8">
-                      "{story.testimonial}"
-                    </p>
+                    <div className="relative">
+                      <p className={`text-gray-500 italic text-sm leading-relaxed mb-6 ${!expandedStories.has(story.id) ? 'line-clamp-4' : ''}`}>
+                        "{story.testimonial}"
+                      </p>
+                      {story.testimonial && story.testimonial.length > 150 && (
+                        <button
+                          onClick={() => toggleStory(story.id)}
+                          className="text-primary text-xs font-bold hover:underline focus:outline-none mb-6 -mt-4 block"
+                        >
+                          {expandedStories.has(story.id) ? 'Show Less' : 'See More'}
+                        </button>
+                      )}
+                    </div>
 
                     <div className="mt-auto pt-6 border-t border-gray-50 space-y-2">
                        <div className="flex justify-between items-center text-xs">
