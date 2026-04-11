@@ -8,9 +8,15 @@ import {
   Linkedin,
   X,
   Save,
-  Loader2
+  X,
+  Save,
+  Loader2,
+  FileText,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { mentorService } from '../../services/mentorService';
+import { authService } from '../../services/api';
 import { MentorResponseDTO as Mentor } from '../../dtos';
 import { motion, AnimatePresence } from 'framer-motion';
 import { compressImage, resolveImageUrl, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
@@ -22,6 +28,9 @@ const AdminMentors = () => {
   const [editingMentor, setEditingMentor] = useState<Mentor | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [showDraftPrompt, setShowDraftPrompt] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     role: '',
@@ -29,6 +38,28 @@ const AdminMentors = () => {
     imageUrl: '',
     linkedinUrl: ''
   });
+
+  const DRAFT_KEY = 'mentor_form_draft';
+
+  const saveToDraft = () => {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+    setSuccess("Draft saved successfully!");
+    setTimeout(() => setSuccess(null), 3000);
+  };
+
+  const loadDraft = () => {
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) {
+      setFormData(JSON.parse(draft));
+      setShowDraftPrompt(false);
+      setSuccess("Draft restored!");
+      setTimeout(() => setSuccess(null), 3000);
+    }
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+  };
 
   const fetchMentors = async () => {
     setLoading(true);
@@ -43,26 +74,63 @@ const AdminMentors = () => {
   };
 
   useEffect(() => {
-    fetchMentors();
+    const checkAuthAndFetch = async () => {
+      try {
+        const user = await authService.getMe();
+        console.log("Current user auth state:", user);
+        setUserRole(user.role);
+        if (user.role?.toUpperCase() !== 'ADMIN') {
+          console.warn("User does not have ADMIN role. Current role:", user.role);
+        }
+      } catch (err) {
+        console.error("Auth check failed:", err);
+      }
+      fetchMentors();
+    };
+    checkAuthAndFetch();
+
+    // Check for draft
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) {
+      const parsed = JSON.parse(draft);
+      if (parsed.name || parsed.role || parsed.description) {
+        setShowDraftPrompt(true);
+      }
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
+    setSuccess(null);
     try {
+      console.log("Attempting to save mentor with role:", userRole);
       if (editingMentor) {
         await mentorService.update(editingMentor.id, formData);
+        setSuccess("Mentor updated successfully!");
       } else {
         await mentorService.create(formData);
+        setSuccess("Mentor created successfully!");
       }
+      
+      clearDraft();
+      setTimeout(() => setSuccess(null), 5000);
+      
       setIsModalOpen(false);
       setEditingMentor(null);
       setFormData({ name: '', role: '', description: '', imageUrl: '', linkedinUrl: '' });
       fetchMentors();
     } catch (err: any) {
       console.error("Error saving mentor:", err);
-      setError(err?.response?.data?.error || err?.response?.data?.message || err.message || "Failed to save mentor. Try again.");
+      const statusCode = err?.response?.status;
+      if (statusCode === 401) {
+        setError("Your session has expired. Please log in again.");
+      } else if (statusCode === 403) {
+        setError(`Access denied. You need ADMIN permissions. Your current role is: ${userRole || 'Unknown'}`);
+      } else {
+        setError(err?.response?.data?.error || err?.response?.data?.message || err.message || "Failed to save mentor. Try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -118,7 +186,19 @@ const AdminMentors = () => {
         </button>
       </div>
 
-      {/* Mentors Grid */}
+      <AnimatePresence>
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-green-50 text-green-700 p-4 rounded-2xl border border-green-100 flex items-center space-x-3 shadow-sm"
+          >
+            <CheckCircle2 size={20} />
+            <span className="font-medium">{success}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {loading ? (
           [1, 2, 3, 4].map(i => (
@@ -211,8 +291,34 @@ const AdminMentors = () => {
               
               <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
                 {error && (
-                  <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 text-sm font-medium">
-                    {error}
+                  <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 text-sm font-medium flex items-center space-x-3">
+                    <AlertCircle size={20} />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                {showDraftPrompt && !editingMentor && (
+                  <div className="bg-orange-50 text-orange-700 p-4 rounded-2xl border border-orange-100 text-sm font-medium flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <FileText size={20} />
+                      <span>You have an unsaved draft.</span>
+                    </div>
+                    <div className="flex space-x-2">
+                       <button 
+                         type="button" 
+                         onClick={loadDraft}
+                         className="px-3 py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all"
+                       >
+                         Load
+                       </button>
+                       <button 
+                         type="button" 
+                         onClick={() => { clearDraft(); setShowDraftPrompt(false); }}
+                         className="px-3 py-1 bg-white border border-orange-200 rounded-lg hover:bg-orange-100 transition-all text-orange-700"
+                       >
+                         Clear
+                       </button>
+                    </div>
                   </div>
                 )}
                 <div className="space-y-4">
@@ -332,9 +438,17 @@ const AdminMentors = () => {
                     Cancel
                   </button>
                   <button
+                    type="button"
+                    onClick={saveToDraft}
+                    className="flex-grow sm:flex-grow-0 px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 transition-all flex items-center justify-center space-x-2"
+                  >
+                    <FileText size={20} />
+                    <span>Save Draft</span>
+                  </button>
+                  <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-8 py-3 bg-primary text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 flex items-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="flex-grow sm:flex-grow-0 px-8 py-3 bg-primary text-white rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
                     <span>{isSubmitting ? 'Saving...' : editingMentor ? 'Update Mentor' : 'Save Mentor'}</span>

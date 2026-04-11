@@ -20,7 +20,7 @@ export default defineConfig(({mode}) => {
           theme_color: '#ffffff',
           icons: [
             {
-              src: 'Logo.tsx',
+              src: 'favicon.ico',
               sizes: '192x192',
               type: 'image/png',
             }
