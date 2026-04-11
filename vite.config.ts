@@ -12,19 +12,13 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+        includeAssets: ['robots.txt'],
         manifest: {
           name: 'Devansh Edutech Platform',
           short_name: 'Devansh Edutech',
           description: 'Educational platform online',
           theme_color: '#ffffff',
-          icons: [
-            {
-              src: 'favicon.ico',
-              sizes: '192x192',
-              type: 'image/png',
-            }
-          ]
+          icons: []
         }
       })
     ],
