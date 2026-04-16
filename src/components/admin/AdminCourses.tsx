@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { courseService } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { compressImage, resolveImageUrl, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
+import { compressImage, resolveImageUrl, uploadImageToCDN, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
+import { backendUrl } from '../../services/api';
 
 const AdminCourses = () => {
   const [courses, setCourses] = useState<any[]>([]);
@@ -23,6 +24,7 @@ const AdminCourses = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [uploadingCourseId, setUploadingCourseId] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -345,13 +347,17 @@ const AdminCourses = () => {
                             onChange={e => setFormData({...formData, image: e.target.value})}
                           />
                         </div>
-                        <label className="flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 rounded-2xl font-bold hover:bg-gray-200 transition-all cursor-pointer whitespace-nowrap border-2 border-dashed border-gray-200 hover:border-primary/30">
-                          <Plus size={20} className="mr-2 text-primary" />
-                          <span>Upload File</span>
+                        <label className={`flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 rounded-2xl font-bold transition-all cursor-pointer whitespace-nowrap border-2 border-dashed border-gray-200 hover:border-primary/30 ${isUploadingImage ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-200'}`}>
+                          {isUploadingImage ? (
+                            <><Loader2 size={20} className="mr-2 text-primary animate-spin" /><span>Uploading...</span></>
+                          ) : (
+                            <><Plus size={20} className="mr-2 text-primary" /><span>Upload File</span></>
+                          )}
                           <input
                             type="file"
                             className="hidden"
                             accept="image/*"
+                            disabled={isUploadingImage}
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (file) {
@@ -359,12 +365,15 @@ const AdminCourses = () => {
                                   alert(`Image size should be less than ${MAX_IMAGE_SIZE_MB}MB`);
                                   return;
                                 }
+                                setIsUploadingImage(true);
                                 try {
-                                  const base64 = await compressImage(file);
-                                  setFormData({ ...formData, image: base64 });
+                                  const cdnUrl = await uploadImageToCDN(file, 'courses', backendUrl);
+                                  setFormData({ ...formData, image: cdnUrl });
                                 } catch (error) {
                                   console.error("Error uploading image:", error);
-                                  alert("Error uploading image. Please try again.");
+                                  alert("Image upload failed. Please try again.");
+                                } finally {
+                                  setIsUploadingImage(false);
                                 }
                               }
                             }}

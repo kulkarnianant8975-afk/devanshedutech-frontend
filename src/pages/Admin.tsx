@@ -9,11 +9,13 @@ import {
   Menu, 
   X,
   Lock,
-  ChevronRight,
   HelpCircle,
-  Award
+  Award,
+  Zap,
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
-import { authService } from '../services/api';
+import { authService, backendUrl } from '../services/api';
 import { UserResponseDTO as User } from '../dtos';
 
 // Admin Components
@@ -37,6 +39,8 @@ const Admin = () => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<{migrated: number, failed: number} | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -114,6 +118,29 @@ const Admin = () => {
     await authService.logout();
     setUser(null);
     setIsAdmin(false);
+  };
+
+  const handleMigrateImages = async () => {
+    if (!window.confirm('This will upload all existing Base64 images to Cloudinary CDN and replace them in the database. This may take 1-2 minutes. Continue?')) return;
+    setIsMigrating(true);
+    setMigrationResult(null);
+    try {
+      const res = await fetch(`${backendUrl}/api/admin/migrate-images`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      setMigrationResult({ migrated: data.migrated, failed: data.failed });
+      if (data.failed === 0) {
+        alert(`✅ Migration complete! ${data.migrated} images moved to Cloudinary CDN. Images will now load instantly.`);
+      } else {
+        alert(`⚠️ Partial migration: ${data.migrated} succeeded, ${data.failed} failed. Check backend logs.`);
+      }
+    } catch (err) {
+      alert('Migration failed. Make sure backend is running with Cloudinary credentials.');
+    } finally {
+      setIsMigrating(false);
+    }
   };
 
   if (loading) {
@@ -328,7 +355,26 @@ const Admin = () => {
               <p className="text-gray-500 text-sm md:text-base">Welcome back, {user.displayName}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            {/* One-click CDN Migration Button */}
+            <button
+              onClick={handleMigrateImages}
+              disabled={isMigrating}
+              title="Migrate all existing Base64 images to Cloudinary CDN"
+              className={`hidden sm:flex items-center space-x-2 px-4 py-2 rounded-2xl font-bold text-sm transition-all ${
+                migrationResult && migrationResult.failed === 0
+                  ? 'bg-green-50 text-green-600 border border-green-200'
+                  : 'bg-orange-50 text-primary border border-orange-100 hover:bg-orange-100'
+              } disabled:opacity-60`}
+            >
+              {isMigrating ? (
+                <><Loader2 size={16} className="animate-spin" /><span>Migrating...</span></>
+              ) : migrationResult && migrationResult.failed === 0 ? (
+                <><CheckCircle2 size={16} /><span>CDN Active</span></>
+              ) : (
+                <><Zap size={16} /><span>Migrate Images to CDN</span></>
+              )}
+            </button>
             <div className="text-right hidden sm:block">
               <p className="font-bold text-sm">{user.displayName}</p>
               <p className="text-xs text-gray-400">{user.email}</p>

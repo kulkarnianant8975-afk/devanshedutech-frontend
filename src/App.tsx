@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, ArrowUp } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 
-// Components
+// Components (always needed, load eagerly)
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import AIChatbot from './components/AIChatbot';
-import WhatsAppButton from './components/WhatsAppButton';
-
-// Pages
-import Home from './pages/Home';
-import About from './pages/About';
-import AllCourses from './pages/AllCourses';
-import Contact from './pages/Contact';
-import Admin from './pages/Admin';
-
 import Logo from './components/Logo';
 import EnrollmentModal from './components/EnrollmentModal';
+
+// Heavy components: lazy-loaded so they don't block initial paint
+const WhatsAppButton = lazy(() => import('./components/WhatsAppButton'));
+const AIChatbot      = lazy(() => import('./components/AIChatbot'));
+
+// Pages: ALL lazy-loaded (biggest win — none of these are needed until navigation)
+const Home       = lazy(() => import('./pages/Home'));
+const About      = lazy(() => import('./pages/About'));
+const AllCourses = lazy(() => import('./pages/AllCourses'));
+const Contact    = lazy(() => import('./pages/Contact'));
+const Admin      = lazy(() => import('./pages/Admin')); // 19KB — never needed by public users
+
 import { useAnalytics } from './lib/useAnalytics';
 import { usePersistedState } from './lib/usePersistedState';
 
@@ -69,13 +71,19 @@ const AppContent = () => {
       {!isAdmin && <Navbar />}
       <main className={!isAdmin ? "flex-grow" : ""}>
         <AnimatePresence mode="wait">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/courses" element={<AllCourses />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            </div>
+          }>
+            <Routes>
+              <Route path="/"        element={<Home />} />
+              <Route path="/about"   element={<About />} />
+              <Route path="/courses" element={<AllCourses />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/admin"   element={<Admin />} />
+            </Routes>
+          </Suspense>
         </AnimatePresence>
       </main>
       {!isAdmin && <Footer />}
@@ -87,8 +95,10 @@ const AppContent = () => {
             onClose={() => setIsEnrollModalOpen(false)} 
             courseName={selectedCourse}
           />
-          <WhatsAppButton />
-          <AIChatbot />
+          <Suspense fallback={null}>
+            <WhatsAppButton />
+            <AIChatbot />
+          </Suspense>
           <AnimatePresence>
             {showBackToTop && (
               <motion.button
@@ -108,37 +118,10 @@ const AppContent = () => {
   );
 };
 
-const App = () => {
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Reduce simulated loading to make app feel snappier
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center">
-        <div className="relative flex flex-col items-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="w-24 h-24 border-4 border-primary/20 border-t-primary rounded-full"
-          />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            <Logo className="scale-75 opacity-80" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <Router>
-      <AppContent />
-    </Router>
-  );
-};
+const App = () => (
+  <Router>
+    <AppContent />
+  </Router>
+);
 
 export default App;

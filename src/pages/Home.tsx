@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle, Users, Award, BookOpen, MessageCircle, Quote, X } from 'lucide-react';
 import { placedStudentService } from '../services/placedStudentService';
@@ -6,10 +6,12 @@ import { PlacedStudentResponseDTO as PlacedStudent } from '../dtos';
 import { Link } from 'react-router-dom';
 import { courses as staticCourses } from '../data/courses';
 import CourseCard from '../components/CourseCard';
-import InstagramFeed from '../components/InstagramFeed';
-import HiringSection from '../components/HiringSection';
 import api, { backendUrl } from '../services/api';
 import { AnimatePresence } from 'framer-motion';
+
+// Lazy-load below-fold sections so they don't block initial render
+const InstagramFeed = lazy(() => import('../components/InstagramFeed'));
+const HiringSection = lazy(() => import('../components/HiringSection'));
 
 const Home = () => {
   const [popularCourses, setPopularCourses] = useState<any[]>(staticCourses.slice(0, 4));
@@ -41,37 +43,32 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await api.get('/courses?limit=4');
-        if (response.data && response.data.length > 0) {
-          const data = response.data.map((course: any) => ({ 
+    const loadPageData = async () => {
+      // Fire both requests simultaneously — saves one full round-trip latency
+      const [coursesResult, storiesResult] = await Promise.allSettled([
+        api.get('/courses?limit=4'),
+        placedStudentService.getAll()
+      ]);
+
+      if (coursesResult.status === 'fulfilled') {
+        const data = coursesResult.value.data;
+        if (data && data.length > 0) {
+          setPopularCourses(data.map((course: any) => ({
             ...course,
             fee: course.price || course.fee,
-            icon: BookOpen // Default icon for dynamic courses
-          }));
-          setPopularCourses(data);
+            icon: BookOpen
+          })));
         }
-      } catch (error) {
-        console.error("Error fetching courses from API:", error);
-      } finally {
-        setLoadingCourses(false);
       }
+      setLoadingCourses(false);
+
+      if (storiesResult.status === 'fulfilled') {
+        setSuccessStories(storiesResult.value);
+      }
+      setLoadingStories(false);
     };
 
-    fetchCourses();
-
-    const fetchStories = async () => {
-      try {
-        const data = await placedStudentService.getAll();
-        setSuccessStories(data);
-      } catch (error) {
-        console.error("Error fetching success stories:", error);
-      } finally {
-        setLoadingStories(false);
-      }
-    };
-    fetchStories();
+    loadPageData();
   }, []);
 
   return (
@@ -81,9 +78,11 @@ const Home = () => {
         {/* Static Background Image */}
         <div className="absolute inset-0 w-full h-full z-0">
           <img 
-            src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000" 
+            src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=1400" 
             alt="Campus" 
             className="w-full h-full object-cover"
+            fetchPriority="high"
+            decoding="async"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
@@ -258,6 +257,8 @@ const Home = () => {
                       src={getImageUrl(story.imageUrl) || `https://i.pravatar.cc/150?u=${story.id}`} 
                       alt={story.name} 
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                      decoding="async"
                       referrerPolicy="no-referrer"
                     />
                     <div className="absolute top-4 left-4">
@@ -301,11 +302,15 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Hiring Section */}
-      <HiringSection />
+      {/* Hiring Section - lazy loaded */}
+      <Suspense fallback={<div className="h-48 bg-gray-50 animate-pulse rounded-3xl mx-8" />}>
+        <HiringSection />
+      </Suspense>
 
-      {/* Instagram Feed */}
-      <InstagramFeed />
+      {/* Instagram Feed - lazy loaded */}
+      <Suspense fallback={<div className="h-80 bg-white animate-pulse" />}>
+        <InstagramFeed />
+      </Suspense>
 
       {/* Newsletter */}
       <section className="py-24">
