@@ -251,7 +251,7 @@ const Home = () => {
                   className="bg-white rounded-[40px] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden group"
                 >
                   <div 
-                    className="h-64 overflow-hidden relative cursor-zoom-in"
+                    className="aspect-[4/5] w-full overflow-hidden relative cursor-zoom-in bg-gray-100"
                     onClick={() => setSelectedImage(getImageUrl(story.imageUrl) || `https://i.pravatar.cc/1000?u=${story.id}`)}
                   >
                     <img 

@@ -206,7 +206,7 @@ const About = () => {
                   className="bg-white rounded-[40px] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full"
                 >
                   <div 
-                    className="h-64 overflow-hidden cursor-zoom-in"
+                    className="aspect-[4/5] w-full overflow-hidden cursor-zoom-in bg-gray-100"
                     onClick={() => setSelectedImage(getImageUrl(mentor.imageUrl) || `https://picsum.photos/seed/${mentor.id}/800/1000`)}
                   >
                     <img
