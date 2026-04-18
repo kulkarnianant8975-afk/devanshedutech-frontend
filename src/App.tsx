@@ -73,7 +73,12 @@ const AppContent = () => {
         <AnimatePresence mode="wait">
           <Suspense fallback={
             <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+              <motion.div
+                animate={{ scale: [1, 1.1, 1], opacity: [0.7, 1, 0.7] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+              >
+                <Logo />
+              </motion.div>
             </div>
           }>
             <Routes>

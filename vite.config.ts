@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
 import {VitePWA} from 'vite-plugin-pwa';
+import viteCompression from 'vite-plugin-compression';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
@@ -20,8 +21,27 @@ export default defineConfig(({mode}) => {
           theme_color: '#ffffff',
           icons: []
         }
+      }),
+      viteCompression({ 
+        algorithm: 'gzip',
+        ext: '.gz',
+      }),
+      viteCompression({ 
+        algorithm: 'brotliCompress',
+        ext: '.br',
       })
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            ui: ['lucide-react', 'framer-motion'],
+            charts: ['recharts']
+          }
+        }
+      }
+    },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || ""),
     },

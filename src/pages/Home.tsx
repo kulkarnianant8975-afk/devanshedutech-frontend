@@ -78,10 +78,11 @@ const Home = () => {
         {/* Static Background Image */}
         <div className="absolute inset-0 w-full h-full z-0">
           <img 
-            src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=1400" 
+            src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=75&w=1200" 
             alt="Campus" 
             className="w-full h-full object-cover"
             fetchPriority="high"
+            loading="eager"
             decoding="async"
             referrerPolicy="no-referrer"
           />
