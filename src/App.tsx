@@ -141,10 +141,25 @@ const AppContent = () => {
   );
 };
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Cache data for 5 minutes
+      gcTime: 1000 * 60 * 30, // Keep in garbage collection for 30 mins
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 const App = () => (
-  <Router>
-    <AppContent />
-  </Router>
+  <QueryClientProvider client={queryClient}>
+    <Router>
+      <AppContent />
+    </Router>
+  </QueryClientProvider>
 );
 
 export default App;

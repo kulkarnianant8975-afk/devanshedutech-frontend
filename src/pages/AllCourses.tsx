@@ -5,33 +5,28 @@ import { courses as staticCourses } from '../data/courses';
 import CourseCard from '../components/CourseCard';
 import api from '../services/api';
 
+import { useQuery } from '@tanstack/react-query';
+
 const AllCourses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [courses, setCourses] = useState<any[]>(staticCourses);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await api.get('/courses');
-        if (response.data && response.data.length > 0) {
-          const data = response.data.map((course: any) => ({ 
-            ...course,
-            fee: course.price || course.fee,
-            icon: BookOpen
-          }));
-          setCourses(data);
-        }
-      } catch (error) {
-        console.error("Error fetching courses:", error);
-      } finally {
-        setLoading(false);
+  // Fetch courses with React Query
+  const { data: courses = staticCourses, isLoading: loading } = useQuery({
+    queryKey: ['all-courses'],
+    queryFn: async () => {
+      const response = await api.get('/courses');
+      if (response.data && response.data.length > 0) {
+        return response.data.map((course: any) => ({ 
+          ...course,
+          fee: course.price || course.fee,
+          icon: BookOpen
+        }));
       }
-    };
-
-    fetchCourses();
-  }, []);
+      return staticCourses;
+    },
+    staleTime: 1000 * 60 * 15, // Cache for 15 minutes
+  });
 
   const categories = ['All', ...new Set(courses.map(c => c.category))];
 

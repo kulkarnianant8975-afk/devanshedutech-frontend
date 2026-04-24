@@ -15,13 +15,36 @@ import { AnimatePresence } from 'framer-motion';
 const InstagramFeed = lazy(() => import('../components/InstagramFeed'));
 const HiringSection = lazy(() => import('../components/HiringSection'));
 
+import { useQuery } from '@tanstack/react-query';
+
 const Home = () => {
-  const [popularCourses, setPopularCourses] = useState<any[]>(staticCourses.slice(0, 4));
-  const [loadingCourses, setLoadingCourses] = useState(true);
-  const [successStories, setSuccessStories] = useState<PlacedStudent[]>([]);
-  const [loadingStories, setLoadingStories] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [expandedStories, setExpandedStories] = useState<Set<string>>(new Set());
+
+  // Fetch popular courses with React Query (automatic caching)
+  const { data: popularCourses = staticCourses.slice(0, 4), isLoading: loadingCourses } = useQuery({
+    queryKey: ['popular-courses'],
+    queryFn: async () => {
+      const res = await api.get('/courses?limit=4');
+      const data = res.data;
+      if (data && data.length > 0) {
+        return data.map((course: any) => ({
+          ...course,
+          fee: course.price || course.fee,
+          icon: BookOpen
+        }));
+      }
+      return staticCourses.slice(0, 4);
+    },
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+  });
+
+  // Fetch success stories with React Query
+  const { data: successStories = [], isLoading: loadingStories } = useQuery({
+    queryKey: ['success-stories'],
+    queryFn: () => placedStudentService.getAll(),
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+  });
 
   const toggleStory = (id: string) => {
     const newExpanded = new Set(expandedStories);
@@ -32,37 +55,6 @@ const Home = () => {
     }
     setExpandedStories(newExpanded);
   };
-
-
-
-  useEffect(() => {
-    const loadPageData = async () => {
-      // Fire both requests simultaneously — saves one full round-trip latency
-      const [coursesResult, storiesResult] = await Promise.allSettled([
-        api.get('/courses?limit=4'),
-        placedStudentService.getAll()
-      ]);
-
-      if (coursesResult.status === 'fulfilled') {
-        const data = coursesResult.value.data;
-        if (data && data.length > 0) {
-          setPopularCourses(data.map((course: any) => ({
-            ...course,
-            fee: course.price || course.fee,
-            icon: BookOpen
-          })));
-        }
-      }
-      setLoadingCourses(false);
-
-      if (storiesResult.status === 'fulfilled') {
-        setSuccessStories(storiesResult.value);
-      }
-      setLoadingStories(false);
-    };
-
-    loadPageData();
-  }, []);
 
   return (
     <div className="overflow-hidden">
