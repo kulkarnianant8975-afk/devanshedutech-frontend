@@ -71,7 +71,7 @@ export const authService = {
 };
 
 export const settingsService = {
-  getBrochure: () => publicApi.get<{downloadUrl: string}>('/public/brochure').then(res => res.data),
+  getBrochure: () => publicApi.get<{downloadUrl: string}>('/api/public/brochure').then(res => res.data),
   uploadBrochure: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -79,7 +79,7 @@ export const settingsService = {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
-  getCourseBrochure: (courseId: string) => publicApi.get<{downloadUrl: string}>(`/public/brochures-info/${courseId}`).then(res => res.data),
+  getCourseBrochure: (courseId: string) => publicApi.get<{downloadUrl: string}>(`${backendUrl}/public/brochures-info/${courseId}`, { baseURL: '' }).then(res => res.data),
   uploadCourseBrochure: (courseId: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
