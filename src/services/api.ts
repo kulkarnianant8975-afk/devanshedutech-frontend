@@ -16,6 +16,12 @@ const api = axios.create({
   withCredentials: true, // Required for sessions
 });
 
+// For public requests that shouldn't send credentials (fixes potential 401 errors with broken cookies)
+export const publicApi = axios.create({
+  baseURL: backendUrl ? `${backendUrl}/api` : '/api',
+  withCredentials: false,
+});
+
 export const courseService = {
   getAll: () => api.get<CourseResponseDTO[]>('/courses').then(res => res.data),
   create: (course: CourseRequestDTO) => api.post<CourseResponseDTO>('/courses', course).then(res => res.data),
@@ -65,7 +71,7 @@ export const authService = {
 };
 
 export const settingsService = {
-  getBrochure: () => api.get<{downloadUrl: string}>('/public/brochure').then(res => res.data),
+  getBrochure: () => publicApi.get<{downloadUrl: string}>('/public/brochure').then(res => res.data),
   uploadBrochure: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -73,7 +79,7 @@ export const settingsService = {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
-  getCourseBrochure: (courseId: string) => api.get<{downloadUrl: string}>(`/public/brochure/${courseId}`).then(res => res.data),
+  getCourseBrochure: (courseId: string) => publicApi.get<{downloadUrl: string}>(`/public/brochure/${courseId}`).then(res => res.data),
   uploadCourseBrochure: (courseId: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
