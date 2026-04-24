@@ -1,0 +1,16 @@
+name: Render Keep-Alive
+
+on:
+  schedule:
+    # Runs every 14 minutes (Render sleeps after 15 mins of inactivity)
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # Allows manual triggering for testing
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Backend
+        run: |
+          curl -s -f https://devanshedutech-backend-1.onrender.com/api/courses > /dev/null || echo "Ping failed but continuing..."
+          echo "Keep-alive ping sent successfully to Render."
