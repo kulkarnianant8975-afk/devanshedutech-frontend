@@ -54,45 +54,56 @@ const BrochureModal: React.FC<BrochureModalProps> = ({ isOpen, onClose, courseTi
       setStatus('success');
       
       try {
-        const settingsService = (await import('../services/api')).settingsService;
+        const { settingsService } = await import('../services/api');
         let result = null;
         
-        // Try course-specific brochure first
+        // 1. Try course-specific brochure first
         if (courseId) {
           try {
-            result = await settingsService.getCourseBrochure(courseId);
-          } catch {
-            // Course-specific not found, try global
+            const courseResult = await settingsService.getCourseBrochure(courseId);
+            if (courseResult && courseResult.downloadUrl) {
+              result = courseResult;
+            }
+          } catch (err) {
+            console.log('Course-specific brochure not found, checking global...');
           }
         }
         
-        // Fall back to global brochure
-        if (!result || !result.pdfData) {
+        // 2. Fall back to global brochure if course-specific not found
+        if (!result || !result.downloadUrl) {
           try {
-            result = await settingsService.getBrochure();
-          } catch {
-            // Global brochure also not found
+            const globalResult = await settingsService.getBrochure();
+            if (globalResult && globalResult.downloadUrl) {
+              result = globalResult;
+            }
+          } catch (err) {
+            console.log('Global brochure not found');
           }
         }
 
         if (result && result.downloadUrl) {
-          const link = document.createElement('a');
-          // Ensure the download URL is absolute
+          // Ensure the download URL is absolute if needed
           const fullUrl = result.downloadUrl.startsWith('/') 
             ? `${backendUrl}${result.downloadUrl}` 
             : result.downloadUrl;
           
+          console.log('Starting brochure download from:', fullUrl);
+          
+          // Use a hidden anchor tag with download attribute for best results
+          const link = document.createElement('a');
           link.href = fullUrl;
-          link.download = courseTitle ? `${courseTitle.replace(/\s+/g, '_')}_Brochure.pdf` : 'Devansh_Course_Brochure.pdf';
+          link.setAttribute('download', courseTitle ? `${courseTitle.replace(/\s+/g, '_')}_Brochure.pdf` : 'Devansh_Course_Brochure.pdf');
+          link.setAttribute('target', '_blank'); // Helps with cross-origin or if browser blocks same-tab download
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
         } else {
           // No brochure available — inform user
+          console.log('No brochure found for download');
           alert('Thank you for your interest! Our team will share the brochure with you on your registered contact details shortly.');
         }
       } catch (err) {
-        console.error('Error fetching brochure', err);
+        console.error('Error fetching brochure info:', err);
         alert('Thank you for your interest! Our team will share the brochure with you shortly.');
       }
       
@@ -100,7 +111,7 @@ const BrochureModal: React.FC<BrochureModalProps> = ({ isOpen, onClose, courseTi
         onClose();
         setStatus('idle');
         setFormData({ fullName: '', education: '', cityName: '', mobileNumber: '', email: '' });
-      }, 3000);
+      }, 4000);
     } catch (error) {
       console.error('Error submitting lead:', error);
       setStatus('error');

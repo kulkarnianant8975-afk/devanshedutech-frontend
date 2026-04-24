@@ -170,8 +170,8 @@ const AdminCourses = () => {
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          if (file.size > 50 * 1024 * 1024) {
-                            alert('Please select a PDF smaller than 50MB.');
+                          if (file.size > 60 * 1024 * 1024) {
+                            alert('Please select a PDF smaller than 60MB.');
                             return;
                           }
                           setUploadingCourseId(course.id);
