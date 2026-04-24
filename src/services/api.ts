@@ -79,7 +79,7 @@ export const settingsService = {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   },
-  getCourseBrochure: (courseId: string) => publicApi.get<{downloadUrl: string}>(`/public/brochure/${courseId}`).then(res => res.data),
+  getCourseBrochure: (courseId: string) => publicApi.get<{downloadUrl: string}>(`/public/brochures-info/${courseId}`).then(res => res.data),
   uploadCourseBrochure: (courseId: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
