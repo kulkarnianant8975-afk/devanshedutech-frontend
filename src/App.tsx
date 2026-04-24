@@ -9,16 +9,34 @@ import Footer from './components/Footer';
 import Logo from './components/Logo';
 import EnrollmentModal from './components/EnrollmentModal';
 
+// Retry wrapper: if a lazy chunk fails to load (stale cache after deploy),
+// do a single full-page reload to pick up the new asset manifest.
+const lazyWithRetry = (importFn: () => Promise<any>) =>
+  lazy(() =>
+    importFn().catch(() => {
+      // Only reload once — use sessionStorage flag to prevent infinite loop
+      const reloaded = sessionStorage.getItem('chunk_reload');
+      if (!reloaded) {
+        sessionStorage.setItem('chunk_reload', '1');
+        window.location.reload();
+      }
+      return importFn(); // fallback attempt (will likely fail but satisfies types)
+    })
+  );
+
+// Clear the reload flag on successful boot
+sessionStorage.removeItem('chunk_reload');
+
 // Heavy components: lazy-loaded so they don't block initial paint
-const WhatsAppButton = lazy(() => import('./components/WhatsAppButton'));
-const AIChatbot      = lazy(() => import('./components/AIChatbot'));
+const WhatsAppButton = lazyWithRetry(() => import('./components/WhatsAppButton'));
+const AIChatbot      = lazyWithRetry(() => import('./components/AIChatbot'));
 
 // Pages: ALL lazy-loaded (biggest win — none of these are needed until navigation)
-const Home       = lazy(() => import('./pages/Home'));
-const About      = lazy(() => import('./pages/About'));
-const AllCourses = lazy(() => import('./pages/AllCourses'));
-const Contact    = lazy(() => import('./pages/Contact'));
-const Admin      = lazy(() => import('./pages/Admin')); // 19KB — never needed by public users
+const Home       = lazyWithRetry(() => import('./pages/Home'));
+const About      = lazyWithRetry(() => import('./pages/About'));
+const AllCourses = lazyWithRetry(() => import('./pages/AllCourses'));
+const Contact    = lazyWithRetry(() => import('./pages/Contact'));
+const Admin      = lazyWithRetry(() => import('./pages/Admin'));
 
 import { useAnalytics } from './lib/useAnalytics';
 import { usePersistedState } from './lib/usePersistedState';
