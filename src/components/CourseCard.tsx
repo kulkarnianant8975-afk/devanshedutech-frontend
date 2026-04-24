@@ -14,6 +14,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   const Icon = course.icon;
 
 
+  const [isImageLoading, setIsImageLoading] = useState(true);
 
   return (
     <>
@@ -21,13 +22,25 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       whileHover={{ y: -10 }}
       className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group"
     >
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-48 overflow-hidden bg-gray-100">
         {course.image ? (
-          <img 
-            src={resolveImageUrl(course.image)} 
-            alt={course.name} 
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+          <>
+            {isImageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-50 animate-pulse">
+                <div className="w-12 h-12 rounded-full border-2 border-primary/10 border-t-primary animate-spin" />
+              </div>
+            )}
+            <img 
+              src={resolveImageUrl(course.image)} 
+              alt={course.name} 
+              onLoad={() => setIsImageLoading(false)}
+              loading="lazy"
+              decoding="async"
+              className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${
+                isImageLoading ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'
+              }`}
+            />
+          </>
         ) : (
           <div className="w-full h-full bg-orange-50 flex items-center justify-center">
             <Icon size={48} className="text-primary/20" />

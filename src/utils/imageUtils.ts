@@ -66,8 +66,17 @@ import { backendUrl } from '../services/api';
 export const resolveImageUrl = (url: string | undefined): string => {
   if (!url) return '';
 
-  // Full external URLs and Base64 data URIs — already usable
-  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  // Full external URLs
+  if (url.startsWith('http')) {
+    // Optimization: If it's a Cloudinary URL, inject auto-format and auto-quality
+    if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+      return url.replace('/upload/', '/upload/f_auto,q_auto/');
+    }
+    return url;
+  }
+
+  // Base64 data URIs — already usable
+  if (url.startsWith('data:')) return url;
 
   // Backend-relative paths (e.g. /api/mentors/123/image) must be prefixed
   // with the backend origin in production (where frontend ≠ backend domain)
