@@ -5,15 +5,15 @@ import { Instagram, Heart, MessageCircle, ExternalLink } from 'lucide-react';
 const instagramPosts = [
   {
     id: 1,
-    image: 'https://instagram.fnag1-4.fna.fbcdn.net/v/t51.82787-15/600459708_18422459110115359_5148942868928965891_n.heic?stp=dst-jpg_e35_tt6&_nc_cat=103&ig_cache_key=Mzc4NzUyNjk2Mzc1MDc0NzcyMQ%3D%3D&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjE0NDB4MTQ0MC5zZHIuQzMifQ%3D%3D&_nc_ohc=QBfjtTzucS4Q7kNvwE_xAJw&_nc_oc=Adrb4jFPF05Mi8DoQh5FZj0IoARWQo-oyWr77e3VLo5ewFvSMVu20qb_Bj5Dd0cfVAc&_nc_ad=z-m&_nc_cid=2034&_nc_zt=23&_nc_ht=instagram.fnag1-4.fna&_nc_gid=LErdS3ui50aolE6uZeWGBw&_nc_ss=7a32e&oh=00_AfzCvJ1Czj8TL_WFLiNhQGmfH3sbOKGR8JOtNyF4HidpNA&oe=69C5A78E',
+    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=600',
     likes: '176',
     comments: '3',
-    caption: 'Overwhelmed with gratitude for all the love you’ve shown. Thank you. 🙏 #student #teacher #engineering #bca #coding #parbhani',
+    caption: 'Overwhelmed with gratitude for all the love you\'ve shown. Thank you. 🙏 #student #teacher #engineering #bca #coding #parbhani',
     link: 'https://www.instagram.com/p/DSQDs0wk3lV/'
   },
   {
     id: 2,
-    image: 'https://instagram.fnag1-4.fna.fbcdn.net/v/t51.82787-15/650515529_17952634656102459_1466027405528680097_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=101&ig_cache_key=MzcwODQwNDMwNTkwMjQ3Mzc4Ng%3D%3D&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjE0NDB4MTQ0MC5zZHIuQzM1In0%3D&_nc_ohc=yRspvLoi4SwQ7kNvwFqfg5o&_nc_oc=AdqqrnicHYLWpoMbhV34vP1y0XyUUTdik0I4YNPyVi6IsXz-OFtCRO5ne-TmpKsTRz0&_nc_ad=z-m&_nc_cid=2034&_nc_zt=23&_nc_ht=instagram.fnag1-4.fna&_nc_gid=gwOIdkt56_BR5jbLx2K08w&_nc_ss=7a32e&oh=00_Afy0kE_I8kjkS1E7vsrqTBhprJc6gMK1t_2CjPt2oQ9_fA&oe=69C5A8AD',
+    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600',
     likes: '792',
     comments: '1',
     caption: 'Ganpati Bappa Morya 🙌🏻😊 May lord ganesha bless us with wisdom, strength & prosperity #ganeshchaturthi #MadhavSharma #celebration',

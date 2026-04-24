@@ -6,7 +6,8 @@ import { PlacedStudentResponseDTO as PlacedStudent } from '../dtos';
 import { Link } from 'react-router-dom';
 import { courses as staticCourses } from '../data/courses';
 import CourseCard from '../components/CourseCard';
-import api, { backendUrl } from '../services/api';
+import api from '../services/api';
+import { resolveImageUrl } from '../utils/imageUtils';
 import { AnimatePresence } from 'framer-motion';
 
 // Lazy-load below-fold sections so they don't block initial render
@@ -31,16 +32,7 @@ const Home = () => {
     setExpandedStories(newExpanded);
   };
 
-  const getImageUrl = (url?: string) => {
-    if (!url) return undefined;
-    // Resolve relative backend paths to absolute production URL if necessary
-    if (url.startsWith('/api')) {
-      return backendUrl ? `${backendUrl}${url}` : url;
-    }
-    // Handle paths starting with / (relative to public folder)
-    if (url.startsWith('/') && !url.startsWith('/api')) return url;
-    return url;
-  };
+
 
   useEffect(() => {
     const loadPageData = async () => {
@@ -252,10 +244,10 @@ const Home = () => {
                 >
                   <div 
                     className="aspect-[4/5] w-full overflow-hidden relative cursor-zoom-in bg-gray-100"
-                    onClick={() => setSelectedImage(getImageUrl(story.imageUrl) || `https://i.pravatar.cc/1000?u=${story.id}`)}
+                    onClick={() => setSelectedImage(resolveImageUrl(story.imageUrl) || `https://i.pravatar.cc/1000?u=${story.id}`)}
                   >
                     <img 
-                      src={getImageUrl(story.imageUrl) || `https://i.pravatar.cc/150?u=${story.id}`} 
+                      src={resolveImageUrl(story.imageUrl) || `https://i.pravatar.cc/150?u=${story.id}`} 
                       alt={story.name} 
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                       loading="lazy"

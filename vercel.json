@@ -1,5 +1,15 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "devanshedutech.vercel.app"
+        }
+      ],
+      "destination": "https://www.devanshedutech.com/$1",
+      "permanent": true
+    }
   ]
 }

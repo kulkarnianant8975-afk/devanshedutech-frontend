@@ -53,10 +53,30 @@ export const compressImage = (
 
 import { backendUrl } from '../services/api';
 
+/**
+ * Resolves any image URL to a fully-qualified, loadable URL.
+ *
+ * Handles:
+ *  - Full URLs (https://...)       → returned as-is
+ *  - Base64 data URIs (data:...)   → returned as-is
+ *  - Backend API paths (/api/...)  → prepends backendUrl for production
+ *  - Local public paths (/images/) → returned as-is (served by Vite / Vercel)
+ *  - Empty / undefined             → returns empty string
+ */
 export const resolveImageUrl = (url: string | undefined): string => {
   if (!url) return '';
+
+  // Full external URLs and Base64 data URIs — already usable
   if (url.startsWith('http') || url.startsWith('data:')) return url;
-  return backendUrl ? `${backendUrl}${url}` : url;
+
+  // Backend-relative paths (e.g. /api/mentors/123/image) must be prefixed
+  // with the backend origin in production (where frontend ≠ backend domain)
+  if (url.startsWith('/api')) {
+    return backendUrl ? `${backendUrl}${url}` : url;
+  }
+
+  // Everything else (e.g. /images/instagram/post3.jpg) is a local public asset
+  return url;
 };
 
 export const MAX_IMAGE_SIZE_MB = 15;
