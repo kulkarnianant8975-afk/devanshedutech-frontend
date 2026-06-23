@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const WhatsAppButton = () => {
-  const phoneNumber = "918669880738"; // Standardized format for WhatsApp
+  const phoneNumber = "917972217407"; // Standardized format for WhatsApp
   const message = "Hello! I'm interested in Devansh Edu-Tech Classes. Can I get more information?";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
