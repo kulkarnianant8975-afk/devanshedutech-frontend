@@ -46,7 +46,7 @@ const Admin = () => {
     const checkAuth = async () => {
       try {
         const currentUser = await authService.getMe();
-        if (currentUser && currentUser.role === 'admin') {
+        if (currentUser && currentUser.role?.toUpperCase() === 'ADMIN') {
           setUser(currentUser);
           setIsAdmin(true);
           setAuthError('');

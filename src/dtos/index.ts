@@ -4,6 +4,7 @@ export interface CourseRequestDTO {
   description: string;
   duration: string;
   price: number;
+  level?: string;
   category: string;
   image?: string;
 }
@@ -14,6 +15,7 @@ export interface CourseResponseDTO {
   description: string;
   duration: string;
   price: number;
+  level?: string;
   category: string;
   image?: string;
 }

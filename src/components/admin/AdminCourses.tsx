@@ -20,6 +20,7 @@ import { backendUrl } from '../../services/api';
 
 const AdminCourses = () => {
   const [courses, setCourses] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
@@ -63,6 +64,7 @@ const AdminCourses = () => {
         name: formData.name,
         description: formData.description,
         duration: formData.duration,
+        level: formData.level,
         category: formData.category,
         price: priceValue,
         image: formData.image
@@ -108,6 +110,15 @@ const AdminCourses = () => {
     }
   };
 
+  const query = searchTerm.trim().toLowerCase();
+  const filteredCourses = query
+    ? courses.filter((c) =>
+        [c.name, c.category, c.description].some((f: string | undefined) =>
+          (f ?? '').toLowerCase().includes(query)
+        )
+      )
+    : courses;
+
   return (
     <div className="space-y-6">
       {/* Actions Bar */}
@@ -117,6 +128,8 @@ const AdminCourses = () => {
           <input
             type="text"
             placeholder="Search courses..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all"
           />
         </div>
@@ -139,17 +152,19 @@ const AdminCourses = () => {
           [1, 2, 3].map(i => (
             <div key={i} className="h-64 bg-white rounded-[40px] animate-pulse" />
           ))
-        ) : courses.length === 0 ? (
+        ) : filteredCourses.length === 0 ? (
           <div className="col-span-full py-20 text-center text-gray-500 bg-white rounded-[40px] border border-dashed border-gray-200">
-            No courses added yet. Click "Add New Course" to get started.
+            {courses.length === 0
+              ? 'No courses added yet. Click "Add New Course" to get started.'
+              : 'No courses match your search.'}
           </div>
         ) : (
-          courses.map((course) => (
+          filteredCourses.map((course) => (
             <div key={course.id} className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-500">
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src={resolveImageUrl(course.image) || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400'} 
-                  alt={course.title} 
+                  alt={course.name}
                   className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"
                 />

@@ -84,7 +84,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
               <span className="text-xs">Brochure</span>
             </button>
             <button
-              onClick={() => window.dispatchEvent(new CustomEvent('open-enrollment'))}
+              onClick={() => window.dispatchEvent(new CustomEvent('open-enrollment', { detail: { courseName: course.name } }))}
               className="flex items-center justify-center space-x-2 bg-primary text-white py-3 rounded-xl font-semibold hover:bg-orange-600 transition-all duration-300"
             >
               <span className="text-xs">Enroll Now</span>

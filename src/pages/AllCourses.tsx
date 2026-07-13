@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, X, BookOpen } from 'lucide-react';
-import { courses as staticCourses } from '../data/courses';
 import CourseCard from '../components/CourseCard';
 import api from '../services/api';
 
@@ -11,19 +10,16 @@ const AllCourses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  // Fetch courses with React Query
-  const { data: courses = staticCourses, isLoading: loading } = useQuery({
+  // Courses come from the API only — no hardcoded fallback. See Home.tsx.
+  const { data: courses = [], isLoading: loading, isError: coursesFailed } = useQuery({
     queryKey: ['all-courses'],
     queryFn: async () => {
       const response = await api.get('/courses');
-      if (response.data && response.data.length > 0) {
-        return response.data.map((course: any) => ({ 
-          ...course,
-          fee: course.price || course.fee,
-          icon: BookOpen
-        }));
-      }
-      return staticCourses;
+      return (response.data ?? []).map((course: any) => ({
+        ...course,
+        fee: course.price || course.fee,
+        icon: BookOpen
+      }));
     },
     staleTime: 1000 * 60 * 15, // Cache for 15 minutes
   });
@@ -109,6 +105,25 @@ const AllCourses = () => {
       {/* Course Grid */}
       <section className="py-16 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                  <div className="h-48 bg-gray-100 animate-pulse" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-4 w-1/3 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-5 w-3/4 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : coursesFailed ? (
+            <div className="text-center py-20">
+              <h3 className="text-2xl font-bold mb-2">We couldn't load our courses</h3>
+              <p className="text-gray-500">Please refresh the page, or contact us and we'll help you directly.</p>
+            </div>
+          ) : (
           <AnimatePresence mode="popLayout">
             {filteredCourses.length > 0 ? (
               <motion.div
@@ -151,6 +166,7 @@ const AllCourses = () => {
               </motion.div>
             )}
           </AnimatePresence>
+          )}
         </div>
       </section>
 

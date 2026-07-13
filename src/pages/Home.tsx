@@ -4,7 +4,6 @@ import { ArrowRight, CheckCircle, Users, Award, BookOpen, MessageCircle, Quote, 
 import { placedStudentService } from '../services/placedStudentService';
 import { PlacedStudentResponseDTO as PlacedStudent } from '../dtos';
 import { Link } from 'react-router-dom';
-import { courses as staticCourses } from '../data/courses';
 import CourseCard from '../components/CourseCard';
 import SuccessStoryCard from '../components/SuccessStoryCard';
 import api from '../services/api';
@@ -21,20 +20,18 @@ const Home = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [expandedStories, setExpandedStories] = useState<Set<string>>(new Set());
 
-  // Fetch popular courses with React Query (automatic caching)
-  const { data: popularCourses = staticCourses.slice(0, 4), isLoading: loadingCourses } = useQuery({
+  // Courses come from the API only. There is deliberately no hardcoded fallback:
+  // falling back to a static list meant a slow or failing API silently served a
+  // stale catalog, so courses deleted in the admin panel reappeared on the site.
+  const { data: popularCourses = [], isLoading: loadingCourses, isError: coursesFailed } = useQuery({
     queryKey: ['popular-courses'],
     queryFn: async () => {
       const res = await api.get('/courses?limit=4');
-      const data = res.data;
-      if (data && data.length > 0) {
-        return data.map((course: any) => ({
-          ...course,
-          fee: course.price || course.fee,
-          icon: BookOpen
-        }));
-      }
-      return staticCourses.slice(0, 4);
+      return (res.data ?? []).map((course: any) => ({
+        ...course,
+        fee: course.price || course.fee,
+        icon: BookOpen
+      }));
     },
     staleTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
@@ -144,11 +141,33 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {popularCourses.map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-          </div>
+          {loadingCourses ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                  <div className="h-48 bg-gray-100 animate-pulse" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-4 w-1/3 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-5 w-3/4 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : coursesFailed ? (
+            <p className="text-center text-gray-500">
+              We couldn't load our courses just now. Please refresh, or{' '}
+              <Link to="/contact" className="text-primary font-semibold hover:underline">get in touch</Link>.
+            </p>
+          ) : popularCourses.length === 0 ? (
+            <p className="text-center text-gray-500">New courses are on the way — check back soon.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {popularCourses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          )}
 
           <div className="mt-16 text-center">
             <Link
