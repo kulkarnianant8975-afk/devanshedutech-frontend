@@ -20,6 +20,28 @@ const Home = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [expandedStories, setExpandedStories] = useState<Set<string>>(new Set());
 
+  // The subscribe box previously had no submit handler at all — the button did
+  // nothing. There is no mailing-list service, so the email is captured as a lead
+  // tagged "Newsletter", which surfaces it in the admin Leads tab.
+  const [subscribeEmail, setSubscribeEmail] = useState('');
+  const [subscribeState, setSubscribeState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subscribeEmail.trim()) return;
+    setSubscribeState('sending');
+    try {
+      await api.post('/leads', {
+        fullName: 'Newsletter subscriber',
+        email: subscribeEmail.trim(),
+        courseInterested: 'Newsletter',
+      });
+      setSubscribeState('sent');
+    } catch {
+      setSubscribeState('error');
+    }
+  };
+
   // Courses come from the API only. There is deliberately no hardcoded fallback:
   // falling back to a static list meant a slow or failing API silently served a
   // stale catalog, so courses deleted in the admin panel reappeared on the site.
@@ -282,16 +304,32 @@ const Home = () => {
             <div className="relative z-10 max-w-2xl mx-auto">
               <h3 className="text-3xl md:text-5xl font-bold mb-6">Ready to Start Your Tech Journey?</h3>
               <p className="text-white/80 mb-10">Subscribe to our newsletter for the latest course updates and tech news.</p>
-              <form className="flex flex-col sm:flex-row gap-4">
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4">
                 <input
                   type="email"
+                  required
+                  value={subscribeEmail}
+                  onChange={(e) => setSubscribeEmail(e.target.value)}
+                  disabled={subscribeState === 'sent'}
                   placeholder="Enter your email"
-                  className="flex-1 bg-white/20 border border-white/30 rounded-2xl px-6 py-4 placeholder:text-white/60 focus:outline-none focus:bg-white/30 transition-all"
+                  className="flex-1 bg-white/20 border border-white/30 rounded-2xl px-6 py-4 placeholder:text-white/60 focus:outline-none focus:bg-white/30 transition-all disabled:opacity-60"
                 />
-                <button className="bg-white text-primary px-8 py-4 rounded-2xl font-bold hover:bg-gray-100 transition-all">
-                  Subscribe Now
+                <button
+                  type="submit"
+                  disabled={subscribeState === 'sending' || subscribeState === 'sent'}
+                  className="bg-white text-primary px-8 py-4 rounded-2xl font-bold hover:bg-gray-100 transition-all disabled:opacity-70"
+                >
+                  {subscribeState === 'sending' ? 'Subscribing…'
+                    : subscribeState === 'sent' ? 'Subscribed ✓'
+                    : 'Subscribe Now'}
                 </button>
               </form>
+              {subscribeState === 'sent' && (
+                <p className="mt-4 text-sm text-white/90">Thanks — we'll be in touch with course updates.</p>
+              )}
+              {subscribeState === 'error' && (
+                <p className="mt-4 text-sm text-white/90">Something went wrong. Please try again, or use the contact page.</p>
+              )}
             </div>
           </div>
         </div>

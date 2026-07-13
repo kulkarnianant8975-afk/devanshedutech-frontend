@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminHiring = () => {
   const [posts, setPosts] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<any>(null);
@@ -90,6 +91,15 @@ const AdminHiring = () => {
     }
   };
 
+  const q = searchTerm.trim().toLowerCase();
+  const filteredPosts = q
+    ? posts.filter((p) =>
+        [p.title, p.company, p.location, p.type].some((f: string | undefined) =>
+          (f ?? '').toLowerCase().includes(q)
+        )
+      )
+    : posts;
+
   return (
     <div className="space-y-6">
       {/* Actions Bar */}
@@ -99,6 +109,8 @@ const AdminHiring = () => {
           <input
             type="text"
             placeholder="Search jobs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all"
           />
         </div>
@@ -121,12 +133,12 @@ const AdminHiring = () => {
           [1, 2, 3].map(i => (
             <div key={i} className="h-48 bg-white rounded-[40px] animate-pulse" />
           ))
-        ) : posts.length === 0 ? (
+        ) : filteredPosts.length === 0 ? (
           <div className="py-20 text-center text-gray-500 bg-white rounded-[40px] border border-dashed border-gray-200">
             No hiring posts yet. Click "Post New Job" to get started.
           </div>
         ) : (
-          posts.map((post) => (
+          filteredPosts.map((post) => (
             <div key={post.id} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-start space-x-6">
                 <div className="w-16 h-16 bg-orange-50 text-primary rounded-3xl flex items-center justify-center">

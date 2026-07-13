@@ -20,6 +20,7 @@ import { backendUrl } from '../../services/api';
 
 const AdminPlacedStudents = () => {
   const [students, setStudents] = useState<PlacedStudent[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<PlacedStudent | null>(null);
@@ -98,6 +99,15 @@ const AdminPlacedStudents = () => {
     }
   };
 
+  const q = searchTerm.trim().toLowerCase();
+  const filteredStudents = q
+    ? students.filter((st) =>
+        [st.name, st.company, st.role].some((f: string | undefined) =>
+          (f ?? '').toLowerCase().includes(q)
+        )
+      )
+    : students;
+
   return (
     <div className="space-y-6">
       {/* Actions Bar */}
@@ -107,6 +117,8 @@ const AdminPlacedStudents = () => {
           <input
             type="text"
             placeholder="Search alumni..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all"
           />
         </div>
@@ -130,12 +142,12 @@ const AdminPlacedStudents = () => {
           [1, 2, 3].map(i => (
             <div key={i} className="h-96 bg-white rounded-[40px] animate-pulse" />
           ))
-        ) : students.length === 0 ? (
+        ) : filteredStudents.length === 0 ? (
           <div className="col-span-full py-20 text-center text-gray-500 bg-white rounded-[40px] border border-dashed border-gray-200">
             No success stories added yet. Click "Add Success Story" to get started.
           </div>
         ) : (
-          students.map((student) => (
+          filteredStudents.map((student) => (
             <div key={student.id} className="bg-white rounded-[40px] border border-gray-100 shadow-sm relative group hover:shadow-xl transition-all duration-500 overflow-hidden flex flex-col h-full">
               <div className="h-48 overflow-hidden relative">
                 <img 

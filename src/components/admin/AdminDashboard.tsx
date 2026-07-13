@@ -31,7 +31,8 @@ const AdminDashboard = () => {
     totalHiring: 0,
     totalMentors: 0,
     totalPlacedStudents: 0,
-    monthlyLeads: [] as any[]
+    monthlyLeads: [] as any[],
+    leadsByCourse: [] as any[]
   });
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -51,13 +52,19 @@ const AdminDashboard = () => {
     fetchStats();
   }, []);
 
+  // Every value here is a real count from /api/stats.
+  // The previous version showed a hardcoded '24%' conversion rate and invented
+  // trend badges ('+12%', '+2', '+5') that were not derived from any data.
+  // Conversion is not shown because it is not yet measurable: every lead sits at
+  // status 'New' until someone changes it, which is now possible from the Leads tab.
+  // Colours are full class names — `bg-${x}-50` cannot be seen by the Tailwind
+  // compiler and silently produced no styles at all.
   const cards = [
-    { label: 'Total Leads', value: stats.totalLeads, icon: Users, color: 'blue', trend: '+12%' },
-    { label: 'Active Courses', value: stats.totalCourses, icon: BookOpen, color: 'orange', trend: '+2' },
-    { label: 'Total Mentors', value: stats.totalMentors, icon: Users, color: 'purple', trend: 'New' },
-    { label: 'Placed Students', value: stats.totalPlacedStudents, icon: Award, color: 'green', trend: 'Live' },
-    { label: 'Hiring Posts', value: stats.totalHiring, icon: Briefcase, color: 'emerald', trend: '+5' },
-    { label: 'Conversion Rate', value: '24%', icon: TrendingUp, color: 'rose', trend: '+3.2%' },
+    { label: 'Total Leads',      value: stats.totalLeads,          icon: Users,     cls: 'bg-blue-50 text-blue-600' },
+    { label: 'Active Courses',   value: stats.totalCourses,        icon: BookOpen,  cls: 'bg-orange-50 text-orange-600' },
+    { label: 'Total Mentors',    value: stats.totalMentors,        icon: Users,     cls: 'bg-purple-50 text-purple-600' },
+    { label: 'Placed Students',  value: stats.totalPlacedStudents, icon: Award,     cls: 'bg-green-50 text-green-600' },
+    { label: 'Hiring Posts',     value: stats.totalHiring,         icon: Briefcase, cls: 'bg-emerald-50 text-emerald-600' },
   ];
 
   if (loading) {
@@ -73,16 +80,12 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {cards.map((card, idx) => (
           <div key={idx} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-2xl bg-${card.color}-50 text-${card.color}-600`}>
+              <div className={`p-3 rounded-2xl ${card.cls}`}>
                 <card.icon size={24} />
-              </div>
-              <div className="flex items-center text-green-500 text-xs font-bold bg-green-50 px-2 py-1 rounded-lg">
-                <ArrowUpRight size={14} className="mr-1" />
-                {card.trend}
               </div>
             </div>
             <p className="text-gray-500 text-sm font-medium">{card.label}</p>
@@ -213,8 +216,8 @@ const AdminDashboard = () => {
         <div className="bg-white p-4 md:p-8 rounded-[40px] border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h4 className="text-xl font-bold">Course Distribution</h4>
-              <p className="text-sm text-gray-500">Leads by course category</p>
+              <h4 className="text-xl font-bold">Leads by Course</h4>
+              <p className="text-sm text-gray-500">Which courses people are enquiring about</p>
             </div>
             <div className="p-2 bg-gray-50 rounded-xl">
               <TrendingUp size={20} className="text-gray-400" />
@@ -222,7 +225,7 @@ const AdminDashboard = () => {
           </div>
           <div className="h-64 md:h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.monthlyLeads}>
+              <BarChart data={stats.leadsByCourse}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
