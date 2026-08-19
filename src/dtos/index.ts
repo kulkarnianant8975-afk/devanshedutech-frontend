@@ -7,6 +7,8 @@ export interface CourseRequestDTO {
   level?: string;
   category: string;
   image?: string;
+  /** The course's name in a URL, so an advertisement can link straight to its page. */
+  slug?: string;
 }
 
 export interface CourseResponseDTO {
@@ -25,9 +27,20 @@ export interface LeadRequestDTO {
   fullName: string;
   email?: string;
   mobileNumber: string;
-  education: string;
-  cityName: string;
+  /** Optional because the server only insists on a name and a usable number. */
+  education?: string;
+  cityName?: string;
   courseInterested?: string;
+  background?: string;
+  notes?: string;
+  /** Where the enquiry came from, so admissions can be credited to the channel that earned them. */
+  source?: string;
+  sourceDetail?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  referrerUrl?: string;
+  referredById?: string;
 }
 
 /** @deprecated the pipeline uses {@link LeadDTO}; kept so older imports still compile. */
@@ -72,6 +85,10 @@ export interface LeadDTO {
   source?: string;
   sourceLabel?: string;
   sourceDetail?: string;
+  /** Which advertisement produced this student — the half that decides next month's budget. */
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
   background?: string;
   backgroundLabel?: string;
 

@@ -144,7 +144,18 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     if (leadId) {
       window.addEventListener('keydown', onKey);
-      window.setTimeout(() => closeRef.current?.focus(), 80);
+      // Move focus into the drawer once it has opened, so a keyboard user is not left behind on
+      // the page underneath. Skipped if focus has already landed somewhere inside it: the delay
+      // is long enough that somebody can start typing first, and stealing focus mid-sentence
+      // throws away what they typed.
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        const typing = active instanceof HTMLInputElement
+          || active instanceof HTMLTextAreaElement
+          || active instanceof HTMLSelectElement;
+        if (typing) return;
+        closeRef.current?.focus();
+      }, 80);
     }
     return () => window.removeEventListener('keydown', onKey);
   }, [leadId, onClose]);
@@ -369,8 +380,17 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                         {lead.stageLabel}
                       </span>
                       {lead.sourceLabel && (
-                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500">
+                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500"
+                          title={[lead.sourceDetail, lead.utmCampaign && `campaign ${lead.utmCampaign}`]
+                            .filter(Boolean).join(' · ') || undefined}>
                           {lead.sourceLabel}
+                        </span>
+                      )}
+                      {/* Named separately from the source, because "website form" and "the
+                          August Instagram campaign" answer different questions. */}
+                      {lead.utmCampaign && (
+                        <span className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 border border-sky-100">
+                          {lead.utmSource ? `${lead.utmSource} · ` : ''}{lead.utmCampaign}
                         </span>
                       )}
                       {lead.optedOut && (

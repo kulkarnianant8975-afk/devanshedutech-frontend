@@ -89,14 +89,31 @@ describe('Lead workspace', () => {
     openDrawer();
     await user.click(await screen.findByText('Not interested'));
 
-    const submit = screen.getByRole('button', { name: /record it/i });
-    expect(submit).toBeDisabled();
+    // Re-queried at each step rather than held in a variable: a re-render can replace the
+    // button node, and asserting on a detached one passes or fails depending on timing.
+    const submit = () => screen.getByRole('button', { name: /record it/i });
+    expect(submit()).toBeDisabled();
 
     await user.type(screen.getByLabelText(/what was said/i), 'Chose another institute');
-    expect(submit).toBeDisabled();          // still needs the lost reason
+    expect(submit()).toBeDisabled();          // still needs the lost reason
 
     await user.selectOptions(screen.getByLabelText(/why was it lost/i), 'FEES');
-    expect(submit).toBeEnabled();
+    expect(submit()).toBeEnabled();
+  });
+
+  it('does not steal focus from someone already typing', async () => {
+    // The drawer moves focus to its close button shortly after opening, for keyboard users. The
+    // delay is long enough that a counsellor can start typing first, and stealing focus
+    // mid-sentence silently threw away what they had written.
+    const user = userEvent.setup();
+    openDrawer();
+    await user.click(await screen.findByText('Not interested'));
+
+    const note = screen.getByLabelText(/what was said/i);
+    note.focus();
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    expect(document.activeElement).toBe(note);
   });
 
   it('is read-only once a student has opted out', async () => {

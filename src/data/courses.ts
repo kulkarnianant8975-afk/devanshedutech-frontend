@@ -14,6 +14,8 @@ export interface Course {
   category: string;
   icon: any;
   image?: string;
+  /** The course's name in a URL. Absent on the built-in fallback list, which falls back to id. */
+  slug?: string;
 }
 
 export const courses: Course[] = [

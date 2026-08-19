@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Clock, Download, ArrowRight } from 'lucide-react';
 import { Course } from '../data/courses';
 import BrochureModal from './BrochureModal';
@@ -60,8 +61,12 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           </div>
         </div>
 
+          {/* The whole title is the link, so an advertisement and a browsing visitor both end
+              up on the same page. Falls back to the id for a course with no slug yet. */}
           <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-            {course.name}
+            <Link to={`/courses/${course.slug ?? course.id}`} className="hover:underline">
+              {course.name}
+            </Link>
           </h3>
           
           <p className="text-gray-500 text-sm mb-6 line-clamp-2">

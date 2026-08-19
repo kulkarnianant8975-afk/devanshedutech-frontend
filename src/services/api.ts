@@ -55,6 +55,9 @@ export const publicApi = axios.create({
 
 export const courseService = {
   getAll: () => api.get<CourseResponseDTO[]>('/courses').then(res => res.data),
+  /** One course by its URL name, for its landing page. Falls back to an id on the server. */
+  getBySlug: (slug: string) =>
+    api.get<CourseResponseDTO>(`/courses/slug/${slug}`).then(res => res.data),
   create: (course: CourseRequestDTO) => api.post<CourseResponseDTO>('/courses', course).then(res => res.data),
   update: (id: string, course: Partial<CourseRequestDTO>) => api.put<CourseResponseDTO>(`/courses/${id}`, course).then(res => res.data),
   delete: (id: string) => api.delete(`/courses/${id}`).then(res => res.data),
