@@ -18,11 +18,12 @@ import {
   Sliders,
   Megaphone,
   CalendarRange,
-  MessageSquareText
+  MessageSquareText,
+  Clock
 } from 'lucide-react';
 import { authService } from '../services/api';
 import { UserResponseDTO as User } from '../dtos';
-import { canAccessPortal, can, roleLabel } from '../lib/permissions';
+import { canAccessPortal, can, canAny, roleLabel } from '../lib/permissions';
 
 // Admin Components
 import AdminDashboard from '../components/admin/AdminDashboard';
@@ -39,6 +40,7 @@ import NotificationBell from '../components/admin/NotificationBell';
 import AdminSettings from '../components/admin/AdminSettings';
 import AdminBroadcasts from '../components/admin/AdminBroadcasts';
 import AdminBatches from '../components/admin/AdminBatches';
+import AdminSchedule from '../components/admin/AdminSchedule';
 import AdminScripts from '../components/admin/AdminScripts';
 import LeadDrawer from '../components/admin/LeadDrawer';
 
@@ -243,6 +245,7 @@ const Admin = () => {
     { id: 'mentors',         label: 'Mentors',         icon: Users,           show: can(user, 'CONTENT_MANAGE') },
     { id: 'placed_students', label: 'Success Stories', icon: Award,           show: can(user, 'CONTENT_MANAGE') },
     { id: 'team',            label: 'Team & Access',   icon: Shield,          show: can(user, 'USER_VIEW') },
+    { id: 'schedule',        label: 'Hours & Duty',    icon: Clock,           show: canAny(user, 'LEAD_VIEW_ALL', 'LEAD_VIEW_OWN') },
     { id: 'scripts',         label: 'Message Scripts', icon: MessageSquareText, show: can(user, 'SETTINGS_MANAGE') },
     { id: 'settings',        label: 'Follow-up Setup', icon: Sliders,         show: can(user, 'SETTINGS_MANAGE') },
   ].filter(item => item.show);
@@ -387,6 +390,7 @@ const Admin = () => {
             {currentTab === 'demos' && <AdminDemos currentUser={user} />}
             {currentTab === 'broadcasts' && <AdminBroadcasts currentUser={user} />}
             {currentTab === 'batches' && <AdminBatches currentUser={user} />}
+            {currentTab === 'schedule' && <AdminSchedule currentUser={user} />}
             {currentTab === 'dashboard' && <AdminDashboard currentUser={user} />}
             {currentTab === 'leads' && <AdminLeads currentUser={user} />}
             {currentTab === 'courses' && <AdminCourses />}

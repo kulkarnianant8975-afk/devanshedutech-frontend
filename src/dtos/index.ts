@@ -594,3 +594,27 @@ export interface ScriptsDTO {
   /** Placeholder name to a description of what it fills in. */
   placeholders: Record<string, string>;
 }
+
+
+/** A weekday's opening hours. Times are 'HH:mm' or 'HH:mm:ss' as the server sends them. */
+export interface WorkingHoursDTO {
+  day: string;
+  opensAt: string;
+  closesAt: string;
+  closed: boolean;
+}
+
+/** A single date the institute is shut, whatever the weekly pattern says. */
+export interface HolidayDTO {
+  day: string;
+  name: string;
+}
+
+/** Who is watching live enquiries, and when. */
+export interface DutyShiftDTO {
+  id: string;
+  userId: string;
+  day: string;
+  startsAt: string;
+  endsAt: string;
+}

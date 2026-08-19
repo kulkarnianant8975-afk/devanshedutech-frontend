@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { 
+  WorkingHoursDTO,
+  HolidayDTO,
+  DutyShiftDTO,
   CourseRequestDTO, 
   CourseResponseDTO, 
   LeadRequestDTO, 
@@ -219,6 +222,30 @@ export const authService = {
       `width=${width},height=${height},left=${left},top=${top}`
     );
   }
+};
+
+/**
+ * Opening hours, closures, and the duty roster.
+ *
+ * These decide two things that used to be assumed: how long a student actually waited (counted
+ * in opening hours rather than wall clock) and who owns an enquiry the moment it arrives.
+ */
+export const scheduleService = {
+  getHours: () => api.get<WorkingHoursDTO[]>('/schedule/hours').then(res => res.data),
+  setHours: (week: WorkingHoursDTO[]) =>
+    api.put<WorkingHoursDTO[]>('/schedule/hours', week).then(res => res.data),
+
+  getHolidays: () => api.get<HolidayDTO[]>('/schedule/holidays').then(res => res.data),
+  addHoliday: (day: string, name: string) =>
+    api.post<HolidayDTO>('/schedule/holidays', { day, name }).then(res => res.data),
+  removeHoliday: (day: string) => api.delete(`/schedule/holidays/${day}`).then(res => res.data),
+
+  getRoster: () => api.get<DutyShiftDTO[]>('/schedule/roster').then(res => res.data),
+  addShift: (shift: { userId: string; day: string; startsAt: string; endsAt: string }) =>
+    api.post<DutyShiftDTO>('/schedule/roster', shift).then(res => res.data),
+  removeShift: (id: string) => api.delete(`/schedule/roster/${id}`).then(res => res.data),
+
+  onDutyNow: () => api.get<{ userId?: string; name?: string }>('/schedule/on-duty').then(res => res.data),
 };
 
 export const settingsService = {
