@@ -427,3 +427,16 @@ export interface PipelineMetricsDTO {
   totalLeads: number;
   windowDescription: string;
 }
+
+export interface BoardColumnDTO {
+  stage: StageName;
+  label: string;
+  leads: LeadDTO[];
+  /** The real number at this stage; leads may be capped. */
+  total: number;
+}
+
+export interface BoardDTO {
+  columns: BoardColumnDTO[];
+  columnLimit: number;
+}

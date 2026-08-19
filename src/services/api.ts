@@ -13,6 +13,8 @@ import {
   CaptureResponseDTO,
   LadderStepDTO,
   PipelineMetricsDTO,
+  BoardDTO,
+  GradeName,
   PageResponseDTO, 
   UserResponseDTO,
   HiringRequestDTO,
@@ -57,6 +59,8 @@ export const leadService = {
   myDay: (owner?: string) =>
     api.get<MyDayDTO>('/leads/my-day', { params: owner ? { owner } : {} }).then(res => res.data),
   options: () => api.get<LeadOptionsDTO>('/leads/options').then(res => res.data),
+  board: (params: { owner?: string; grade?: GradeName; q?: string } = {}) =>
+    api.get<BoardDTO>('/leads/board', { params }).then(res => res.data),
 
   create: (lead: LeadRequestDTO) =>
     api.post<CaptureResponseDTO>('/leads', lead).then(res => res.data),
