@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Phone, Mail, MapPin, GraduationCap, CalendarClock, Loader2, AlertCircle,
   CheckCircle2, MessageSquare, PhoneCall, ArrowRightLeft, Sparkles, StickyNote,
-  Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks
+  Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks, CalendarPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { leadService, userService, errorMessage } from '../../services/api';
+import { leadService, userService, demoService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import {
   LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO,
@@ -203,6 +203,30 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
       flash('Follow-ups resumed.');
     } catch (err) {
       setError(errorMessage(err, 'Could not resume that sequence.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const bookDemo = async () => {
+    if (!lead) return;
+    const date = window.prompt(
+      'Demo date? (YYYY-MM-DD)\n\nBooking it moves the lead to "Demo booked" and points the ' +
+      'next touch at the demo day.',
+      new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0]
+    );
+    if (!date) return;
+    const time = window.prompt('Time? (HH:MM, 24-hour)', '17:00');
+    if (!time) return;
+
+    setSaving(true);
+    try {
+      await demoService.book(lead.id, `${date}T${time}:00`);
+      const detail = await leadService.detail(lead.id);
+      applyDetail(detail);
+      flash('Demo booked. Confirm it with the student in writing.');
+    } catch (err) {
+      setError(errorMessage(err, 'Could not book that demo.'));
     } finally {
       setSaving(false);
     }
@@ -540,6 +564,20 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                           ))}
                         </div>
                       )}
+                    </section>
+                  )}
+
+                  {/* Demo */}
+                  {canEdit && !lead.optedOut && (
+                    <section className="py-5 border-b border-gray-100">
+                      <button onClick={bookDemo} disabled={saving}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-gray-300 text-sm font-bold text-gray-600 hover:border-primary hover:text-primary hover:bg-orange-50/50 transition-colors disabled:opacity-50">
+                        <CalendarPlus size={16} /> Book a demo or campus visit
+                      </button>
+                      <p className="text-[11px] text-gray-400 mt-2 text-center">
+                        The free demo is the low-risk next step the SOP recommends when someone
+                        is hesitating.
+                      </p>
                     </section>
                   )}
 

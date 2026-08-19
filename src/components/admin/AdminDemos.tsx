@@ -1,0 +1,240 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  CalendarDays, Loader2, AlertCircle, X, CheckCircle2, XCircle, ChevronLeft,
+  ChevronRight, Clock, AlertTriangle
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { demoService, errorMessage } from '../../services/api';
+import { can } from '../../lib/permissions';
+import LeadDrawer from './LeadDrawer';
+import { DemoBoardDTO, DemoDTO, LeadOptionsDTO, StaffUserDTO, UserResponseDTO } from '../../dtos';
+import { leadService, userService } from '../../services/api';
+
+/**
+ * The demo calendar.
+ *
+ * Attendance is three-state on purpose. A demo that has not happened yet is not a no-show, and
+ * collapsing the two would report every future booking as a failure — so unmarked past demos get
+ * their own list at the top, because those are exactly the ones that quietly rot and take the
+ * conversion figures down with them.
+ */
+
+const startOfWeek = (d: Date) => {
+  const copy = new Date(d);
+  const day = (copy.getDay() + 6) % 7;      // Monday-based
+  copy.setDate(copy.getDate() - day);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+};
+
+const iso = (d: Date) => d.toISOString().split('T')[0];
+const dayLabel = (d: Date) => d.toLocaleDateString('en-IN', { weekday: 'short' });
+const dateLabel = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+const timeLabel = (s: string) => new Date(s).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+
+interface Props { currentUser?: UserResponseDTO | null; }
+
+const AdminDemos: React.FC<Props> = ({ currentUser }) => {
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const [board, setBoard] = useState<DemoBoardDTO | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  const [options, setOptions] = useState<LeadOptionsDTO | null>(null);
+  const [staff, setStaff] = useState<StaffUserDTO[]>([]);
+
+  const canEdit = can(currentUser, 'LEAD_EDIT');
+  const flash = (m: string) => { setSuccess(m); window.setTimeout(() => setSuccess(null), 3500); };
+
+  const load = useCallback(async () => {
+    setError(null);
+    const end = new Date(weekStart); end.setDate(end.getDate() + 6);
+    try {
+      setBoard(await demoService.board(iso(weekStart), iso(end)));
+    } catch (err) {
+      setError(errorMessage(err, 'Could not load the demo calendar.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [weekStart]);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    leadService.options().then(setOptions).catch(() => {});
+    if (can(currentUser, 'USER_VIEW')) userService.getAssignable().then(setStaff).catch(() => {});
+  }, [currentUser]);
+
+  const mark = async (demo: DemoDTO, attended: boolean) => {
+    setBusyId(demo.id);
+    setError(null);
+    try {
+      await demoService.mark(demo.id, attended);
+      flash(attended
+        ? `${demo.studentName} attended — day 1 and day 3 follow-ups booked.`
+        : `${demo.studentName} marked as a no-show. A recovery touch is booked for today.`);
+      load();
+    } catch (err) {
+      setError(errorMessage(err, 'Could not record that.'));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart); d.setDate(d.getDate() + i); return d;
+  });
+  const today = new Date();
+
+  const DemoCard: React.FC<{ demo: DemoDTO; showDate?: boolean }> = ({ demo, showDate }) => {
+    const tone = demo.attended === true ? 'border-emerald-500 bg-emerald-50'
+      : demo.attended === false ? 'border-red-400 bg-red-50'
+      : demo.awaitingMarking ? 'border-amber-400 bg-amber-50'
+      : 'border-sky-400 bg-sky-50';
+    return (
+      <div className={`rounded-xl border-l-[3px] ${tone} p-2.5`}>
+        <button onClick={() => setOpenLeadId(demo.leadId)} className="text-left w-full">
+          <p className="text-[10px] font-bold text-gray-500 tabular-nums">
+            {showDate ? `${dateLabel(new Date(demo.scheduledAt))} · ` : ''}{timeLabel(demo.scheduledAt)}
+          </p>
+          <p className="text-[13px] font-bold text-gray-900 leading-tight mt-0.5">{demo.studentName}</p>
+          <p className="text-[11px] text-gray-500 truncate">{demo.course || demo.mode}</p>
+        </button>
+
+        {demo.attended === true && (
+          <p className="text-[10px] font-bold text-emerald-700 mt-1.5 flex items-center gap-1">
+            <CheckCircle2 size={11} /> Attended
+          </p>
+        )}
+        {demo.attended === false && (
+          <p className="text-[10px] font-bold text-red-600 mt-1.5 flex items-center gap-1">
+            <XCircle size={11} /> No-show
+          </p>
+        )}
+        {demo.attended === null && canEdit && (
+          <div className="flex gap-1.5 mt-2">
+            <button onClick={() => mark(demo, true)} disabled={busyId === demo.id}
+              className="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+              {busyId === demo.id ? '…' : 'Attended'}
+            </button>
+            <button onClick={() => mark(demo, false)} disabled={busyId === demo.id}
+              className="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+              No-show
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (loading && !board) {
+    return <div className="grid grid-cols-7 gap-2">{[...Array(7)].map((_, i) =>
+      <div key={i} className="h-56 bg-white rounded-2xl animate-pulse" />)}</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <AnimatePresence>
+        {error && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            role="alert" className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl">
+            <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
+            <p className="text-sm font-medium flex-1">{error}</p>
+            <button onClick={() => setError(null)} aria-label="Dismiss"><X size={18} /></button>
+          </motion.div>
+        )}
+        {success && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            role="status" className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 text-emerald-700 p-3.5 rounded-2xl">
+            <CheckCircle2 size={18} /><p className="text-sm font-medium">{success}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Unmarked past demos come first: nothing else on this screen matters if these rot. */}
+      {board && board.awaitingMarking.length > 0 && (
+        <section className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <h3 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+            <AlertTriangle size={16} />
+            {board.awaitingMarking.length} demo{board.awaitingMarking.length === 1 ? '' : 's'} still unmarked
+          </h3>
+          <p className="text-xs text-amber-800 mt-1 mb-3">
+            These have already happened. Until somebody says whether the student turned up, the
+            follow-ups are not booked and the conversion figures are wrong.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {board.awaitingMarking.map(d => <DemoCard key={d.id} demo={d} showDate />)}
+          </div>
+        </section>
+      )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <button onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); }}
+          aria-label="Previous week"
+          className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
+          <ChevronLeft size={18} />
+        </button>
+        <button onClick={() => setWeekStart(startOfWeek(new Date()))}
+          className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-bold hover:bg-gray-50 transition-colors">
+          This week
+        </button>
+        <button onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d); }}
+          aria-label="Next week"
+          className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
+          <ChevronRight size={18} />
+        </button>
+
+        <div className="ml-auto flex items-center gap-4 text-sm">
+          <span className="text-gray-500">
+            <strong className="text-gray-900 tabular-nums">{board?.scheduled ?? 0}</strong> booked
+          </span>
+          <span className="text-gray-500">
+            <strong className="text-emerald-700 tabular-nums">{board?.attended ?? 0}</strong> attended
+          </span>
+          <span className="text-gray-500">
+            attendance{' '}
+            <strong className="text-gray-900 tabular-nums">
+              {board?.attendanceRate == null ? '—' : `${board.attendanceRate}%`}
+            </strong>
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+        {days.map(day => {
+          const forDay = (board?.demos ?? []).filter(d => isSameDay(new Date(d.scheduledAt), day));
+          const isToday = isSameDay(day, today);
+          return (
+            <div key={day.toISOString()} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <header className={`px-3 py-2 border-b border-gray-100 ${isToday ? 'bg-orange-50' : 'bg-gray-50/60'}`}>
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${isToday ? 'text-primary' : 'text-gray-400'}`}>
+                  {dayLabel(day)}{isToday ? ' · today' : ''}
+                </p>
+                <p className={`text-sm font-bold ${isToday ? 'text-primary' : 'text-gray-900'}`}>
+                  {dateLabel(day)}
+                </p>
+              </header>
+              <div className="p-2 space-y-2 min-h-[110px]">
+                {forDay.length === 0
+                  ? <p className="text-[11px] text-gray-300 text-center py-6">—</p>
+                  : forDay.map(d => <DemoCard key={d.id} demo={d} />)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-gray-400 flex items-center gap-1.5">
+        <Clock size={13} /> Book a demo from any lead's screen. Marking attendance schedules the
+        day 1 and day 3 follow-ups automatically.
+      </p>
+
+      <LeadDrawer leadId={openLeadId} currentUser={currentUser} options={options} staff={staff}
+        onClose={() => setOpenLeadId(null)} onUpdated={() => load()} />
+    </div>
+  );
+};
+
+export default AdminDemos;

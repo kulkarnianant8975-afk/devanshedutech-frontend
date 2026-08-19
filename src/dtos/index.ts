@@ -440,3 +440,26 @@ export interface BoardDTO {
   columns: BoardColumnDTO[];
   columnLimit: number;
 }
+
+export interface DemoDTO {
+  id: string;
+  leadId: string;
+  studentName: string;
+  course?: string;
+  scheduledAt: string;
+  mode: string;
+  /** Null until someone marks it — unknown is not the same as did not attend. */
+  attended: boolean | null;
+  feedback?: string;
+  awaitingMarking: boolean;
+}
+
+export interface DemoBoardDTO {
+  from: string;
+  to: string;
+  demos: DemoDTO[];
+  awaitingMarking: DemoDTO[];
+  scheduled: number;
+  attended: number;
+  attendanceRate: number | null;
+}

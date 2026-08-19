@@ -14,6 +14,8 @@ import {
   LadderStepDTO,
   PipelineMetricsDTO,
   BoardDTO,
+  DemoDTO,
+  DemoBoardDTO,
   GradeName,
   PageResponseDTO, 
   UserResponseDTO,
@@ -123,6 +125,18 @@ export const errorMessage = (err: any, fallback = 'Something went wrong. Please 
   if (data?.message) return data.message;
   if (data?.error) return data.error;
   return err?.message || fallback;
+};
+
+/** Demo classes and campus visits. */
+export const demoService = {
+  board: (from?: string, to?: string) =>
+    api.get<DemoBoardDTO>('/demos', { params: { from, to } }).then(res => res.data),
+  book: (leadId: string, scheduledAt: string, mode?: string) =>
+    api.post<DemoDTO>('/demos', { leadId, scheduledAt, mode }).then(res => res.data),
+  mark: (id: string, attended: boolean, feedback?: string) =>
+    api.post<DemoDTO>(`/demos/${id}/mark`, { attended, feedback }).then(res => res.data),
+  cancel: (id: string, reason?: string) =>
+    api.delete(`/demos/${id}`, { params: { reason } }).then(res => res.data),
 };
 
 export const authService = {
