@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, Send, Clock, Globe, Instagram, Loader2, CheckCircle } from 'lucide-react';
 import api from '../services/api';
+import { getAttribution } from '../lib/attribution';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -20,6 +21,8 @@ const Contact = () => {
     try {
       await api.post('/messages', {
         ...formData,
+        // Where this visitor came from, so a contact-form enquiry is attributed like any other.
+        ...getAttribution(),
       });
       setIsSuccess(true);
       setFormData({ fullName: '', email: '', mobile: '', message: '' });

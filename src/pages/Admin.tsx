@@ -15,7 +15,8 @@ import {
   Sun,
   Columns3,
   CalendarDays,
-  Sliders
+  Sliders,
+  Megaphone
 } from 'lucide-react';
 import { authService } from '../services/api';
 import { UserResponseDTO as User } from '../dtos';
@@ -34,6 +35,7 @@ import PipelineBoard from '../components/admin/PipelineBoard';
 import AdminDemos from '../components/admin/AdminDemos';
 import NotificationBell from '../components/admin/NotificationBell';
 import AdminSettings from '../components/admin/AdminSettings';
+import AdminBroadcasts from '../components/admin/AdminBroadcasts';
 import LeadDrawer from '../components/admin/LeadDrawer';
 
 /** Initials for the avatar, so a missing photo needs no network request. */
@@ -45,7 +47,7 @@ const Admin = () => {
   // True when the signed-in user holds any permission at all, not when they are an admin.
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'myday' | 'board' | 'demos' | 'dashboard' | 'courses' | 'leads' | 'hiring' | 'mentors' | 'placed_students' | 'team' | 'settings'>('myday');
+  const [activeTab, setActiveTab] = useState<'myday' | 'board' | 'demos' | 'dashboard' | 'courses' | 'leads' | 'hiring' | 'mentors' | 'placed_students' | 'broadcasts' | 'team' | 'settings'>('myday');
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [authError, setAuthError] = useState<React.ReactNode>('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -230,6 +232,7 @@ const Admin = () => {
     { id: 'board',           label: 'Pipeline',        icon: Columns3,        show: can(user, 'LEAD_VIEW_ALL') || can(user, 'LEAD_VIEW_OWN') },
     { id: 'leads',           label: 'Student Leads',   icon: Users,           show: can(user, 'LEAD_VIEW_ALL') || can(user, 'LEAD_VIEW_OWN') },
     { id: 'demos',           label: 'Demos',           icon: CalendarDays,    show: can(user, 'LEAD_VIEW_ALL') || can(user, 'LEAD_VIEW_OWN') },
+    { id: 'broadcasts',      label: 'Broadcasts',      icon: Megaphone,       show: can(user, 'LEAD_VIEW_ALL') },
     { id: 'courses',         label: 'Manage Courses',  icon: BookOpen,        show: can(user, 'CONTENT_MANAGE') },
     { id: 'hiring',          label: 'Hiring Posts',    icon: Briefcase,       show: can(user, 'CONTENT_MANAGE') },
     { id: 'mentors',         label: 'Mentors',         icon: Users,           show: can(user, 'CONTENT_MANAGE') },
@@ -376,6 +379,7 @@ const Admin = () => {
             {currentTab === 'myday' && <MyDay currentUser={user} />}
             {currentTab === 'board' && <PipelineBoard currentUser={user} />}
             {currentTab === 'demos' && <AdminDemos currentUser={user} />}
+            {currentTab === 'broadcasts' && <AdminBroadcasts currentUser={user} />}
             {currentTab === 'dashboard' && <AdminDashboard currentUser={user} />}
             {currentTab === 'leads' && <AdminLeads currentUser={user} />}
             {currentTab === 'courses' && <AdminCourses />}

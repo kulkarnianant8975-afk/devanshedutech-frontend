@@ -518,3 +518,31 @@ export interface SendOutcomeDTO {
   handoffUrl: string | null;
   channel: string;
 }
+
+export interface SegmentDTO {
+  segment: string;
+  label: string;
+  description: string;
+  recipients: number;
+  optedOutExcluded: number;
+}
+
+export interface SegmentsDTO {
+  segments: SegmentDTO[];
+  /** False until a messaging provider is connected; a broadcast cannot fan out without one. */
+  canSend: boolean;
+}
+
+export interface BroadcastDTO {
+  id: string;
+  title: string;
+  message: string;
+  segment: string;
+  status: string;
+  recipientCount?: number;
+  sentCount?: number;
+  failedCount?: number;
+  createdByName?: string;
+  createdAt: string;
+  sentAt?: string;
+}

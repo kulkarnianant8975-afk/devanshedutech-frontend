@@ -20,6 +20,8 @@ import {
   DemoDTO,
   DemoBoardDTO,
   NotificationListDTO,
+  SegmentsDTO,
+  BroadcastDTO,
   GradeName,
   PageResponseDTO, 
   UserResponseDTO,
@@ -161,6 +163,14 @@ export const notificationService = {
     api.get<NotificationListDTO>('/notifications', { params: { limit } }).then(res => res.data),
   markRead: (id: string) => api.post(`/notifications/${id}/read`).then(res => res.data),
   markAllRead: () => api.post('/notifications/read-all').then(res => res.data),
+};
+
+/** Announcements to dormant leads. */
+export const broadcastService = {
+  segments: () => api.get<SegmentsDTO>('/broadcasts/segments').then(res => res.data),
+  recent: () => api.get<BroadcastDTO[]>('/broadcasts').then(res => res.data),
+  send: (title: string, message: string, segment: string) =>
+    api.post<BroadcastDTO>('/broadcasts', { title, message, segment }).then(res => res.data),
 };
 
 export const authService = {
