@@ -41,6 +41,98 @@ const shortDate = (iso?: string) => {
   return isNaN(d.getTime()) ? null : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 };
 
+/**
+ * At module level deliberately. A component declared inside its parent is a new type on every
+ * render, so React rebuilds the DOM rather than updating it — which during a drag means the
+ * card you are holding is destroyed underneath you.
+ */
+const Column: React.FC<{
+  col: BoardColumnDTO;
+  canEdit: boolean;
+  dragging: LeadDTO | null;
+  dragOver: StageName | null;
+  onDragOverColumn: (stage: StageName) => void;
+  onDragLeaveColumn: () => void;
+  onDropColumn: (stage: StageName) => void;
+  onDragStartCard: (lead: LeadDTO) => void;
+  onDragEndCard: () => void;
+  onOpen: (id: string) => void;
+}> = ({ col, canEdit, dragging, dragOver, onDragOverColumn, onDragLeaveColumn,
+        onDropColumn, onDragStartCard, onDragEndCard, onOpen }) => {
+  const isTarget = dragOver === col.stage && dragging?.stage !== col.stage;
+  return (
+    <div
+      onDragOver={e => { if (canEdit && dragging) { e.preventDefault(); onDragOverColumn(col.stage); } }}
+      onDragLeave={onDragLeaveColumn}
+      onDrop={e => { e.preventDefault(); onDropColumn(col.stage); }}
+      className={`w-[260px] flex-shrink-0 rounded-2xl border transition-colors ${
+        isTarget ? 'border-primary bg-orange-50/60' : 'border-gray-100 bg-gray-50/60'}`}
+    >
+      <header className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100">
+        <span className={`w-1 h-4 rounded-full ${STAGE_ACCENT[col.stage]}`} />
+        <h3 className="text-xs font-bold text-gray-700 flex-1 truncate">{col.label}</h3>
+        <span className="text-xs font-bold text-gray-400 tabular-nums">{col.total}</span>
+      </header>
+
+      <div className="p-2 space-y-2 min-h-[80px] max-h-[calc(100vh-330px)] overflow-y-auto">
+        {col.leads.length === 0 ? (
+          <p className="text-[11px] text-gray-400 text-center py-6">
+            {isTarget ? 'Drop here' : 'Nothing here'}
+          </p>
+        ) : col.leads.map(lead => (
+          <article
+            key={lead.id}
+            draggable={canEdit}
+            onDragStart={() => onDragStartCard(lead)}
+            onDragEnd={onDragEndCard}
+            onClick={() => onOpen(lead.id)}
+            onKeyDown={e => { if (e.key === 'Enter') onOpen(lead.id); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`${lead.fullName}, ${lead.stageLabel}`}
+            className={`bg-white rounded-xl border border-gray-100 p-2.5 shadow-sm hover:shadow-md
+              transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 ${
+              dragging?.id === lead.id ? 'opacity-40' : ''}`}
+          >
+            <div className="flex items-start gap-1.5">
+              <span className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${
+                lead.grade ? GRADE_DOT[lead.grade] : 'bg-gray-200'}`} aria-hidden="true" />
+              <p className="text-[13px] font-bold text-gray-900 leading-tight flex-1 truncate">
+                {lead.fullName}
+              </p>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-1 truncate pl-3.5">
+              {lead.courseInterested || 'General enquiry'}
+            </p>
+            <div className="flex items-center gap-2 mt-2 pl-3.5 flex-wrap">
+              {lead.nextTouchOn ? (
+                <span className={`text-[10px] font-bold flex items-center gap-1 tabular-nums ${
+                  lead.daysOverdue ? 'text-red-600' : 'text-gray-400'}`}>
+                  <CalendarClock size={10} />
+                  {lead.daysOverdue ? `${lead.daysOverdue}d late` : shortDate(lead.nextTouchOn)}
+                </span>
+              ) : lead.blankNextTouch ? (
+                <span className="text-[10px] font-bold text-red-500">No next step</span>
+              ) : null}
+              {lead.assignedToName && (
+                <span className="text-[10px] text-gray-400 flex items-center gap-1 ml-auto truncate">
+                  <User size={10} />{lead.assignedToName.split(' ')[0]}
+                </span>
+              )}
+            </div>
+          </article>
+        ))}
+
+        {col.total > col.leads.length && (
+          <p className="text-[10px] text-gray-400 text-center py-1.5">
+            showing {col.leads.length} of {col.total}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 interface Props { currentUser?: UserResponseDTO | null; }
 
 const PipelineBoard: React.FC<Props> = ({ currentUser }) => {
@@ -127,81 +219,6 @@ const PipelineBoard: React.FC<Props> = ({ currentUser }) => {
     }
   };
 
-  const Column: React.FC<{ col: BoardColumnDTO }> = ({ col }) => {
-    const isTarget = dragOver === col.stage && dragging?.stage !== col.stage;
-    return (
-      <div
-        onDragOver={e => { if (canEdit && dragging) { e.preventDefault(); setDragOver(col.stage); } }}
-        onDragLeave={() => setDragOver(null)}
-        onDrop={e => { e.preventDefault(); drop(col.stage); }}
-        className={`w-[260px] flex-shrink-0 rounded-2xl border transition-colors ${
-          isTarget ? 'border-primary bg-orange-50/60' : 'border-gray-100 bg-gray-50/60'}`}
-      >
-        <header className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100">
-          <span className={`w-1 h-4 rounded-full ${STAGE_ACCENT[col.stage]}`} />
-          <h3 className="text-xs font-bold text-gray-700 flex-1 truncate">{col.label}</h3>
-          <span className="text-xs font-bold text-gray-400 tabular-nums">{col.total}</span>
-        </header>
-
-        <div className="p-2 space-y-2 min-h-[80px] max-h-[calc(100vh-330px)] overflow-y-auto">
-          {col.leads.length === 0 ? (
-            <p className="text-[11px] text-gray-400 text-center py-6">
-              {isTarget ? 'Drop here' : 'Nothing here'}
-            </p>
-          ) : col.leads.map(lead => (
-            <article
-              key={lead.id}
-              draggable={canEdit}
-              onDragStart={() => setDragging(lead)}
-              onDragEnd={() => { setDragging(null); setDragOver(null); }}
-              onClick={() => setOpenLeadId(lead.id)}
-              onKeyDown={e => { if (e.key === 'Enter') setOpenLeadId(lead.id); }}
-              tabIndex={0}
-              role="button"
-              aria-label={`${lead.fullName}, ${lead.stageLabel}`}
-              className={`bg-white rounded-xl border border-gray-100 p-2.5 shadow-sm hover:shadow-md
-                transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 ${
-                dragging?.id === lead.id ? 'opacity-40' : ''}`}
-            >
-              <div className="flex items-start gap-1.5">
-                <span className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${
-                  lead.grade ? GRADE_DOT[lead.grade] : 'bg-gray-200'}`} aria-hidden="true" />
-                <p className="text-[13px] font-bold text-gray-900 leading-tight flex-1 truncate">
-                  {lead.fullName}
-                </p>
-              </div>
-              <p className="text-[11px] text-gray-500 mt-1 truncate pl-3.5">
-                {lead.courseInterested || 'General enquiry'}
-              </p>
-              <div className="flex items-center gap-2 mt-2 pl-3.5 flex-wrap">
-                {lead.nextTouchOn ? (
-                  <span className={`text-[10px] font-bold flex items-center gap-1 tabular-nums ${
-                    lead.daysOverdue ? 'text-red-600' : 'text-gray-400'}`}>
-                    <CalendarClock size={10} />
-                    {lead.daysOverdue ? `${lead.daysOverdue}d late` : shortDate(lead.nextTouchOn)}
-                  </span>
-                ) : lead.blankNextTouch ? (
-                  <span className="text-[10px] font-bold text-red-500">No next step</span>
-                ) : null}
-                {lead.assignedToName && (
-                  <span className="text-[10px] text-gray-400 flex items-center gap-1 ml-auto truncate">
-                    <User size={10} />{lead.assignedToName.split(' ')[0]}
-                  </span>
-                )}
-              </div>
-            </article>
-          ))}
-
-          {col.total > col.leads.length && (
-            <p className="text-[10px] text-gray-400 text-center py-1.5">
-              showing {col.leads.length} of {col.total}
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   if (loading && !board) {
     return (
       <div className="flex gap-3 overflow-hidden">
@@ -264,7 +281,18 @@ const PipelineBoard: React.FC<Props> = ({ currentUser }) => {
 
       <div className="overflow-x-auto pb-3">
         <div className="flex gap-3 min-w-max">
-          {board?.columns.map(col => <Column key={col.stage} col={col} />)}
+          {board?.columns.map(col => (
+            <Column
+              key={col.stage} col={col} canEdit={canEdit}
+              dragging={dragging} dragOver={dragOver}
+              onDragOverColumn={setDragOver}
+              onDragLeaveColumn={() => setDragOver(null)}
+              onDropColumn={drop}
+              onDragStartCard={setDragging}
+              onDragEndCard={() => { setDragging(null); setDragOver(null); }}
+              onOpen={setOpenLeadId}
+            />
+          ))}
         </div>
       </div>
 

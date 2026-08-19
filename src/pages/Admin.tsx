@@ -390,14 +390,16 @@ const Admin = () => {
         </AnimatePresence>
       </main>
 
-      <LeadDrawer
+      {/* Only mounted when a notification actually opens a lead, so it never overlaps the
+          drawer a screen is already showing. */}
+      {notifiedLeadId && <LeadDrawer
         leadId={notifiedLeadId}
         currentUser={user}
         options={null}
         staff={[]}
         onClose={() => setNotifiedLeadId(null)}
         onUpdated={() => { /* the tab underneath reloads on its own next refresh */ }}
-      />
+      />}
 
       {/* Profile Picture Modal */}
       <AnimatePresence>

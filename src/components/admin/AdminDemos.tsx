@@ -33,6 +33,56 @@ const dateLabel = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', m
 const timeLabel = (s: string) => new Date(s).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
 
+/** At module level: declared inside the parent it would be a new type on every render, so the
+ *  calendar rebuilt itself rather than updating, and the cards flickered. */
+const DemoCard: React.FC<{
+  demo: DemoDTO;
+  showDate?: boolean;
+  canEdit: boolean;
+  busyId: string | null;
+  onOpenLead: (leadId: string) => void;
+  onMark: (demo: DemoDTO, attended: boolean) => void;
+}> = ({ demo, showDate, canEdit, busyId, onOpenLead, onMark }) => {
+  const tone = demo.attended === true ? 'border-emerald-500 bg-emerald-50'
+    : demo.attended === false ? 'border-red-400 bg-red-50'
+    : demo.awaitingMarking ? 'border-amber-400 bg-amber-50'
+    : 'border-sky-400 bg-sky-50';
+  return (
+    <div className={`rounded-xl border-l-[3px] ${tone} p-2.5`}>
+      <button onClick={() => onOpenLead(demo.leadId)} className="text-left w-full">
+        <p className="text-[10px] font-bold text-gray-500 tabular-nums">
+          {showDate ? `${dateLabel(new Date(demo.scheduledAt))} · ` : ''}{timeLabel(demo.scheduledAt)}
+        </p>
+        <p className="text-[13px] font-bold text-gray-900 leading-tight mt-0.5">{demo.studentName}</p>
+        <p className="text-[11px] text-gray-500 truncate">{demo.course || demo.mode}</p>
+      </button>
+
+      {demo.attended === true && (
+        <p className="text-[10px] font-bold text-emerald-700 mt-1.5 flex items-center gap-1">
+          <CheckCircle2 size={11} /> Attended
+        </p>
+      )}
+      {demo.attended === false && (
+        <p className="text-[10px] font-bold text-red-600 mt-1.5 flex items-center gap-1">
+          <XCircle size={11} /> No-show
+        </p>
+      )}
+      {demo.attended === null && canEdit && (
+        <div className="flex gap-1.5 mt-2">
+          <button onClick={() => onMark(demo, true)} disabled={busyId === demo.id}
+            className="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+            {busyId === demo.id ? '…' : 'Attended'}
+          </button>
+          <button onClick={() => onMark(demo, false)} disabled={busyId === demo.id}
+            className="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+            No-show
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface Props { currentUser?: UserResponseDTO | null; }
 
 const AdminDemos: React.FC<Props> = ({ currentUser }) => {
@@ -88,47 +138,6 @@ const AdminDemos: React.FC<Props> = ({ currentUser }) => {
   });
   const today = new Date();
 
-  const DemoCard: React.FC<{ demo: DemoDTO; showDate?: boolean }> = ({ demo, showDate }) => {
-    const tone = demo.attended === true ? 'border-emerald-500 bg-emerald-50'
-      : demo.attended === false ? 'border-red-400 bg-red-50'
-      : demo.awaitingMarking ? 'border-amber-400 bg-amber-50'
-      : 'border-sky-400 bg-sky-50';
-    return (
-      <div className={`rounded-xl border-l-[3px] ${tone} p-2.5`}>
-        <button onClick={() => setOpenLeadId(demo.leadId)} className="text-left w-full">
-          <p className="text-[10px] font-bold text-gray-500 tabular-nums">
-            {showDate ? `${dateLabel(new Date(demo.scheduledAt))} · ` : ''}{timeLabel(demo.scheduledAt)}
-          </p>
-          <p className="text-[13px] font-bold text-gray-900 leading-tight mt-0.5">{demo.studentName}</p>
-          <p className="text-[11px] text-gray-500 truncate">{demo.course || demo.mode}</p>
-        </button>
-
-        {demo.attended === true && (
-          <p className="text-[10px] font-bold text-emerald-700 mt-1.5 flex items-center gap-1">
-            <CheckCircle2 size={11} /> Attended
-          </p>
-        )}
-        {demo.attended === false && (
-          <p className="text-[10px] font-bold text-red-600 mt-1.5 flex items-center gap-1">
-            <XCircle size={11} /> No-show
-          </p>
-        )}
-        {demo.attended === null && canEdit && (
-          <div className="flex gap-1.5 mt-2">
-            <button onClick={() => mark(demo, true)} disabled={busyId === demo.id}
-              className="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors">
-              {busyId === demo.id ? '…' : 'Attended'}
-            </button>
-            <button onClick={() => mark(demo, false)} disabled={busyId === demo.id}
-              className="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors">
-              No-show
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   if (loading && !board) {
     return <div className="grid grid-cols-7 gap-2">{[...Array(7)].map((_, i) =>
       <div key={i} className="h-56 bg-white rounded-2xl animate-pulse" />)}</div>;
@@ -165,7 +174,7 @@ const AdminDemos: React.FC<Props> = ({ currentUser }) => {
             follow-ups are not booked and the conversion figures are wrong.
           </p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {board.awaitingMarking.map(d => <DemoCard key={d.id} demo={d} showDate />)}
+            {board.awaitingMarking.map(d => <DemoCard key={d.id} demo={d} showDate canEdit={canEdit} busyId={busyId} onOpenLead={setOpenLeadId} onMark={mark} />)}
           </div>
         </section>
       )}
@@ -219,7 +228,7 @@ const AdminDemos: React.FC<Props> = ({ currentUser }) => {
               <div className="p-2 space-y-2 min-h-[110px]">
                 {forDay.length === 0
                   ? <p className="text-[11px] text-gray-300 text-center py-6">—</p>
-                  : forDay.map(d => <DemoCard key={d.id} demo={d} />)}
+                  : forDay.map(d => <DemoCard key={d.id} demo={d} canEdit={canEdit} busyId={busyId} onOpenLead={setOpenLeadId} onMark={mark} />)}
               </div>
             </div>
           );

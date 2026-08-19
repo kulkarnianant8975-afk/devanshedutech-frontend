@@ -39,6 +39,68 @@ const formatWait = (mins: number) => {
   return `${Math.floor(mins / 1440)}d`;
 };
 
+
+const TONES = {
+  red: 'text-red-600 bg-red-50',
+  amber: 'text-amber-600 bg-amber-50',
+  emerald: 'text-emerald-600 bg-emerald-50',
+  gray: 'text-gray-500 bg-gray-100',
+} as const;
+
+/**
+ * Defined at module level rather than inside MyDay on purpose: a component declared inside
+ * another is a new type on every render, so React discards the DOM and rebuilds it instead of
+ * updating in place. With a clock ticking every thirty seconds that showed up as a visible
+ * flicker across the whole screen.
+ */
+const Row: React.FC<{ lead: LeadDTO; right?: React.ReactNode; onOpen: (id: string) => void }> =
+  React.memo(({ lead, right, onOpen }) => (
+  <button
+    onClick={() => onOpen(lead.id)}
+    className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-b-0"
+  >
+    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${lead.grade ? GRADE_DOT[lead.grade] : 'bg-gray-300'}`}
+      aria-hidden="true" />
+    <div className="min-w-0 flex-1">
+      <p className="font-bold text-sm text-gray-900 truncate">{lead.fullName}</p>
+      <p className="text-xs text-gray-500 truncate">
+        {[lead.courseInterested, lead.cityName].filter(Boolean).join(' · ')}
+        {lead.nextTouchNote ? ` — ${lead.nextTouchNote}` : ''}
+      </p>
+    </div>
+    <div className="flex items-center gap-2 flex-shrink-0">
+      {right}
+      <ChevronRight size={16} className="text-gray-300" />
+    </div>
+  </button>
+));
+Row.displayName = 'Row';
+
+const Queue: React.FC<{
+  title: string; hint: string; leads: LeadDTO[]; icon: React.ElementType;
+  tone: keyof typeof TONES;
+  onOpen: (id: string) => void;
+  children: (lead: LeadDTO) => React.ReactNode;
+}> = ({ title, hint, leads, icon: Icon, tone, onOpen, children }) => (
+  <section className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
+    <header className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+      <span className={`w-8 h-8 rounded-xl flex items-center justify-center ${TONES[tone]}`}>
+        <Icon size={16} />
+      </span>
+      <div className="min-w-0">
+        <h3 className="font-bold text-sm text-gray-900">{title}</h3>
+        <p className="text-xs text-gray-500">{hint}</p>
+      </div>
+      <span className="ml-auto text-sm font-bold text-gray-400 tabular-nums">{leads.length}</span>
+    </header>
+    {leads.length === 0 ? (
+      <p className="px-5 py-8 text-center text-sm text-gray-400">Nothing here. Good.</p>
+    ) : (
+      <div>{leads.map(l => <Row key={l.id} lead={l} right={children(l)} onOpen={onOpen} />)}</div>
+    )}
+  </section>
+);
+
 interface Props {
   currentUser?: UserResponseDTO | null;
 }
@@ -78,7 +140,7 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
 
   // The five-minute rule is a live clock, so the waiting times have to tick.
   useEffect(() => {
-    const id = window.setInterval(() => forceTick(t => t + 1), 30000);
+    const id = window.setInterval(() => forceTick(t => t + 1), 60000);
     return () => window.clearInterval(id);
   }, []);
 
@@ -97,59 +159,6 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
   };
 
   const onLeadUpdated = () => { load(); };
-
-  const Row: React.FC<{ lead: LeadDTO; right?: React.ReactNode }> = ({ lead, right }) => (
-    <button
-      onClick={() => setOpenLeadId(lead.id)}
-      className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-b-0"
-    >
-      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${lead.grade ? GRADE_DOT[lead.grade] : 'bg-gray-300'}`}
-        aria-hidden="true" />
-      <div className="min-w-0 flex-1">
-        <p className="font-bold text-sm text-gray-900 truncate">{lead.fullName}</p>
-        <p className="text-xs text-gray-500 truncate">
-          {[lead.courseInterested, lead.cityName].filter(Boolean).join(' · ')}
-          {lead.nextTouchNote ? ` — ${lead.nextTouchNote}` : ''}
-        </p>
-      </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {right}
-        <ChevronRight size={16} className="text-gray-300" />
-      </div>
-    </button>
-  );
-
-  const Queue: React.FC<{
-    title: string; hint: string; leads: LeadDTO[]; icon: React.ElementType;
-    tone: 'red' | 'amber' | 'emerald' | 'gray';
-    children: (lead: LeadDTO) => React.ReactNode;
-  }> = ({ title, hint, leads, icon: Icon, tone, children }) => {
-    const tones = {
-      red: 'text-red-600 bg-red-50',
-      amber: 'text-amber-600 bg-amber-50',
-      emerald: 'text-emerald-600 bg-emerald-50',
-      gray: 'text-gray-500 bg-gray-100',
-    };
-    return (
-      <section className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
-        <header className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-          <span className={`w-8 h-8 rounded-xl flex items-center justify-center ${tones[tone]}`}>
-            <Icon size={16} />
-          </span>
-          <div className="min-w-0">
-            <h3 className="font-bold text-sm text-gray-900">{title}</h3>
-            <p className="text-xs text-gray-500">{hint}</p>
-          </div>
-          <span className="ml-auto text-sm font-bold text-gray-400 tabular-nums">{leads.length}</span>
-        </header>
-        {leads.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-gray-400">Nothing here. Good.</p>
-        ) : (
-          <div>{leads.map(l => <Row key={l.id} lead={l} right={children(l)} />)}</div>
-        )}
-      </section>
-    );
-  };
 
   if (loading) {
     return (
@@ -218,7 +227,7 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
             <Queue
               title="Reply within five minutes"
               hint="New enquiries nobody has answered yet"
-              leads={awaiting} icon={Clock} tone="red"
+              leads={awaiting} icon={Clock} tone="red" onOpen={setOpenLeadId}
             >
               {(lead) => {
                 const waited = minutesSince(lead.createdAt);
@@ -235,7 +244,7 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
             <Queue
               title="Overdue"
               hint="Should already have happened"
-              leads={overdue} icon={AlertTriangle} tone="amber"
+              leads={overdue} icon={AlertTriangle} tone="amber" onOpen={setOpenLeadId}
             >
               {(lead) => (
                 <span className="text-xs font-bold text-red-600 tabular-nums">
@@ -249,7 +258,7 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
             <Queue
               title="Due today"
               hint="Morning, after lunch, and before closing"
-              leads={due} icon={CalendarCheck} tone="emerald"
+              leads={due} icon={CalendarCheck} tone="emerald" onOpen={setOpenLeadId}
             >
               {(lead) => (
                 <span className="text-xs font-medium text-gray-400">
@@ -261,7 +270,7 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
             <Queue
               title="No next step booked"
               hint="A blank next touch is how leads die"
-              leads={blank} icon={CircleAlert} tone="gray"
+              leads={blank} icon={CircleAlert} tone="gray" onOpen={setOpenLeadId}
             >
               {(lead) => (
                 <span className="text-xs font-bold text-red-500">Set a date</span>
