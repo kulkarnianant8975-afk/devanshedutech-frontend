@@ -2,14 +2,15 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Phone, Mail, MapPin, GraduationCap, CalendarClock, Loader2, AlertCircle,
   CheckCircle2, MessageSquare, PhoneCall, ArrowRightLeft, Sparkles, StickyNote,
-  Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks, CalendarPlus
+  Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks, CalendarPlus, GraduationCap as Cap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, demoService, errorMessage } from '../../services/api';
 import SendPackPanel from './SendPackPanel';
+import { batchService } from '../../services/api';
 import { can } from '../../lib/permissions';
 import {
-  LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO,
+  LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO, BatchDTO,
   GradeName, StageName, OutcomeName, StaffUserDTO, UserResponseDTO
 } from '../../dtos';
 
@@ -78,6 +79,8 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
   const [activities, setActivities] = useState<LeadActivityDTO[]>([]);
   const [ladder, setLadder] = useState<LadderStepDTO[]>([]);
   const [showLane, setShowLane] = useState(false);
+  const [batches, setBatches] = useState<BatchDTO[]>([]);
+  const [enrolling, setEnrolling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -220,6 +223,34 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
       flash('Follow-ups resumed.');
     } catch (err) {
       setError(errorMessage(err, 'Could not resume that sequence.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Enrolling. The batch list is only fetched when a counsellor opens the form, because most
+   * lead screens are opened to log a call rather than to close a student.
+   */
+  const startEnrolment = async () => {
+    setEnrolling(true);
+    if (batches.length === 0) {
+      batchService.list(true).then(setBatches).catch(() => { /* enrol without a batch */ });
+    }
+  };
+
+  const confirmEnrolment = async (batchId: string, feePlan: string, paymentStatus: string) => {
+    if (!lead) return;
+    setSaving(true);
+    try {
+      const updated = await leadService.enrol(lead.id, batchId || undefined, feePlan, paymentStatus);
+      setLead(updated);
+      onUpdated(updated);
+      setEnrolling(false);
+      flash('Enrolled. Their week-one check-in is booked.');
+      leadService.detail(lead.id).then(applyDetail).catch(() => {});
+    } catch (err) {
+      setError(errorMessage(err, 'Could not record that enrolment.'));
     } finally {
       setSaving(false);
     }
@@ -597,6 +628,32 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                     />
                   )}
 
+                  {/* Enrolment */}
+                  {canEdit && !lead.optedOut && (
+                    <section className="py-5 border-b border-gray-100">
+                      {lead.stage === 'ENROLLED' ? (
+                        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 opacity-80">Enrolled</p>
+                          <p className="font-bold text-emerald-800 mt-1">{lead.batchName ?? 'No batch chosen yet'}</p>
+                          {lead.feePlan && <p className="text-xs text-emerald-800 mt-1">{lead.feePlan}</p>}
+                          {lead.paymentStatus && (
+                            <p className="text-[11px] text-emerald-700 mt-1">
+                              Payment: {lead.paymentStatus.replace('_', ' ').toLowerCase()}
+                            </p>
+                          )}
+                        </div>
+                      ) : enrolling ? (
+                        <EnrolmentForm batches={batches} saving={saving}
+                          onCancel={() => setEnrolling(false)} onConfirm={confirmEnrolment} />
+                      ) : (
+                        <button onClick={startEnrolment}
+                          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors">
+                          <Cap size={16} /> Enrol this student
+                        </button>
+                      )}
+                    </section>
+                  )}
+
                   {/* Demo */}
                   {canEdit && !lead.optedOut && (
                     <section className="py-5 border-b border-gray-100">
@@ -703,6 +760,68 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
         )}
       </AnimatePresence>
     </>
+  );
+};
+
+/**
+ * The enrolment form.
+ *
+ * A batch is optional: the date is often agreed after payment, and refusing to record an
+ * enrolment because the intake is undecided would push counsellors back to a notebook.
+ */
+const EnrolmentForm: React.FC<{
+  batches: BatchDTO[];
+  saving: boolean;
+  onCancel: () => void;
+  onConfirm: (batchId: string, feePlan: string, paymentStatus: string) => void;
+}> = ({ batches, saving, onCancel, onConfirm }) => {
+  const [batchId, setBatchId] = useState('');
+  const [feePlan, setFeePlan] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('PENDING');
+
+  return (
+    <div className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/40 space-y-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Enrol this student</p>
+
+      <div>
+        <label className="text-[11px] font-bold text-gray-500 mb-1 block" htmlFor="en-batch">Batch</label>
+        <select id="en-batch" value={batchId} onChange={e => setBatchId(e.target.value)}
+          className="w-full text-sm px-3 py-2 rounded-xl border border-gray-200 bg-white outline-none focus:ring-2 focus:ring-primary/20">
+          <option value="">Not decided yet</option>
+          {batches.map(b => <option key={b.id} value={b.id}>{b.description}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label className="text-[11px] font-bold text-gray-500 mb-1 block" htmlFor="en-fee">Fee plan</label>
+        <input id="en-fee" value={feePlan} onChange={e => setFeePlan(e.target.value)}
+          placeholder="45,000 in three instalments"
+          className="w-full text-sm px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-primary/20" />
+      </div>
+
+      <div>
+        <label className="text-[11px] font-bold text-gray-500 mb-1 block" htmlFor="en-pay">Payment</label>
+        <select id="en-pay" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}
+          className="w-full text-sm px-3 py-2 rounded-xl border border-gray-200 bg-white outline-none focus:ring-2 focus:ring-primary/20">
+          <option value="PENDING">Not paid yet</option>
+          <option value="PART_PAID">Part paid</option>
+          <option value="PAID">Paid in full</option>
+        </select>
+      </div>
+
+      <div className="flex gap-2">
+        <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl bg-white border border-gray-200 text-sm font-bold text-gray-600">
+          Cancel
+        </button>
+        <button onClick={() => onConfirm(batchId, feePlan, paymentStatus)} disabled={saving}
+          className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+          {saving && <Loader2 size={14} className="animate-spin" />} Enrol
+        </button>
+      </div>
+      <p className="text-[11px] text-gray-500">
+        A week-one check-in is booked automatically, because that is when to ask for a referral.
+      </p>
+    </div>
   );
 };
 

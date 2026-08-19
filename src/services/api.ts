@@ -22,6 +22,7 @@ import {
   NotificationListDTO,
   SegmentsDTO,
   BroadcastDTO,
+  BatchDTO,
   GradeName,
   PageResponseDTO, 
   UserResponseDTO,
@@ -79,6 +80,13 @@ export const leadService = {
   addNote: (id: string, summary: string, detail?: string) =>
     api.post(`/leads/${id}/activity`, { summary, detail, type: 'NOTE' }).then(res => res.data),
   optOut: (id: string) => api.post<LeadDTO>(`/leads/${id}/opt-out`).then(res => res.data),
+
+  /** Enrolment and referrals. */
+  nextBatch: (id: string) =>
+    api.get<{ id?: string; name?: string; startDate?: string; description?: string }>(
+      `/leads/${id}/next-batch`).then(res => res.data),
+  enrol: (id: string, batchId: string | undefined, feePlan: string, paymentStatus: string) =>
+    api.post<LeadDTO>(`/leads/${id}/enrol`, { batchId, feePlan, paymentStatus }).then(res => res.data),
 
   /** Message packs: what is about to be sent, and recording that it was. */
   packs: () => api.get<SendPackSummaryDTO[]>('/leads/packs').then(res => res.data),
@@ -171,6 +179,15 @@ export const broadcastService = {
   recent: () => api.get<BroadcastDTO[]>('/broadcasts').then(res => res.data),
   send: (title: string, message: string, segment: string) =>
     api.post<BroadcastDTO>('/broadcasts', { title, message, segment }).then(res => res.data),
+};
+
+/** Course intakes. */
+export const batchService = {
+  list: (upcomingOnly = false) =>
+    api.get<BatchDTO[]>('/batches', { params: { upcomingOnly } }).then(res => res.data),
+  create: (batch: Partial<BatchDTO>) => api.post<BatchDTO>('/batches', batch).then(res => res.data),
+  update: (id: string, changes: Partial<BatchDTO>) =>
+    api.patch<BatchDTO>(`/batches/${id}`, changes).then(res => res.data),
 };
 
 export const authService = {

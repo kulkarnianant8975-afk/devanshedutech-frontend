@@ -98,6 +98,11 @@ export interface LeadDTO {
   ladderPauseReason?: string;
   ladderCurrentTitle?: string;
 
+  batchId?: string;
+  batchName?: string;
+  feePlan?: string;
+  paymentStatus?: string;
+
   lostReason?: string;
   lostNote?: string;
   /** Set when a lead decayed to lost without ever really being worked. */
@@ -151,6 +156,11 @@ export interface LeadPatchDTO {
   nextTouchNote?: string;
   notes?: string;
   courseInterested?: string;
+  batchId?: string;
+  batchName?: string;
+  feePlan?: string;
+  paymentStatus?: string;
+
   lostReason?: string;
   lostNote?: string;
   reason?: string;
@@ -545,4 +555,19 @@ export interface BroadcastDTO {
   createdByName?: string;
   createdAt: string;
   sentAt?: string;
+}
+
+export interface BatchDTO {
+  id: string;
+  courseId: string;
+  courseName?: string;
+  name: string;
+  startDate: string;
+  timing?: string;
+  capacity?: number;
+  status: string;
+  /** Whether a counsellor can still put somebody in it. */
+  takingEnrolments: boolean;
+  /** Ready to read out on a call. */
+  description: string;
 }
