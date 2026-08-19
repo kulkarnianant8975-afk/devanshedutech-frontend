@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { 
   WorkingHoursDTO,
+  GradeSuggestionDTO,
   HolidayDTO,
   DutyShiftDTO,
   CourseRequestDTO, 
@@ -233,6 +234,23 @@ export const authService = {
  * These decide two things that used to be assumed: how long a student actually waited (counted
  * in opening hours rather than wall clock) and who owns an enquiry the moment it arrives.
  */
+/**
+ * The counsellor's assistant.
+ *
+ * Everything here suggests; nothing here decides. A grade comes back for a person to accept or
+ * ignore, and a draft comes back for a person to edit and send.
+ */
+export const assistantService = {
+  available: (leadId: string) =>
+    api.get<{ available: boolean }>(`/leads/${leadId}/ai/available`).then(res => res.data.available),
+  suggestGrade: (leadId: string) =>
+    api.post<GradeSuggestionDTO>(`/leads/${leadId}/ai/grade`).then(res => res.data),
+  summarise: (leadId: string) =>
+    api.post<{ summary: string }>(`/leads/${leadId}/ai/summary`).then(res => res.data.summary),
+  draft: (leadId: string, intent?: string) =>
+    api.post<{ draft: string }>(`/leads/${leadId}/ai/draft`, { intent }).then(res => res.data.draft),
+};
+
 export const scheduleService = {
   getHours: () => api.get<WorkingHoursDTO[]>('/schedule/hours').then(res => res.data),
   setHours: (week: WorkingHoursDTO[]) =>

@@ -651,3 +651,16 @@ export interface DutyShiftDTO {
   startsAt: string;
   endsAt: string;
 }
+
+
+/**
+ * What the assistant thinks a lead should be graded, and why.
+ *
+ * `applied` is always false — the grade only ever changes when a person presses a button. The
+ * grade itself may be absent if the model answered with something that is not one of ours.
+ */
+export interface GradeSuggestionDTO {
+  grade?: GradeName;
+  reasoning: string;
+  applied: boolean;
+}

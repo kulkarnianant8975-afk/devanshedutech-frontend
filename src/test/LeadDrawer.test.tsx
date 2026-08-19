@@ -9,6 +9,8 @@ vi.mock('../services/api', () => ({
   leadService: { detail: vi.fn(), patch: vi.fn(), recordOutcome: vi.fn(), optOut: vi.fn(),
                  pause: vi.fn(), resume: vi.fn(),
                  packs: vi.fn(), preparePack: vi.fn(), recordPackSent: vi.fn(), sendPack: vi.fn() },
+  // The assistant hides itself when unavailable, which is what these tests want.
+  assistantService: { available: vi.fn().mockResolvedValue(false), suggestGrade: vi.fn(), summarise: vi.fn(), draft: vi.fn() },
   userService: { getAssignable: vi.fn() },
   demoService: { book: vi.fn() },
   errorMessage: (_e: unknown, fallback: string) => fallback,

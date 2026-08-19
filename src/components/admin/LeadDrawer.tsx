@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, demoService, errorMessage } from '../../services/api';
 import SendPackPanel from './SendPackPanel';
 import { batchService } from '../../services/api';
+import AssistantPanel from './AssistantPanel';
 import { can } from '../../lib/permissions';
 import {
   LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO, BatchDTO,
@@ -484,6 +485,13 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                       )}
                     </section>
                   )}
+
+                  <AssistantPanel
+                    leadId={lead.id}
+                    canEdit={!readOnly}
+                    onApplyGrade={g => patch({ grade: g }, `Graded ${g} — assistant suggestion, accepted`)}
+                    onUseDraft={text => setOutcomeNote(text)}
+                  />
 
                   {/* Follow-up ladder */}
                   {lead.grade && ladder.length > 0 && (
