@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Send, CheckCircle2, Clock, AlertTriangle, FileText, Video, Link2, Image } from 'lucide-react';
+import { Loader2, CheckCircle2, Clock, AlertTriangle, FileText, Video, Link2, Image, Zap } from 'lucide-react';
+import SwipeToSend from './SwipeToSend';
 import { leadService, errorMessage } from '../../services/api';
 import { SendPackSummaryDTO, PreparedPackDTO } from '../../dtos';
 
@@ -47,6 +48,7 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
   useEffect(() => {
     leadService.packs()
@@ -62,6 +64,7 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
       setPrepared(p);
       setMessage(p.message);
       setExcluded(new Set());
+      setAwaitingConfirm(false);
     } catch (err) {
       onError(errorMessage(err, 'Could not prepare that message.'));
     } finally {
@@ -73,14 +76,33 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
 
   const included = (prepared?.assets ?? []).filter(a => !excluded.has(a.key));
 
-  const openWhatsApp = () => {
+  /**
+   * One swipe sends it. With a provider configured the message goes straight to the student;
+   * without one the server returns a hand-off link, WhatsApp opens with the message ready, and
+   * nothing is written to the timeline until the counsellor confirms they actually sent it.
+   */
+  const swipeToSend = async () => {
     if (!prepared) return;
-    // The edited message goes, not the prepared one — the counsellor's wording wins.
-    const phoneUrl = prepared.whatsappUrl?.split('?text=')[0];
-    if (phoneUrl) {
-      window.open(`${phoneUrl}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+    setSending(true);
+    try {
+      const outcome = await leadService.sendPack(
+        leadId, prepared.packKey, message, included.map(a => a.key));
+
+      if (outcome.sent) {
+        setSent(true);
+        onSent();
+      } else if (outcome.handoffUrl) {
+        const phoneUrl = outcome.handoffUrl.split('?text=')[0];
+        window.open(`${phoneUrl}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+        setAwaitingConfirm(true);
+      } else {
+        onError(outcome.detail);
+      }
+    } catch (err) {
+      onError(errorMessage(err, 'Could not send that message.'));
+    } finally {
+      setSending(false);
     }
-    setSent(true);
   };
 
   const confirmSent = async () => {
@@ -88,8 +110,9 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
     setSending(true);
     try {
       await leadService.recordPackSent(leadId, prepared.packKey, included.map(a => a.key));
+      setSent(true);
+      setAwaitingConfirm(false);
       onSent();
-      setSent(false);
     } catch (err) {
       onError(errorMessage(err, 'Sent, but it could not be recorded on the timeline.'));
     } finally {
@@ -179,22 +202,33 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
             </ul>
           )}
 
-          {!sent ? (
-            <button onClick={openWhatsApp} disabled={!prepared.whatsappUrl}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-orange-600 disabled:opacity-40 transition-colors">
-              <Send size={16} /> Open in WhatsApp
-            </button>
-          ) : (
-            <button onClick={confirmSent} disabled={sending}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 transition-colors">
-              {sending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              I sent it — record on the timeline
-            </button>
-          )}
+          <div className="mt-3">
+            {awaitingConfirm ? (
+              <button onClick={confirmSent} disabled={sending}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+                {sending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                I sent it — record on the timeline
+              </button>
+            ) : (
+              <SwipeToSend
+                label={`Swipe to send ${included.length + 1} message${included.length ? 's' : ''}`}
+                sendingLabel="Sending to the student…"
+                doneLabel={`Sent to ${studentName.split(' ')[0]}`}
+                sending={sending}
+                done={sent}
+                onSend={swipeToSend}
+              />
+            )}
+          </div>
 
-          <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
-            {included.length} attachment{included.length === 1 ? '' : 's'} plus the message.
-            {' '}{prepared.note}
+          <p className="text-[11px] text-gray-400 mt-2 leading-relaxed flex items-start gap-1.5">
+            {prepared.sendsAutomatically && <Zap size={12} className="mt-0.5 flex-shrink-0 text-emerald-600" />}
+            <span>
+              {prepared.note}
+              {prepared.sendsAutomatically
+                ? ` Sent through ${prepared.channel}, one student at a time — nothing goes out on its own.`
+                : ' WhatsApp opens with the message ready; confirm once you have sent it.'}
+            </span>
           </p>
         </>
       ) : null}

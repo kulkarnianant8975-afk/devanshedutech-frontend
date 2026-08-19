@@ -15,6 +15,7 @@ import {
   PipelineMetricsDTO,
   SendPackSummaryDTO,
   PreparedPackDTO,
+  SendOutcomeDTO,
   BoardDTO,
   DemoDTO,
   DemoBoardDTO,
@@ -81,6 +82,9 @@ export const leadService = {
   packs: () => api.get<SendPackSummaryDTO[]>('/leads/packs').then(res => res.data),
   preparePack: (id: string, packKey: string) =>
     api.get<PreparedPackDTO>(`/leads/${id}/packs/${packKey}`).then(res => res.data),
+  sendPack: (id: string, packKey: string, message: string, assets: string[]) =>
+    api.post<SendOutcomeDTO>(`/leads/${id}/packs/${packKey}/send`, { message, assets })
+       .then(res => res.data),
   recordPackSent: (id: string, packKey: string, assets: string[]) =>
     api.post<LeadDTO>(`/leads/${id}/packs/${packKey}/sent`, { assets }).then(res => res.data),
 

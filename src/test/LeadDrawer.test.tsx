@@ -8,7 +8,7 @@ import type { LeadDTO, LeadOptionsDTO, UserResponseDTO } from '../dtos';
 vi.mock('../services/api', () => ({
   leadService: { detail: vi.fn(), patch: vi.fn(), recordOutcome: vi.fn(), optOut: vi.fn(),
                  pause: vi.fn(), resume: vi.fn(),
-                 packs: vi.fn(), preparePack: vi.fn(), recordPackSent: vi.fn() },
+                 packs: vi.fn(), preparePack: vi.fn(), recordPackSent: vi.fn(), sendPack: vi.fn() },
   userService: { getAssignable: vi.fn() },
   demoService: { book: vi.fn() },
   errorMessage: (_e: unknown, fallback: string) => fallback,
@@ -63,6 +63,7 @@ describe('Lead workspace', () => {
                  url: '/x.pdf', sizeLabel: 'PDF', tracked: true }],
       replyWindowMinutesLeft: 145, freeReplyOpen: true,
       whatsappUrl: 'https://wa.me/919876543210?text=hi', note: '1 attachment plus the message.',
+      sendsAutomatically: false, channel: 'Manual WhatsApp',
     });
   });
 
@@ -122,7 +123,8 @@ describe('Send pack', () => {
     ],
     replyWindowMinutesLeft: 145, freeReplyOpen: true,
     whatsappUrl: 'https://wa.me/919876543210?text=hi',
-    note: '2 attachments plus the message.', ...over,
+    note: '2 attachments plus the message.',
+    sendsAutomatically: false, channel: 'Manual WhatsApp', ...over,
   });
 
   it('shows how long the free reply window has left', async () => {
@@ -160,17 +162,43 @@ describe('Send pack', () => {
     expect(attachment).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('only records the send after the counsellor confirms they sent it', async () => {
+  it('sends the whole pack in one action when a provider is connected', async () => {
+    const user = userEvent.setup();
+    vi.mocked(leadService.preparePack).mockResolvedValue(prepared({
+      sendsAutomatically: true, channel: 'AiSensy',
+    }));
+    vi.mocked(leadService.sendPack).mockResolvedValue({
+      sent: true, status: 'sent', detail: 'Sent through AiSensy.',
+      handoffUrl: null, channel: 'AiSensy',
+    });
+    openDrawer();
+
+    // The control is a button underneath the gesture, so it can be operated by keyboard.
+    const swipe = await screen.findByRole('button', { name: /swipe to send/i });
+    await user.type(swipe, '{Enter}');
+
+    expect(leadService.sendPack).toHaveBeenCalledWith(
+      'l1', 'guidance', 'Great speaking with you, Rohit!', ['syllabus', 'demo_link']);
+    // Nothing else to confirm: the provider accepted it, so the server already recorded it.
+    expect(leadService.recordPackSent).not.toHaveBeenCalled();
+  });
+
+  it('falls back to a hand-off and only records once the counsellor confirms', async () => {
     const user = userEvent.setup();
     vi.mocked(leadService.preparePack).mockResolvedValue(prepared());
+    vi.mocked(leadService.sendPack).mockResolvedValue({
+      sent: false, status: 'manual', detail: 'Opens in your WhatsApp.',
+      handoffUrl: 'https://wa.me/919876543210?text=hi', channel: 'Manual WhatsApp',
+    });
     vi.mocked(leadService.recordPackSent).mockResolvedValue({} as never);
     vi.stubGlobal('open', vi.fn());
     openDrawer();
 
-    await user.click(await screen.findByRole('button', { name: /open in whatsapp/i }));
+    await user.type(await screen.findByRole('button', { name: /swipe to send/i }), '{Enter}');
+    // Nothing may be written to the timeline yet — the message might never be sent.
     expect(leadService.recordPackSent).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole('button', { name: /i sent it/i }));
+    await user.click(await screen.findByRole('button', { name: /i sent it/i }));
     expect(leadService.recordPackSent).toHaveBeenCalledWith('l1', 'guidance', ['syllabus', 'demo_link']);
   });
 });

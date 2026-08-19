@@ -505,4 +505,16 @@ export interface PreparedPackDTO {
   freeReplyOpen: boolean;
   whatsappUrl: string | null;
   note: string;
+  /** True when the swipe delivers to the student directly rather than opening WhatsApp. */
+  sendsAutomatically: boolean;
+  channel: string;
+}
+
+export interface SendOutcomeDTO {
+  sent: boolean;
+  status: string;
+  detail: string;
+  /** Set only when the channel cannot send itself and a person has to. */
+  handoffUrl: string | null;
+  channel: string;
 }
