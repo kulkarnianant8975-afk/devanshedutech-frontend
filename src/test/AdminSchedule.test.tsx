@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AdminSchedule from '../components/admin/AdminSchedule';
 import { scheduleService, userService } from '../services/api';
-import type { WorkingHoursDTO, UserResponseDTO } from '../dtos';
+import type { WorkingHoursDTO, UserResponseDTO, StaffUserDTO } from '../dtos';
 
 vi.mock('../services/api', () => ({
   scheduleService: {
@@ -17,6 +17,11 @@ vi.mock('../services/api', () => ({
 const admin: UserResponseDTO = {
   id: 'u1', email: 'a@x.com', displayName: 'Admin', photoURL: '',
   role: 'ADMIN', permissions: ['LEAD_VIEW_ALL', 'LEAD_ASSIGN', 'SETTINGS_MANAGE'],
+};
+
+const counsellorStaff: StaffUserDTO = {
+  id: 'u2', email: 'p@x.com', displayName: 'Priya',
+  role: 'SALES_EXECUTIVE', roleLabel: 'Counsellor', active: true, roleLockedByConfig: false,
 };
 
 const counsellor: UserResponseDTO = {
@@ -35,7 +40,7 @@ describe('Hours & Duty', () => {
     vi.mocked(scheduleService.getHolidays).mockResolvedValue([]);
     vi.mocked(scheduleService.getRoster).mockResolvedValue([]);
     vi.mocked(scheduleService.onDutyNow).mockResolvedValue({});
-    vi.mocked(userService.getTeam).mockResolvedValue([]);
+    vi.mocked(userService.getTeam).mockResolvedValue({ users: [], roles: [] });
   });
 
   it('says plainly when nobody is watching enquiries', async () => {
@@ -54,7 +59,7 @@ describe('Hours & Duty', () => {
     vi.mocked(scheduleService.getRoster).mockResolvedValue([
       { id: 's1', userId: 'u2', day: 'MONDAY', startsAt: '10:00:00', endsAt: '14:00:00' },
     ]);
-    vi.mocked(userService.getTeam).mockResolvedValue([counsellor]);
+    vi.mocked(userService.getTeam).mockResolvedValue({ users: [counsellorStaff], roles: [] });
     render(<AdminSchedule currentUser={admin} />);
 
     const warning = await screen.findByText(/No cover on/i);

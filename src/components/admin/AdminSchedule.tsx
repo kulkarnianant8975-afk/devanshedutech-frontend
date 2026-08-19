@@ -6,7 +6,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { scheduleService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
-import { WorkingHoursDTO, HolidayDTO, DutyShiftDTO, UserResponseDTO } from '../../dtos';
+import { WorkingHoursDTO, HolidayDTO, DutyShiftDTO, UserResponseDTO, StaffUserDTO } from '../../dtos';
 
 /**
  * Opening hours, closures, and who is watching enquiries.
@@ -42,7 +42,7 @@ const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
   const [hours, setHours] = useState<WorkingHoursDTO[]>([]);
   const [holidays, setHolidays] = useState<HolidayDTO[]>([]);
   const [roster, setRoster] = useState<DutyShiftDTO[]>([]);
-  const [staff, setStaff] = useState<UserResponseDTO[]>([]);
+  const [staff, setStaff] = useState<StaffUserDTO[]>([]);
   const [onDuty, setOnDuty] = useState<{ userId?: string; name?: string }>({});
 
   const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
       setOnDuty(duty);
       // Only people who can change the roster need the staff list to choose from.
       if (mayEditRoster) {
-        try { setStaff(await userService.getTeam()); } catch { /* the roster still reads fine */ }
+        try { setStaff((await userService.getTeam()).users); } catch { /* the roster still reads fine */ }
       }
     } catch (e) {
       setError(errorMessage(e));
