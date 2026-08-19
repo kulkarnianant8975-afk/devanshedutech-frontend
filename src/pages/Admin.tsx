@@ -13,10 +13,13 @@ import {
   Award,
   Zap,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Shield,
+  Sun
 } from 'lucide-react';
-import { authService, backendUrl } from '../services/api';
+import { authService } from '../services/api';
 import { UserResponseDTO as User } from '../dtos';
+import { canAccessPortal, can, roleLabel } from '../lib/permissions';
 
 // Admin Components
 import AdminDashboard from '../components/admin/AdminDashboard';
@@ -25,12 +28,15 @@ import AdminLeads from '../components/admin/AdminLeads';
 import AdminHiring from '../components/admin/AdminHiring';
 import AdminMentors from '../components/admin/AdminMentors';
 import AdminPlacedStudents from '../components/admin/AdminPlacedStudents';
+import AdminTeam from '../components/admin/AdminTeam';
+import MyDay from '../components/admin/MyDay';
 
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // True when the signed-in user holds any permission at all, not when they are an admin.
+  const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'leads' | 'hiring' | 'mentors' | 'placed_students'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'myday' | 'dashboard' | 'courses' | 'leads' | 'hiring' | 'mentors' | 'placed_students' | 'team'>('myday');
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [authError, setAuthError] = useState<React.ReactNode>('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -44,17 +50,16 @@ const Admin = () => {
     const checkAuth = async () => {
       try {
         const currentUser = await authService.getMe();
-        if (currentUser && currentUser.role?.toUpperCase() === 'ADMIN') {
-          setUser(currentUser);
-          setIsAdmin(true);
-          setAuthError('');
-        } else {
-          setUser(currentUser);
-          setIsAdmin(false);
-        }
+        // Authorise on the permissions the server issued, not on a role name. The previous
+        // version compared against the literal 'ADMIN' here and against lowercase 'admin'
+        // after login, so the two paths disagreed and a fresh sign-in could be refused
+        // until the page was reloaded.
+        setUser(currentUser);
+        setHasAccess(canAccessPortal(currentUser));
+        if (canAccessPortal(currentUser)) setAuthError('');
       } catch (error: any) {
         setUser(null);
-        setIsAdmin(false);
+        setHasAccess(false);
         if (error.response?.status !== 401) {
           setAuthError(`Authentication error: ${error.response?.data?.error || error.message}`);
         }
@@ -97,13 +102,8 @@ const Admin = () => {
       const currentUser = await authService.getMe();
       console.log('Current user after auth:', currentUser);
       
-      if (currentUser && currentUser.role === 'admin') {
-        setUser(currentUser);
-        setIsAdmin(true);
-      } else {
-        setUser(currentUser);
-        setIsAdmin(false);
-      }
+      setUser(currentUser);
+      setHasAccess(canAccessPortal(currentUser));
     } catch (error: any) {
       console.error('Local auth error:', error);
       setAuthError(error.response?.data?.error || 'Authentication failed');
@@ -115,7 +115,7 @@ const Admin = () => {
   const handleLogout = async () => {
     await authService.logout();
     setUser(null);
-    setIsAdmin(false);
+    setHasAccess(false);
   };
 
   if (loading) {
@@ -126,7 +126,7 @@ const Admin = () => {
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user || !hasAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <motion.div 
@@ -139,9 +139,11 @@ const Admin = () => {
           </div>
           <h1 className="text-3xl font-bold mb-4 text-center">Admin Portal</h1>
           
-          {user && !isAdmin && (
+          {user && !hasAccess && (
             <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm mb-6 text-center border border-red-100">
-              Logged in as <strong>{user.email}</strong>, but you do not have administrator permissions.
+              Signed in as <strong>{user.email}</strong> with no portal access
+              {user.roleLabel ? <> ({roleLabel(user)})</> : null}.
+              Ask a manager to add you to the team.
             </div>
           )}
 
@@ -202,41 +204,29 @@ const Admin = () => {
 
 
 
-          <div className="mt-10 pt-6 border-t border-gray-100 flex flex-col items-center space-y-4">
-            <button 
-              onClick={async () => {
-                try {
-                  const res = await authService.getMe();
-                  alert(`Auth Status: Logged in as ${res.email} (${res.role})`);
-                } catch (e) {
-                  alert(`Auth Status: Not logged in (401)`);
-                }
-              }}
-              className="text-[10px] text-gray-300 hover:text-gray-500 transition-colors"
-            >
-              Check Auth Status
-            </button>
-            <a 
-              href="/api/debug/auth" 
-              target="_blank"
-              className="text-[10px] text-gray-300 hover:text-gray-500 transition-colors"
-            >
-              View Debug Auth Info
-            </a>
-          </div>
         </motion.div>
       </div>
     );
   }
 
+  // Navigation follows the permissions the server issued. This is presentation only —
+  // every endpoint behind these screens re-checks, so a stale menu cannot grant anything.
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'leads', label: 'Student Leads', icon: Users },
-    { id: 'courses', label: 'Manage Courses', icon: BookOpen },
-    { id: 'hiring', label: 'Hiring Posts', icon: Briefcase },
-    { id: 'mentors', label: 'Mentors', icon: Users },
-    { id: 'placed_students', label: 'Success Stories', icon: Award },
-  ];
+    { id: 'myday',           label: 'My Day',          icon: Sun,             show: can(user, 'LEAD_VIEW_ALL') || can(user, 'LEAD_VIEW_OWN') },
+    { id: 'dashboard',       label: 'Dashboard',       icon: LayoutDashboard, show: can(user, 'REPORT_VIEW') },
+    { id: 'leads',           label: 'Student Leads',   icon: Users,           show: can(user, 'LEAD_VIEW_ALL') || can(user, 'LEAD_VIEW_OWN') },
+    { id: 'courses',         label: 'Manage Courses',  icon: BookOpen,        show: can(user, 'CONTENT_MANAGE') },
+    { id: 'hiring',          label: 'Hiring Posts',    icon: Briefcase,       show: can(user, 'CONTENT_MANAGE') },
+    { id: 'mentors',         label: 'Mentors',         icon: Users,           show: can(user, 'CONTENT_MANAGE') },
+    { id: 'placed_students', label: 'Success Stories', icon: Award,           show: can(user, 'CONTENT_MANAGE') },
+    { id: 'team',            label: 'Team & Access',   icon: Shield,          show: can(user, 'USER_VIEW') },
+  ].filter(item => item.show);
+
+  // A counsellor has no dashboard permission, so landing them on the default tab would show
+  // an empty screen. Fall back to the first thing they can actually open.
+  const currentTab = menuItems.some(i => i.id === activeTab)
+    ? activeTab
+    : (menuItems[0]?.id ?? 'dashboard');
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -282,7 +272,7 @@ const Admin = () => {
                 if (window.innerWidth < 1024) setIsSidebarOpen(false);
               }}
               className={`w-full flex items-center p-4 rounded-2xl transition-all ${
-                activeTab === item.id 
+                currentTab === item.id 
                   ? 'bg-primary text-white shadow-lg shadow-orange-100' 
                   : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
               }`}
@@ -325,7 +315,7 @@ const Admin = () => {
             </button>
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                {menuItems.find(i => i.id === activeTab)?.label}
+                {menuItems.find(i => i.id === currentTab)?.label ?? 'Admin Panel'}
               </h2>
               <p className="text-gray-500 text-sm md:text-base">Welcome back, {user.displayName}</p>
             </div>
@@ -333,7 +323,7 @@ const Admin = () => {
           <div className="flex items-center space-x-3">
             <div className="text-right hidden sm:block">
               <p className="font-bold text-sm">{user.displayName}</p>
-              <p className="text-xs text-gray-400">{user.email}</p>
+              <p className="text-xs text-gray-400">{roleLabel(user)}</p>
             </div>
             <button 
               onClick={() => setIsProfileModalOpen(true)}
@@ -354,18 +344,20 @@ const Admin = () => {
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeTab}
+            key={currentTab}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {activeTab === 'dashboard' && <AdminDashboard />}
-            {activeTab === 'leads' && <AdminLeads />}
-            {activeTab === 'courses' && <AdminCourses />}
-            {activeTab === 'hiring' && <AdminHiring />}
-            {activeTab === 'mentors' && <AdminMentors />}
-            {activeTab === 'placed_students' && <AdminPlacedStudents />}
+            {currentTab === 'myday' && <MyDay currentUser={user} />}
+            {currentTab === 'dashboard' && <AdminDashboard currentUser={user} />}
+            {currentTab === 'leads' && <AdminLeads currentUser={user} />}
+            {currentTab === 'courses' && <AdminCourses />}
+            {currentTab === 'hiring' && <AdminHiring />}
+            {currentTab === 'mentors' && <AdminMentors />}
+            {currentTab === 'placed_students' && <AdminPlacedStudents />}
+            {currentTab === 'team' && <AdminTeam currentUser={user} />}
           </motion.div>
         </AnimatePresence>
       </main>

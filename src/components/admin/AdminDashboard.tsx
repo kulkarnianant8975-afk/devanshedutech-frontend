@@ -1,246 +1,352 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  BookOpen, 
-  Briefcase, 
-  TrendingUp, 
-  Calendar,
-  ArrowUpRight,
-  ShieldCheck,
-  Server,
-  Loader2,
-  Award
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  TrendingUp, TrendingDown, Minus, AlertCircle, Loader2, X, RefreshCw,
+  CheckCircle2, AlertTriangle, Users, Award
 } from 'lucide-react';
-import { leadService } from '../../services/api';
-import { 
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  BarChart,
-  Bar
-} from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import { leadService, errorMessage } from '../../services/api';
+import { can } from '../../lib/permissions';
+import {
+  PipelineMetricsDTO, MetricDTO, FunnelStepDTO, SourcePerformanceDTO,
+  WeeklyCountDTO, UserResponseDTO
+} from '../../dtos';
 
-const AdminDashboard = () => {
-  const [stats, setStats] = useState({
-    totalLeads: 0,
-    totalCourses: 0,
-    totalHiring: 0,
-    totalMentors: 0,
-    totalPlacedStudents: 0,
-    monthlyLeads: [] as any[],
-    leadsByCourse: [] as any[]
-  });
-  const [loading, setLoading] = useState(true);
-  const [isUploading, setIsUploading] = useState(false);
+/**
+ * The manager dashboard: the six numbers the playbook asks for, plus the funnel and which
+ * source actually produces admissions.
+ *
+ * Every figure comes from the server's single metrics calculation — nothing is computed here.
+ * Two screens showing different conversion rates is how a team stops trusting both.
+ *
+ * The charts are deliberately single-series: these are magnitudes and headline numbers, so
+ * they are stat tiles and directly-labelled bars rather than anything that needs a legend.
+ * Status is shown with an icon and a word as well as a colour, so it survives colour-blindness
+ * and a black-and-white print.
+ */
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await leadService.getStats();
-        setStats(data);
-      } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+const WEEK_OPTIONS = [4, 8, 12, 26];
 
-    fetchStats();
-  }, []);
+const formatValue = (m: MetricDTO) => {
+  if (m.value == null) return '—';
+  const rounded = Number.isInteger(m.value) ? m.value : m.value.toFixed(1);
+  return `${rounded}`;
+};
 
-  // Every value here is a real count from /api/stats.
-  // The previous version showed a hardcoded '24%' conversion rate and invented
-  // trend badges ('+12%', '+2', '+5') that were not derived from any data.
-  // Conversion is not shown because it is not yet measurable: every lead sits at
-  // status 'New' until someone changes it, which is now possible from the Leads tab.
-  // Colours are full class names — `bg-${x}-50` cannot be seen by the Tailwind
-  // compiler and silently produced no styles at all.
-  const cards = [
-    { label: 'Total Leads',      value: stats.totalLeads,          icon: Users,     cls: 'bg-blue-50 text-blue-600' },
-    { label: 'Active Courses',   value: stats.totalCourses,        icon: BookOpen,  cls: 'bg-orange-50 text-orange-600' },
-    { label: 'Total Mentors',    value: stats.totalMentors,        icon: Users,     cls: 'bg-purple-50 text-purple-600' },
-    { label: 'Placed Students',  value: stats.totalPlacedStudents, icon: Award,     cls: 'bg-green-50 text-green-600' },
-    { label: 'Hiring Posts',     value: stats.totalHiring,         icon: Briefcase, cls: 'bg-emerald-50 text-emerald-600' },
-  ];
+const MetricTile: React.FC<{ metric: MetricDTO }> = ({ metric }) => {
+  const unknown = metric.value == null;
+  const status = metric.healthy;
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-32 bg-white rounded-3xl animate-pulse" />
+  return (
+    <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col">
+      <p className="text-xs font-bold text-gray-500">{metric.label}</p>
+
+      <div className="flex items-baseline gap-1 mt-2">
+        <span className={`text-[32px] leading-none font-bold tabular-nums ${
+          unknown ? 'text-gray-300' : 'text-gray-900'}`}>
+          {formatValue(metric)}
+        </span>
+        {!unknown && metric.unit && (
+          <span className="text-sm font-bold text-gray-400">{metric.unit}</span>
+        )}
+      </div>
+
+      {unknown ? (
+        <p className="text-xs text-gray-400 mt-2 flex-1">
+          Not enough data yet{metric.sampleSize > 0 ? ` — ${metric.sampleSize} so far` : ''}.
+        </p>
+      ) : (
+        <>
+          {status != null && (
+            <span className={`inline-flex items-center gap-1.5 text-xs font-bold mt-2 ${
+              status ? 'text-emerald-700' : 'text-red-600'}`}>
+              {status ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
+              {status ? 'On target' : 'Off target'}
+            </span>
+          )}
+          <p className="text-xs text-gray-400 mt-2 flex-1">
+            Based on {metric.sampleSize.toLocaleString('en-IN')} record
+            {metric.sampleSize === 1 ? '' : 's'}
+          </p>
+        </>
+      )}
+
+      <p className="text-[11px] text-gray-400 mt-3 pt-3 border-t border-gray-50">
+        Target: {metric.target}
+      </p>
+    </div>
+  );
+};
+
+const Funnel: React.FC<{ steps: FunnelStepDTO[] }> = ({ steps }) => {
+  // The stage losing the most leads, which is where the playbook says to look first.
+  let worst: FunnelStepDTO | null = null;
+  for (const s of steps) {
+    if (s.dropFromPrevious == null) continue;
+    if (worst == null || s.dropFromPrevious > (worst.dropFromPrevious ?? 0)) worst = s;
+  }
+
+  return (
+    <section className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
+      <header className="px-5 py-4 border-b border-gray-100">
+        <h3 className="font-bold text-sm text-gray-900">Admissions funnel</h3>
+        <p className="text-xs text-gray-500 mt-0.5">
+          How many leads ever reached each stage, including those that later went cold.
+        </p>
+      </header>
+
+      <div className="p-5 space-y-2.5">
+        {steps.map(step => (
+          <div key={step.stage} className="grid grid-cols-[110px_1fr_64px] items-center gap-3">
+            <span className="text-xs font-bold text-gray-600 truncate">{step.label}</span>
+            <div className="h-7 bg-gray-50 rounded-lg overflow-hidden">
+              <div
+                className="h-full bg-primary/85 rounded-lg flex items-center px-2.5 min-w-[2px] transition-all"
+                style={{ width: `${Math.max(step.percentOfTotal, 0.5)}%` }}
+                title={`${step.reached} leads reached ${step.label}`}
+              >
+                <span className="text-[11px] font-bold text-white tabular-nums">
+                  {step.reached}
+                </span>
+              </div>
+            </div>
+            <span className={`text-xs text-right tabular-nums font-medium ${
+              step === worst ? 'text-red-600 font-bold' : 'text-gray-400'}`}>
+              {step.dropFromPrevious == null ? '—' : `−${step.dropFromPrevious}%`}
+            </span>
+          </div>
         ))}
+      </div>
+
+      {worst && worst.dropFromPrevious != null && (
+        <p className="mx-5 mb-5 text-xs text-gray-500 bg-gray-50 rounded-2xl p-3 leading-relaxed">
+          The biggest fall is into <strong className="text-gray-700">{worst.label}</strong>, losing{' '}
+          <strong className="text-gray-700">{worst.dropFromPrevious}%</strong>. Fix the weakest
+          stage before anything else.
+        </p>
+      )}
+    </section>
+  );
+};
+
+const Sources: React.FC<{ sources: SourcePerformanceDTO[] }> = ({ sources }) => {
+  const best = sources.reduce((max, s) => Math.max(max, s.conversionRate ?? 0), 0) || 1;
+
+  return (
+    <section className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
+      <header className="px-5 py-4 border-b border-gray-100">
+        <h3 className="font-bold text-sm text-gray-900">Which source produces admissions</h3>
+        <p className="text-xs text-gray-500 mt-0.5">
+          Not which produces the most enquiries — which produces students.
+        </p>
+      </header>
+
+      {sources.length === 0 ? (
+        <p className="px-5 py-10 text-center text-sm text-gray-400">
+          No sources recorded yet. Enquiries captured from now on carry their channel.
+        </p>
+      ) : (
+        <div className="p-5 space-y-3.5">
+          {sources.map(s => (
+            <div key={s.source}>
+              <div className="flex items-baseline gap-2 mb-1.5">
+                <span className="text-xs font-bold text-gray-700 flex-1 truncate">{s.label}</span>
+                <span className="text-[11px] text-gray-400 tabular-nums">
+                  {s.enrolled}/{s.leads}
+                </span>
+                <span className="text-xs font-bold text-gray-900 tabular-nums w-12 text-right">
+                  {s.conversionRate == null ? '—' : `${s.conversionRate}%`}
+                </span>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-600 rounded-full transition-all"
+                  style={{ width: `${((s.conversionRate ?? 0) / best) * 100}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
+const Weekly: React.FC<{ weeks: WeeklyCountDTO[] }> = ({ weeks }) => {
+  const peak = Math.max(1, ...weeks.map(w => w.leads));
+  return (
+    <section className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
+      <header className="px-5 py-4 border-b border-gray-100">
+        <h3 className="font-bold text-sm text-gray-900">Enquiries per week</h3>
+      </header>
+      <div className="p-5">
+        <div className="flex items-end gap-1.5 h-28">
+          {weeks.map(w => (
+            <div key={w.weekStarting} className="flex-1 flex flex-col items-center gap-1.5 group">
+              <span className="text-[10px] font-bold text-gray-400 tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
+                {w.leads}
+              </span>
+              <div
+                className="w-full bg-primary/80 rounded-t-lg hover:bg-primary transition-colors"
+                style={{ height: `${Math.max((w.leads / peak) * 100, 2)}%` }}
+                title={`${w.leads} enquiries in the week of ${new Date(w.weekStarting).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-1.5 mt-2">
+          {weeks.map((w, i) => (
+            <span key={w.weekStarting} className="flex-1 text-[9px] text-gray-400 text-center">
+              {i === 0 || i === weeks.length - 1
+                ? new Date(w.weekStarting).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+                : ''}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+interface Props {
+  currentUser?: UserResponseDTO | null;
+}
+
+const AdminDashboard: React.FC<Props> = ({ currentUser }) => {
+  const [data, setData] = useState<PipelineMetricsDTO | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [weeks, setWeeks] = useState(8);
+
+  const seesTeam = can(currentUser, 'REPORT_VIEW_TEAM');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setData(await leadService.pipelineMetrics(weeks));
+    } catch (err) {
+      setError(errorMessage(err, 'Could not load the numbers. Check your connection and try again.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [weeks]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading && !data) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-40 bg-white rounded-[28px] animate-pulse" />)}
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-        {cards.map((card, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-2xl ${card.cls}`}>
-                <card.icon size={24} />
-              </div>
-            </div>
-            <p className="text-gray-500 text-sm font-medium">{card.label}</p>
-            <h4 className="text-3xl font-bold text-gray-900 mt-1">{card.value}</h4>
-          </div>
+    <div className="space-y-5">
+      <AnimatePresence>
+        {error && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            role="alert" className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl">
+            <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
+            <p className="text-sm font-medium flex-1">{error}</p>
+            <button onClick={() => setError(null)} aria-label="Dismiss"><X size={18} /></button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Filters sit in one row above the charts */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-gray-500 mr-1">Window</span>
+        {WEEK_OPTIONS.map(w => (
+          <button key={w} onClick={() => setWeeks(w)} aria-pressed={weeks === w}
+            className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${
+              weeks === w ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
+            {w} weeks
+          </button>
         ))}
+        <button onClick={load} disabled={loading}
+          className="ml-auto flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-50 transition-colors disabled:opacity-50">
+          {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Refresh
+        </button>
       </div>
 
-      {/* Project Info Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center space-x-6">
-          <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl">
-            <ShieldCheck size={32} />
+      {data && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {data.metrics.map(m => <MetricTile key={m.key} metric={m} />)}
           </div>
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Project ID</p>
-            <p className="text-lg font-bold text-gray-900">devanshedutech-5d749</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center space-x-6">
-          <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl">
-            <Server size={32} />
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Environment</p>
-            <div className="flex items-center space-x-2">
-              <span className="text-lg font-bold text-gray-900">Production</span>
-              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full">LIVE</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 col-span-1 md:col-span-2">
-          <div className="flex items-center space-x-6">
-            <div className="p-4 bg-orange-50 text-orange-600 rounded-2xl">
-              <BookOpen size={32} />
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Global Assets</p>
-              <h4 className="text-lg font-bold text-gray-900">Course Brochure PDF</h4>
-              <p className="text-sm text-gray-500">Students download this file after form submission.</p>
-            </div>
-          </div>
-          <label className={`cursor-pointer w-full md:w-auto px-6 py-3 bg-primary text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-100 flex items-center justify-center space-x-2 ${
-            isUploading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-orange-600'
-          }`}>
-            {isUploading ? (
-              <>
-                <Loader2 size={20} className="animate-spin" />
-                <span>Uploading...</span>
-              </>
-            ) : (
-              <>
-                <span>Upload Brochure (PDF)</span>
-              </>
-            )}
-            <input 
-              disabled={isUploading}
-              type="file" 
-              accept="application/pdf" 
-              className="hidden" 
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                  if (file) {
-                    if (file.size > 60 * 1024 * 1024) {
-                      alert('Please select a PDF smaller than 60MB.');
-                      return;
-                    }
-                    setIsUploading(true);
-                    try {
-                      const s = await import('../../services/api').then(m => m.settingsService);
-                      await s.uploadBrochure(file);
-                      alert('Brochure uploaded successfully! Students will now get this version.');
-                    } catch (err) {
-                      console.error('Failed to upload brochure', err);
-                      alert('Failed to upload brochure.');
-                    } finally {
-                      setIsUploading(false);
-                      e.target.value = ''; // Reset input
-                    }
-                  }
-              }}
-            />
-          </label>
-        </div>
-      </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-4 md:p-8 rounded-[40px] border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h4 className="text-xl font-bold">Student Inquiries</h4>
-              <p className="text-sm text-gray-500">Monthly lead generation overview</p>
-            </div>
-            <div className="p-2 bg-gray-50 rounded-xl">
-              <Calendar size={20} className="text-gray-400" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <Funnel steps={data.funnel} />
+            <div className="space-y-4">
+              <Sources sources={data.sources} />
+              <Weekly weeks={data.weekly} />
             </div>
           </div>
-          <div className="h-64 md:h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats.monthlyLeads}>
-                <defs>
-                  <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FF6321" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#FF6321" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
-                <Tooltip 
-                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="leads" 
-                  stroke="#FF6321" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorLeads)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
 
-        <div className="bg-white p-4 md:p-8 rounded-[40px] border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h4 className="text-xl font-bold">Leads by Course</h4>
-              <p className="text-sm text-gray-500">Which courses people are enquiring about</p>
-            </div>
-            <div className="p-2 bg-gray-50 rounded-xl">
-              <TrendingUp size={20} className="text-gray-400" />
-            </div>
-          </div>
-          <div className="h-64 md:h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.leadsByCourse}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
-                <Tooltip 
-                  cursor={{fill: '#f9fafb'}}
-                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                />
-                <Bar dataKey="leads" fill="#FF6321" radius={[8, 8, 0, 0]} barSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
+          {seesTeam && data.counsellors.length > 0 && (
+            <section className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
+              <header className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                <Users size={15} className="text-gray-400" />
+                <h3 className="font-bold text-sm text-gray-900">Counsellor scorecard</h3>
+              </header>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50/60">
+                      {['Counsellor', 'Active', 'Enrolled', 'Conversion', 'Overdue', 'No next step', 'Lost unworked']
+                        .map(h => (
+                          <th key={h} className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                            {h}
+                          </th>
+                        ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {data.counsellors.map(c => (
+                      <tr key={c.userId} className="hover:bg-gray-50/50">
+                        <td className="px-5 py-3 font-bold text-sm text-gray-900">{c.name}</td>
+                        <td className="px-5 py-3 text-sm text-gray-600 tabular-nums">{c.activeLeads}</td>
+                        <td className="px-5 py-3 text-sm text-gray-600 tabular-nums">{c.enrolled}</td>
+                        <td className="px-5 py-3 text-sm font-bold text-gray-900 tabular-nums">
+                          {c.conversionRate == null ? '—' : `${c.conversionRate}%`}
+                        </td>
+                        <td className="px-5 py-3">
+                          <Count n={c.overdueTouches} />
+                        </td>
+                        <td className="px-5 py-3">
+                          <Count n={c.blankNextTouch} />
+                        </td>
+                        <td className="px-5 py-3">
+                          <Count n={c.lostUnworked} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="px-5 py-3 text-[11px] text-gray-400 border-t border-gray-50">
+                “Lost unworked” counts leads that ran out of follow-ups without ever really being
+                contacted. Those are follow-up failures, not students who said no.
+              </p>
+            </section>
+          )}
+
+          <p className="text-xs text-gray-400 text-center">
+            {data.windowDescription} · {data.totalLeads.toLocaleString('en-IN')} leads in total
+          </p>
+        </>
+      )}
     </div>
   );
 };
+
+/** A count where zero is the good answer, so it is stated rather than coloured. */
+const Count: React.FC<{ n: number }> = ({ n }) => (
+  <span className={`inline-flex items-center gap-1 text-xs font-bold tabular-nums ${
+    n > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+    {n > 0 ? <AlertTriangle size={12} /> : <Minus size={12} />}
+    {n}
+  </span>
+);
 
 export default AdminDashboard;

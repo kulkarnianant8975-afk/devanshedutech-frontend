@@ -3,10 +3,25 @@ import {
   CourseRequestDTO, 
   CourseResponseDTO, 
   LeadRequestDTO, 
-  LeadResponseDTO, 
+  LeadDTO,
+  LeadDetailDTO,
+  LeadPatchDTO,
+  LeadQueryParams,
+  LeadOptionsDTO,
+  MyDayDTO,
+  OutcomeDTO,
+  CaptureResponseDTO,
+  LadderStepDTO,
+  PipelineMetricsDTO,
+  PageResponseDTO, 
   UserResponseDTO,
   HiringRequestDTO,
-  HiringResponseDTO
+  HiringResponseDTO,
+  TeamResponseDTO,
+  StaffUserDTO,
+  CreateUserDTO,
+  AuditEntryDTO,
+  RoleName
 } from '../dtos';
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
@@ -29,12 +44,45 @@ export const courseService = {
   delete: (id: string) => api.delete(`/courses/${id}`).then(res => res.data),
 };
 
+/**
+ * The pipeline.
+ *
+ * `list` is paginated and filtered on the server; a counsellor's request is narrowed to their
+ * own leads there, so the client never needs to filter for security reasons.
+ */
 export const leadService = {
-  getAll: () => api.get<LeadResponseDTO[]>('/leads').then(res => res.data),
-  create: (lead: LeadRequestDTO) => api.post<LeadResponseDTO>('/leads', lead).then(res => res.data),
-  updateStatus: (id: string, status: string) => api.patch<LeadResponseDTO>(`/leads/${id}/status`, { status }).then(res => res.data),
+  list: (params: LeadQueryParams = {}) =>
+    api.get<PageResponseDTO<LeadDTO>>('/leads', { params }).then(res => res.data),
+  detail: (id: string) => api.get<LeadDetailDTO>(`/leads/${id}`).then(res => res.data),
+  myDay: (owner?: string) =>
+    api.get<MyDayDTO>('/leads/my-day', { params: owner ? { owner } : {} }).then(res => res.data),
+  options: () => api.get<LeadOptionsDTO>('/leads/options').then(res => res.data),
+
+  create: (lead: LeadRequestDTO) =>
+    api.post<CaptureResponseDTO>('/leads', lead).then(res => res.data),
+  patch: (id: string, changes: LeadPatchDTO) =>
+    api.patch<LeadDTO>(`/leads/${id}`, changes).then(res => res.data),
+  recordOutcome: (id: string, outcome: OutcomeDTO) =>
+    api.post<LeadDetailDTO>(`/leads/${id}/outcome`, outcome).then(res => res.data),
+  addNote: (id: string, summary: string, detail?: string) =>
+    api.post(`/leads/${id}/activity`, { summary, detail, type: 'NOTE' }).then(res => res.data),
+  optOut: (id: string) => api.post<LeadDTO>(`/leads/${id}/opt-out`).then(res => res.data),
+
+  /** Freezes the follow-up sequence without pretending the lead is lost. */
+  pause: (id: string, until: string, reason?: string) =>
+    api.post<LeadDTO>(`/leads/${id}/pause`, { until, reason }).then(res => res.data),
+  resume: (id: string) => api.post<LeadDTO>(`/leads/${id}/resume`).then(res => res.data),
+
+  ladderConfig: () => api.get<LadderStepDTO[]>('/leads/ladder').then(res => res.data),
+  /** Runs the daily follow-up pass on demand. Idempotent for a given day. */
+  runLadder: () => api.post<Record<string, number>>('/leads/ladder/run').then(res => res.data),
+
+  /** Discouraged: the SOP marks a lead lost and keeps it, because they may return. */
   delete: (id: string) => api.delete(`/leads/${id}`).then(res => res.data),
   getStats: () => api.get('/stats').then(res => res.data),
+  /** The six numbers, the funnel and source performance — all from one server-side calculation. */
+  pipelineMetrics: (weeks = 8) =>
+    api.get<PipelineMetricsDTO>('/stats/pipeline', { params: { weeks } }).then(res => res.data),
 };
 
 export const hiringService = {
@@ -42,6 +90,35 @@ export const hiringService = {
   create: (post: HiringRequestDTO) => api.post<HiringResponseDTO>('/hiring', post).then(res => res.data),
   update: (id: string, post: Partial<HiringRequestDTO>) => api.put<HiringResponseDTO>(`/hiring/${id}`, post).then(res => res.data),
   delete: (id: string) => api.delete(`/hiring/${id}`).then(res => res.data),
+};
+
+/**
+ * Staff administration. Every call here is authorised on the server; a 403 means the role is
+ * not permitted, and the message from the server is written to be shown to the user as-is.
+ */
+export const userService = {
+  getTeam: () => api.get<TeamResponseDTO>('/users').then(res => res.data),
+  getAssignable: () => api.get<StaffUserDTO[]>('/users/assignable').then(res => res.data),
+  create: (user: CreateUserDTO) => api.post<StaffUserDTO>('/users', user).then(res => res.data),
+  update: (id: string, changes: { displayName?: string; phone?: string }) =>
+    api.patch<StaffUserDTO>(`/users/${id}`, changes).then(res => res.data),
+  changeRole: (id: string, role: RoleName, reason?: string) =>
+    api.patch<StaffUserDTO>(`/users/${id}/role`, { role, reason }).then(res => res.data),
+  setActive: (id: string, active: boolean, reason?: string) =>
+    api.patch<StaffUserDTO>(`/users/${id}/active`, { active, reason }).then(res => res.data),
+  resetPassword: (id: string, password: string) =>
+    api.post(`/users/${id}/password`, { password }).then(res => res.data),
+  getAudit: (page = 0, size = 100) =>
+    api.get<AuditEntryDTO[]>('/users/audit', { params: { page, size } }).then(res => res.data),
+};
+
+/** Pulls the human-readable message out of an axios error, with a sane fallback. */
+export const errorMessage = (err: any, fallback = 'Something went wrong. Please try again.'): string => {
+  const data = err?.response?.data;
+  if (typeof data === 'string' && data.trim()) return data;
+  if (data?.message) return data.message;
+  if (data?.error) return data.error;
+  return err?.message || fallback;
 };
 
 export const authService = {

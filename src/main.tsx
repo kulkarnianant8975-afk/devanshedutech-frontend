@@ -3,6 +3,10 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 import './index.css';
+import { captureAttribution } from './lib/attribution';
+
+// Read the campaign tags before the router rewrites the URL.
+captureAttribution();
 
 // Initialize PWA Service Worker for Offline-First approach
 if ('serviceWorker' in navigator) {

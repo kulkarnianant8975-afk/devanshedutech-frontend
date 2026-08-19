@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, GraduationCap, Phone, Mail, MapPin, Send, Loader2 } from 'lucide-react';
 import api from '../services/api';
+import { getAttribution } from '../lib/attribution';
 
 interface EnrollmentModalProps {
   isOpen: boolean;
@@ -61,7 +62,8 @@ const EnrollmentModal: React.FC<EnrollmentModalProps> = ({ isOpen, onClose, cour
         education: formData.education,
         cityName: formData.city,
         courseInterested: formData.course,
-        type: 'enrollment',
+        // Where this visitor came from, remembered since they landed on the site.
+        ...getAttribution(),
       });
       setIsSuccess(true);
       setTimeout(() => {
