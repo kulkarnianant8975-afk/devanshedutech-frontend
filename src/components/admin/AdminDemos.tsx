@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  CalendarDays, Loader2, AlertCircle, X, CheckCircle2, XCircle, ChevronLeft,
+  AlertCircle, X, CheckCircle2, XCircle, ChevronLeft,
   ChevronRight, Clock, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -236,7 +236,7 @@ const AdminDemos: React.FC<Props> = ({ currentUser }) => {
       </div>
 
       <p className="text-xs text-gray-400 flex items-center gap-1.5">
-        <Clock size={13} /> Book a demo from any lead's screen. Marking attendance schedules the
+        <Clock size={13} /> Book a demo from any lead&apos;s screen. Marking attendance schedules the
         day 1 and day 3 follow-ups automatically.
       </p>
 

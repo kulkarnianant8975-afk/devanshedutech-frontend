@@ -135,7 +135,7 @@ const AdminHiring = () => {
           ))
         ) : filteredPosts.length === 0 ? (
           <div className="py-20 text-center text-gray-500 bg-white rounded-[40px] border border-dashed border-gray-200">
-            No hiring posts yet. Click "Post New Job" to get started.
+            No hiring posts yet. Click &quot;Post New Job&quot; to get started.
           </div>
         ) : (
           filteredPosts.map((post) => (

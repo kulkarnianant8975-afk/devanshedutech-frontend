@@ -45,7 +45,7 @@ const Contact = () => {
             Contact <span className="text-primary">Us</span>
           </motion.h1>
           <p className="text-gray-500 max-w-2xl mx-auto">
-            Have questions? We're here to help. Reach out to us via any of the channels below.
+            Have questions? We&apos;re here to help. Reach out to us via any of the channels below.
           </p>
         </div>
       </section>

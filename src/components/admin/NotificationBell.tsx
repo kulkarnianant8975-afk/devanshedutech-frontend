@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Bell, Loader2, CheckCheck, Clock, AlertTriangle, UserPlus, CalendarDays } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { notificationService, errorMessage } from '../../services/api';
+import { notificationService } from '../../services/api';
 import { NotificationDTO } from '../../dtos';
 
 /**

@@ -64,7 +64,7 @@ const BrochureModal: React.FC<BrochureModalProps> = ({ isOpen, onClose, courseTi
             if (courseResult && courseResult.downloadUrl) {
               result = courseResult;
             }
-          } catch (err) {
+          } catch {
             console.log('Course-specific brochure not found, checking global...');
           }
         }
@@ -76,7 +76,7 @@ const BrochureModal: React.FC<BrochureModalProps> = ({ isOpen, onClose, courseTi
             if (globalResult && globalResult.downloadUrl) {
               result = globalResult;
             }
-          } catch (err) {
+          } catch {
             console.log('Global brochure not found');
           }
         }

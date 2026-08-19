@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Loader2, AlertCircle, X, RefreshCw, Search, CalendarClock, CheckCircle2, User
+  AlertCircle, X, RefreshCw, Search, CalendarClock, CheckCircle2, User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, userService, errorMessage } from '../../services/api';
@@ -275,7 +275,7 @@ const PipelineBoard: React.FC<Props> = ({ currentUser }) => {
 
       {canEdit && (
         <p className="text-xs text-gray-400">
-          Drag a card to move it. The change is recorded on the lead's timeline.
+          Drag a card to move it. The change is recorded on the lead&apos;s timeline.
         </p>
       )}
 

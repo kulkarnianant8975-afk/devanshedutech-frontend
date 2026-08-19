@@ -5,7 +5,6 @@ import {
   Edit2, 
   Trash2, 
   Image as ImageIcon,
-  Briefcase,
   Quote,
   X,
   Save,
@@ -15,7 +14,7 @@ import {
 import { placedStudentService } from '../../services/placedStudentService';
 import { PlacedStudentResponseDTO as PlacedStudent } from '../../dtos';
 import { motion, AnimatePresence } from 'framer-motion';
-import { compressImage, resolveImageUrl, uploadImageToCDN, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
+import { resolveImageUrl, uploadImageToCDN, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
 import { backendUrl } from '../../services/api';
 
 const AdminPlacedStudents = () => {
@@ -144,7 +143,7 @@ const AdminPlacedStudents = () => {
           ))
         ) : filteredStudents.length === 0 ? (
           <div className="col-span-full py-20 text-center text-gray-500 bg-white rounded-[40px] border border-dashed border-gray-200">
-            No success stories added yet. Click "Add Success Story" to get started.
+            No success stories added yet. Click &quot;Add Success Story&quot; to get started.
           </div>
         ) : (
           filteredStudents.map((student) => (
@@ -181,7 +180,7 @@ const AdminPlacedStudents = () => {
 
                 <div className="flex-grow mb-6">
                   <p className="text-gray-500 text-xs italic">
-                    "{student.testimonial}"
+                    &quot;{student.testimonial}&quot;
                   </p>
                 </div>
 

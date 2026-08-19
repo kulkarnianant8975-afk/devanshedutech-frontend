@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, GraduationCap, Phone, Mail, MapPin, Send, Loader2 } from 'lucide-react';
+import { X, CheckCircle, GraduationCap, Send, Loader2 } from 'lucide-react';
 import api from '../services/api';
 import { getAttribution } from '../lib/attribution';
 

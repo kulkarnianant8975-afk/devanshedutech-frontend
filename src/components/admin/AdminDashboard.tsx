@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  TrendingUp, TrendingDown, Minus, AlertCircle, Loader2, X, RefreshCw,
-  CheckCircle2, AlertTriangle, Users, Award
+  Minus, AlertCircle, Loader2, X, RefreshCw,
+  CheckCircle2, AlertTriangle, Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, errorMessage } from '../../services/api';

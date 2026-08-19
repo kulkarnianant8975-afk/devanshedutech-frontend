@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, Minus, Maximize2, Bot, User, Loader2, Sparkles } from 'lucide-react';
+import { Send, X, Minus, Maximize2, Bot, User, Loader2, Sparkles } from 'lucide-react';
 import api from '../services/api';
 
 const AIChatbot = () => {

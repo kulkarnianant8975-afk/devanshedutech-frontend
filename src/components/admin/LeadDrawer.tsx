@@ -5,7 +5,7 @@ import {
   Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks, CalendarPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { leadService, userService, demoService, errorMessage } from '../../services/api';
+import { leadService, demoService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import {
   LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO,

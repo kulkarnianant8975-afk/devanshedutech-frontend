@@ -11,9 +11,6 @@ import {
   Lock,
   HelpCircle,
   Award,
-  Zap,
-  CheckCircle2,
-  Loader2,
   Shield,
   Sun,
   Columns3,
@@ -54,7 +51,8 @@ const Admin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  // Self-registration is disabled on the server, so there is no control that sets this.
+  const [isRegisterMode] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   // Opening a lead from a notification works from whichever screen you are on, so the drawer

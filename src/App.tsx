@@ -68,8 +68,9 @@ const AppContent = () => {
     window.addEventListener('scroll', handleScroll);
     
     // Listen for global enroll event
-    const handleEnrollEvent = (e: any) => {
-      const course = e.detail?.courseName;
+    const handleEnrollEvent = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const course = detail?.courseName;
       setSelectedCourse(course);
       setIsEnrollModalOpen(true);
       // Track Analytics
@@ -81,7 +82,7 @@ const AppContent = () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('open-enrollment', handleEnrollEvent);
     };
-  }, []);
+  }, [trackEvent, setSelectedCourse, setIsEnrollModalOpen]);
 
   return (
     <div className={`flex flex-col ${!isAdmin ? 'min-h-screen' : ''}`}>

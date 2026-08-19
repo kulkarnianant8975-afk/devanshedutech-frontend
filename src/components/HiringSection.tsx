@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Briefcase, MapPin, Building2, ArrowRight, ExternalLink } from 'lucide-react';
+import { MapPin, Building2, ExternalLink } from 'lucide-react';
 import { hiringService } from '../services/api';
 
 const HiringSection = () => {

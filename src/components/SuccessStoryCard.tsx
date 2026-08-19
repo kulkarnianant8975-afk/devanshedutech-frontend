@@ -57,7 +57,7 @@ const SuccessStoryCard: React.FC<SuccessStoryCardProps> = ({
         
         <div className="relative">
           <p className={`text-gray-500 italic text-sm leading-relaxed mb-6 ${!isExpanded ? 'line-clamp-4' : ''}`}>
-            "{story.testimonial}"
+            &quot;{story.testimonial}&quot;
           </p>
           {story.testimonial && story.testimonial.length > 150 && (
             <button

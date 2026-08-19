@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { courseService } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { compressImage, resolveImageUrl, uploadImageToCDN, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
+import { resolveImageUrl, uploadImageToCDN, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
 import { backendUrl } from '../../services/api';
 
 const AdminCourses = () => {

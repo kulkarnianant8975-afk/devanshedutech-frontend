@@ -17,7 +17,7 @@ import { mentorService } from '../../services/mentorService';
 import { authService } from '../../services/api';
 import { MentorResponseDTO as Mentor } from '../../dtos';
 import { motion, AnimatePresence } from 'framer-motion';
-import { compressImage, resolveImageUrl, uploadImageToCDN, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
+import { resolveImageUrl, uploadImageToCDN, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
 import { backendUrl } from '../../services/api';
 
 const AdminMentors = () => {
@@ -206,7 +206,7 @@ const AdminMentors = () => {
           ))
         ) : mentors.length === 0 ? (
           <div className="col-span-full py-20 text-center text-gray-500 bg-white rounded-[40px] border border-dashed border-gray-200">
-            No mentors added yet. Click "Add New Mentor" to get started.
+            No mentors added yet. Click &quot;Add New Mentor&quot; to get started.
           </div>
         ) : (
           mentors.map((mentor) => (

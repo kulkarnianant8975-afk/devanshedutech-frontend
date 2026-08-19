@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Target, Eye, Lightbulb, Users, CheckCircle2, Linkedin, X } from 'lucide-react';
+import { Target, Eye, Lightbulb, CheckCircle2, Linkedin, X } from 'lucide-react';
 import { mentorService } from '../services/mentorService';
 import { MentorResponseDTO as Mentor } from '../dtos';
 import { AnimatePresence } from 'framer-motion';

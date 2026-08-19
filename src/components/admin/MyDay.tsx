@@ -272,7 +272,7 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
               hint="A blank next touch is how leads die"
               leads={blank} icon={CircleAlert} tone="gray" onOpen={setOpenLeadId}
             >
-              {(lead) => (
+              {() => (
                 <span className="text-xs font-bold text-red-500">Set a date</span>
               )}
             </Queue>

@@ -1,13 +1,11 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle, Users, Award, BookOpen, MessageCircle, Quote, X } from 'lucide-react';
+import { ArrowRight, CheckCircle, Users, Award, BookOpen, MessageCircle, X } from 'lucide-react';
 import { placedStudentService } from '../services/placedStudentService';
-import { PlacedStudentResponseDTO as PlacedStudent } from '../dtos';
 import { Link } from 'react-router-dom';
 import CourseCard from '../components/CourseCard';
 import SuccessStoryCard from '../components/SuccessStoryCard';
 import api from '../services/api';
-import { resolveImageUrl } from '../utils/imageUtils';
 import { AnimatePresence } from 'framer-motion';
 
 // Lazy-load below-fold sections so they don't block initial render
@@ -178,7 +176,7 @@ const Home = () => {
             </div>
           ) : coursesFailed ? (
             <p className="text-center text-gray-500">
-              We couldn't load our courses just now. Please refresh, or{' '}
+              We couldn&apos;t load our courses just now. Please refresh, or{' '}
               <Link to="/contact" className="text-primary font-semibold hover:underline">get in touch</Link>.
             </p>
           ) : popularCourses.length === 0 ? (
@@ -229,7 +227,7 @@ const Home = () => {
               <h2 className="text-primary font-bold uppercase tracking-widest text-sm mb-4">Why Us?</h2>
               <h3 className="text-4xl font-bold mb-6">Experience the Best Technical Education</h3>
               <p className="text-gray-600 mb-8 leading-relaxed">
-                We don't just teach code; we build careers. Our methodology focuses on practical implementation, ensuring every student is ready for the industry from day one.
+                We don&apos;t just teach code; we build careers. Our methodology focuses on practical implementation, ensuring every student is ready for the industry from day one.
               </p>
               <ul className="space-y-4 mb-10">
                 {['Live Interactive Sessions', 'Doubt Clearing Support', 'Lifetime Access to Materials', 'Industry Tie-ups for Placements'].map((text, i) => (
@@ -325,7 +323,7 @@ const Home = () => {
                 </button>
               </form>
               {subscribeState === 'sent' && (
-                <p className="mt-4 text-sm text-white/90">Thanks — we'll be in touch with course updates.</p>
+                <p className="mt-4 text-sm text-white/90">Thanks — we&apos;ll be in touch with course updates.</p>
               )}
               {subscribeState === 'error' && (
                 <p className="mt-4 text-sm text-white/90">Something went wrong. Please try again, or use the contact page.</p>

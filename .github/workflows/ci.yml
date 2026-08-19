@@ -1,0 +1,34 @@
+name: Frontend CI
+
+# Lint, typecheck, test and build on every push. The lint step is the one that matters most
+# here: `tsc` alone cannot see React mistakes, and a component declared inside another shipped
+# to three screens before there was anything to catch it.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Lint, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint and typecheck
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build

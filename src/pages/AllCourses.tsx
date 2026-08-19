@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, X, BookOpen } from 'lucide-react';
 import CourseCard from '../components/CourseCard';
@@ -120,8 +120,8 @@ const AllCourses = () => {
             </div>
           ) : coursesFailed ? (
             <div className="text-center py-20">
-              <h3 className="text-2xl font-bold mb-2">We couldn't load our courses</h3>
-              <p className="text-gray-500">Please refresh the page, or contact us and we'll help you directly.</p>
+              <h3 className="text-2xl font-bold mb-2">We couldn&apos;t load our courses</h3>
+              <p className="text-gray-500">Please refresh the page, or contact us and we&apos;ll help you directly.</p>
             </div>
           ) : (
           <AnimatePresence mode="popLayout">
@@ -153,7 +153,7 @@ const AllCourses = () => {
                   <Search size={40} />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">No courses found</h3>
-                <p className="text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
+                <p className="text-gray-500">Try adjusting your search or filter to find what you&apos;re looking for.</p>
                 <button
                   onClick={() => {
                     setSearchTerm('');
