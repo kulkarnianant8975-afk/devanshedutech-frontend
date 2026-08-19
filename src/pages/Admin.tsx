@@ -34,6 +34,8 @@ import AdminTeam from '../components/admin/AdminTeam';
 import MyDay from '../components/admin/MyDay';
 import PipelineBoard from '../components/admin/PipelineBoard';
 import AdminDemos from '../components/admin/AdminDemos';
+import NotificationBell from '../components/admin/NotificationBell';
+import LeadDrawer from '../components/admin/LeadDrawer';
 
 /** Initials for the avatar, so a missing photo needs no network request. */
 const initialsOf = (name: string) =>
@@ -53,6 +55,9 @@ const Admin = () => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  // Opening a lead from a notification works from whichever screen you are on, so the drawer
+  // lives in the shell rather than inside any one tab.
+  const [notifiedLeadId, setNotifiedLeadId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -331,6 +336,7 @@ const Admin = () => {
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            <NotificationBell onOpenLead={setNotifiedLeadId} />
             <div className="text-right hidden sm:block">
               <p className="font-bold text-sm">{user.displayName}</p>
               <p className="text-xs text-gray-400">{roleLabel(user)}</p>
@@ -379,6 +385,15 @@ const Admin = () => {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      <LeadDrawer
+        leadId={notifiedLeadId}
+        currentUser={user}
+        options={null}
+        staff={[]}
+        onClose={() => setNotifiedLeadId(null)}
+        onUpdated={() => { /* the tab underneath reloads on its own next refresh */ }}
+      />
 
       {/* Profile Picture Modal */}
       <AnimatePresence>

@@ -16,6 +16,7 @@ import {
   BoardDTO,
   DemoDTO,
   DemoBoardDTO,
+  NotificationListDTO,
   GradeName,
   PageResponseDTO, 
   UserResponseDTO,
@@ -137,6 +138,14 @@ export const demoService = {
     api.post<DemoDTO>(`/demos/${id}/mark`, { attended, feedback }).then(res => res.data),
   cancel: (id: string, reason?: string) =>
     api.delete(`/demos/${id}`, { params: { reason } }).then(res => res.data),
+};
+
+/** Each person's own notifications. There is no path to anybody else's. */
+export const notificationService = {
+  list: (limit = 30) =>
+    api.get<NotificationListDTO>('/notifications', { params: { limit } }).then(res => res.data),
+  markRead: (id: string) => api.post(`/notifications/${id}/read`).then(res => res.data),
+  markAllRead: () => api.post('/notifications/read-all').then(res => res.data),
 };
 
 export const authService = {

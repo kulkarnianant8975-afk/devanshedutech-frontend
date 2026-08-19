@@ -463,3 +463,18 @@ export interface DemoBoardDTO {
   attended: number;
   attendanceRate: number | null;
 }
+
+export interface NotificationDTO {
+  id: string;
+  kind: string;
+  title: string;
+  body?: string;
+  leadId?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface NotificationListDTO {
+  items: NotificationDTO[];
+  unread: number;
+}
