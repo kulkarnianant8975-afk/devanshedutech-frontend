@@ -17,7 +17,8 @@ import {
   Shield,
   Sun,
   Columns3,
-  CalendarDays
+  CalendarDays,
+  Sliders
 } from 'lucide-react';
 import { authService } from '../services/api';
 import { UserResponseDTO as User } from '../dtos';
@@ -35,6 +36,7 @@ import MyDay from '../components/admin/MyDay';
 import PipelineBoard from '../components/admin/PipelineBoard';
 import AdminDemos from '../components/admin/AdminDemos';
 import NotificationBell from '../components/admin/NotificationBell';
+import AdminSettings from '../components/admin/AdminSettings';
 import LeadDrawer from '../components/admin/LeadDrawer';
 
 /** Initials for the avatar, so a missing photo needs no network request. */
@@ -46,7 +48,7 @@ const Admin = () => {
   // True when the signed-in user holds any permission at all, not when they are an admin.
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'myday' | 'board' | 'demos' | 'dashboard' | 'courses' | 'leads' | 'hiring' | 'mentors' | 'placed_students' | 'team'>('myday');
+  const [activeTab, setActiveTab] = useState<'myday' | 'board' | 'demos' | 'dashboard' | 'courses' | 'leads' | 'hiring' | 'mentors' | 'placed_students' | 'team' | 'settings'>('myday');
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [authError, setAuthError] = useState<React.ReactNode>('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -235,6 +237,7 @@ const Admin = () => {
     { id: 'mentors',         label: 'Mentors',         icon: Users,           show: can(user, 'CONTENT_MANAGE') },
     { id: 'placed_students', label: 'Success Stories', icon: Award,           show: can(user, 'CONTENT_MANAGE') },
     { id: 'team',            label: 'Team & Access',   icon: Shield,          show: can(user, 'USER_VIEW') },
+    { id: 'settings',        label: 'Follow-up Setup', icon: Sliders,         show: can(user, 'SETTINGS_MANAGE') },
   ].filter(item => item.show);
 
   // A counsellor has no dashboard permission, so landing them on the default tab would show
@@ -382,6 +385,7 @@ const Admin = () => {
             {currentTab === 'mentors' && <AdminMentors />}
             {currentTab === 'placed_students' && <AdminPlacedStudents />}
             {currentTab === 'team' && <AdminTeam currentUser={user} />}
+            {currentTab === 'settings' && <AdminSettings currentUser={user} />}
           </motion.div>
         </AnimatePresence>
       </main>

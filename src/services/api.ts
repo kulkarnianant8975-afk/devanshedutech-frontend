@@ -83,6 +83,8 @@ export const leadService = {
   ladderConfig: () => api.get<LadderStepDTO[]>('/leads/ladder').then(res => res.data),
   /** Runs the daily follow-up pass on demand. Idempotent for a given day. */
   runLadder: () => api.post<Record<string, number>>('/leads/ladder/run').then(res => res.data),
+  updateLadderStep: (id: string, changes: { dayOffset?: number; title?: string; action?: string; active?: boolean }) =>
+    api.patch<LadderStepDTO>(`/leads/ladder/${id}`, changes).then(res => res.data),
 
   /** Discouraged: the SOP marks a lead lost and keeps it, because they may return. */
   delete: (id: string) => api.delete(`/leads/${id}`).then(res => res.data),
