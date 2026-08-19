@@ -31,6 +31,10 @@ import AdminPlacedStudents from '../components/admin/AdminPlacedStudents';
 import AdminTeam from '../components/admin/AdminTeam';
 import MyDay from '../components/admin/MyDay';
 
+/** Initials for the avatar, so a missing photo needs no network request. */
+const initialsOf = (name: string) =>
+  name.split(/[\s@.]+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   // True when the signed-in user holds any permission at all, not when they are an admin.
@@ -329,12 +333,18 @@ const Admin = () => {
               onClick={() => setIsProfileModalOpen(true)}
               className="relative group flex-shrink-0 w-12 h-12 rounded-2xl overflow-hidden border-2 border-white shadow-sm"
             >
-              <img 
-                src={user.photoURL || 'https://via.placeholder.com/150'} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+              {user.photoURL ? (
+                <img 
+                  src={user.photoURL} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <span className="w-full h-full bg-orange-50 text-primary flex items-center justify-center font-bold text-lg">
+                  {initialsOf(user.displayName || user.email)}
+                </span>
+              )}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="text-[10px] text-white font-bold leading-tight">View</span>
               </div>
@@ -389,12 +399,18 @@ const Admin = () => {
               <h3 className="text-xl font-bold mb-6">Profile Picture</h3>
               
               <div className="w-48 h-48 mx-auto mb-6 rounded-3xl overflow-hidden shadow-inner border-4 border-gray-50 flex items-center justify-center bg-gray-100">
-                <img 
-                  src={user.photoURL || 'https://via.placeholder.com/150'} 
-                  alt="Profile View" 
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
+                {user.photoURL ? (
+                  <img 
+                    src={user.photoURL} 
+                    alt="Profile View" 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <span className="text-5xl font-bold text-primary">
+                    {initialsOf(user.displayName || user.email)}
+                  </span>
+                )}
               </div>
               
               <label className="cursor-pointer inline-flex items-center justify-center w-full px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-orange-600 transition-colors shadow-lg shadow-orange-100">
