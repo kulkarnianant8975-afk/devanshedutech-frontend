@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -11,7 +12,7 @@ vi.mock('../services/api', () => ({
   errorMessage: (e: unknown, fallback: string) => fallback,
 }));
 
-const panel = (props: Partial<React.ComponentProps<typeof AssistantPanel>> = {}) =>
+const panel = (props: Partial<ComponentProps<typeof AssistantPanel>> = {}) =>
   render(
     <AssistantPanel
       leadId="l1" canEdit
