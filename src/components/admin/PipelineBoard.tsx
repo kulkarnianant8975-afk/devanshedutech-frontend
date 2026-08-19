@@ -177,6 +177,9 @@ const PipelineBoard: React.FC<Props> = ({ currentUser }) => {
 
   useEffect(() => { load(); }, [load]);
 
+  // Stable, so the drawer's effect does not re-run on every render of this screen.
+  const handleUpdated = useCallback(() => { load(); }, [load]);
+
   useEffect(() => {
     leadService.options().then(setOptions).catch(() => {});
     if (canViewStaff) userService.getAssignable().then(setStaff).catch(() => {});
@@ -299,7 +302,7 @@ const PipelineBoard: React.FC<Props> = ({ currentUser }) => {
       <LeadDrawer
         leadId={openLeadId} currentUser={currentUser} options={options} staff={staff}
         onClose={() => setOpenLeadId(null)}
-        onUpdated={() => load()}
+        onUpdated={handleUpdated}
       />
     </div>
   );

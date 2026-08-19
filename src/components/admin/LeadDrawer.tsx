@@ -40,6 +40,14 @@ const ACTIVITY_ICONS: Record<string, React.ElementType> = {
   SYSTEM: Clock,
 };
 
+/**
+ * Shared empty values. Assigning a fresh [] on every reset is what turned this component into
+ * an infinite render loop: React compares state with Object.is, so a new array is always a
+ * change, which re-rendered, which re-ran the effect, which reset again.
+ */
+const NO_ACTIVITIES: LeadActivityDTO[] = [];
+const NO_LADDER: LadderStepDTO[] = [];
+
 const today = () => new Date().toISOString().split('T')[0];
 
 const formatStamp = (iso: string) => {
@@ -92,18 +100,26 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
     window.setTimeout(() => setSuccess(null), 3000);
   };
 
+  /**
+   * Held in a ref rather than named as a dependency. Every screen passes this as an inline
+   * arrow, so it has a new identity on each parent render — depending on it directly made
+   * applyDetail unstable, which made the effect below re-run on every render.
+   */
+  const onUpdatedRef = useRef(onUpdated);
+  useEffect(() => { onUpdatedRef.current = onUpdated; });
+
   const applyDetail = useCallback((detail: LeadDetailDTO) => {
     setLead(detail.lead);
     setActivities(detail.activities);
-    setLadder(detail.ladder ?? []);
+    setLadder(detail.ladder ?? NO_LADDER);
     setNotes(detail.lead.notes ?? '');
     setNotesDirty(false);
     setNextTouch(detail.lead.nextTouchOn ?? '');
-    onUpdated(detail.lead);
-  }, [onUpdated]);
+    onUpdatedRef.current(detail.lead);
+  }, []);
 
   useEffect(() => {
-    if (!leadId) { setLead(null); setActivities([]); setLadder([]); return; }
+    if (!leadId) { setLead(null); setActivities(NO_ACTIVITIES); setLadder(NO_LADDER); return; }
     let cancelled = false;
     setLoading(true);
     setError(null);

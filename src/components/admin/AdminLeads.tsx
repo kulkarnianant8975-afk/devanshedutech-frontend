@@ -112,6 +112,10 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
 
   useEffect(() => { load(); }, [load]);
 
+  // Stable, so the drawer's effect does not re-run on every render of this screen.
+  const handleUpdated = useCallback((updated: LeadDTO) =>
+    setLeads(prev => prev.map(l => (l.id === updated.id ? updated : l))), []);
+
   useEffect(() => {
     leadService.options().then(setOptions).catch(() => { /* filters degrade to plain text */ });
     // Loading the staff list needs USER_VIEW, which a Viewer does not hold even though they
@@ -436,7 +440,7 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
         options={options}
         staff={staff}
         onClose={() => setOpenLeadId(null)}
-        onUpdated={updated => setLeads(prev => prev.map(l => (l.id === updated.id ? updated : l)))}
+        onUpdated={handleUpdated}
       />
     </div>
   );

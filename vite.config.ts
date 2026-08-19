@@ -11,8 +11,22 @@ export default defineConfig(() => {
       react(), 
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        // 'autoUpdate' reloads the page by itself the moment a new build is detected. That is
+        // acceptable on the marketing site and actively harmful in the CRM: a counsellor
+        // halfway through typing a call note would lose it without warning, and during a run of
+        // redeploys the page reloads over and over.
+        registerType: 'prompt',
         includeAssets: ['robots.txt'],
+        workbox: {
+          // The admin app and everything the server owns must never be served from the cache.
+          // A cached index.html points at asset filenames that a later build has removed, which
+          // is a blank screen with no obvious cause.
+          navigateFallbackDenylist: [
+            /^\/admin/, /^\/api/, /^\/auth/, /^\/oauth2/, /^\/login/,
+          ],
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+        },
         manifest: {
           name: 'Devansh Edutech Platform',
           short_name: 'Devansh Edutech',

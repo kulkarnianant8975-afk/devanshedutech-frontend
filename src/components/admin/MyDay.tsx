@@ -158,7 +158,7 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
     }
   };
 
-  const onLeadUpdated = () => { load(); };
+  const onLeadUpdated = useCallback(() => { load(); }, [load]);
 
   if (loading) {
     return (

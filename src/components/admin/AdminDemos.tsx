@@ -112,6 +112,9 @@ const AdminDemos: React.FC<Props> = ({ currentUser }) => {
   }, [weekStart]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Stable, so the drawer's effect does not re-run on every render of this screen.
+  const handleUpdated = useCallback(() => { load(); }, [load]);
   useEffect(() => {
     leadService.options().then(setOptions).catch(() => {});
     if (can(currentUser, 'USER_VIEW')) userService.getAssignable().then(setStaff).catch(() => {});
@@ -241,7 +244,7 @@ const AdminDemos: React.FC<Props> = ({ currentUser }) => {
       </p>
 
       <LeadDrawer leadId={openLeadId} currentUser={currentUser} options={options} staff={staff}
-        onClose={() => setOpenLeadId(null)} onUpdated={() => load()} />
+        onClose={() => setOpenLeadId(null)} onUpdated={handleUpdated} />
     </div>
   );
 };
