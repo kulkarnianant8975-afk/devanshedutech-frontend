@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import LeadDrawer from '../components/admin/LeadDrawer';
 import { leadService } from '../services/api';
-import type { LeadDTO, LeadOptionsDTO, UserResponseDTO } from '../dtos';
+import type { LeadDTO, LeadOptionsDTO, UserResponseDTO, AssetOpenDTO } from '../dtos';
 
 vi.mock('../services/api', () => ({
   leadService: { detail: vi.fn(), patch: vi.fn(), recordOutcome: vi.fn(), optOut: vi.fn(),
@@ -38,9 +38,9 @@ const lead: LeadDTO = {
   nextTouchOn: '2026-08-20', nextTouchNote: 'Call again in the evening',
 };
 
-const openDrawer = (over: Partial<LeadDTO> = {}) => {
+const openDrawer = (over: Partial<LeadDTO> = {}, opens: AssetOpenDTO[] = []) => {
   vi.mocked(leadService.detail).mockResolvedValue({
-    lead: { ...lead, ...over }, activities: [], ladder: [],
+    lead: { ...lead, ...over }, activities: [], ladder: [], opens,
   });
   return render(
     <LeadDrawer leadId="l1" currentUser={counsellor} options={options} staff={[]}
@@ -200,5 +200,26 @@ describe('Send pack', () => {
 
     await user.click(await screen.findByRole('button', { name: /i sent it/i }));
     expect(leadService.recordPackSent).toHaveBeenCalledWith('l1', 'guidance', ['syllabus', 'demo_link']);
+  });
+
+  it('shows what the student opened, and calls out repeat opens', async () => {
+    openDrawer({}, [
+      { assetKey: 'fees', assetName: 'Fee sheet', opens: 3 },
+      { assetKey: 'syllabus', assetName: 'Syllabus', opens: 1 },
+    ]);
+
+    expect(await screen.findByText('Fee sheet')).toBeInTheDocument();
+    expect(screen.getByText('opened 3 times')).toBeInTheDocument();
+    expect(screen.getByText('opened once')).toBeInTheDocument();
+    // Going back to the fee sheet repeatedly is the signal worth acting on.
+    expect(screen.getByText(/Worth a call/i)).toBeInTheDocument();
+  });
+
+  it('draws nothing about opens when nothing tracked has been sent', async () => {
+    // An empty panel reads as "they ignored it", when the truth is usually that nothing
+    // trackable has gone out yet.
+    openDrawer();
+    await screen.findByText(lead.fullName);
+    expect(screen.queryByText(/What they opened/i)).not.toBeInTheDocument();
   });
 });

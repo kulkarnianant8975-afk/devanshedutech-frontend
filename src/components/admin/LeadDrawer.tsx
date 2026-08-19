@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Phone, Mail, MapPin, GraduationCap, CalendarClock, Loader2, AlertCircle,
   CheckCircle2, MessageSquare, PhoneCall, ArrowRightLeft, Sparkles, StickyNote,
-  Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks, CalendarPlus, GraduationCap as Cap
+  Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks, CalendarPlus, Eye, GraduationCap as Cap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, demoService, errorMessage } from '../../services/api';
@@ -11,6 +11,7 @@ import { batchService } from '../../services/api';
 import { can } from '../../lib/permissions';
 import {
   LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO, BatchDTO,
+  AssetOpenDTO,
   GradeName, StageName, OutcomeName, StaffUserDTO, UserResponseDTO
 } from '../../dtos';
 
@@ -49,6 +50,8 @@ const ACTIVITY_ICONS: Record<string, React.ElementType> = {
  */
 const NO_ACTIVITIES: LeadActivityDTO[] = [];
 const NO_LADDER: LadderStepDTO[] = [];
+// Stable empty arrays, so a lead with no data does not retrigger effects on every render.
+const NO_OPENS: AssetOpenDTO[] = [];
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -78,6 +81,7 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
   const [lead, setLead] = useState<LeadDTO | null>(null);
   const [activities, setActivities] = useState<LeadActivityDTO[]>([]);
   const [ladder, setLadder] = useState<LadderStepDTO[]>([]);
+  const [opens, setOpens] = useState<AssetOpenDTO[]>([]);
   const [showLane, setShowLane] = useState(false);
   const [batches, setBatches] = useState<BatchDTO[]>([]);
   const [enrolling, setEnrolling] = useState(false);
@@ -116,6 +120,7 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
     setLead(detail.lead);
     setActivities(detail.activities);
     setLadder(detail.ladder ?? NO_LADDER);
+    setOpens(detail.opens ?? NO_OPENS);
     setNotes(detail.lead.notes ?? '');
     setNotesDirty(false);
     setNextTouch(detail.lead.nextTouchOn ?? '');
@@ -123,7 +128,7 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
   }, []);
 
   useEffect(() => {
-    if (!leadId) { setLead(null); setActivities(NO_ACTIVITIES); setLadder(NO_LADDER); return; }
+    if (!leadId) { setLead(null); setActivities(NO_ACTIVITIES); setLadder(NO_LADDER); setOpens(NO_OPENS); return; }
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -430,6 +435,35 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                       )}
                     </div>
                   </section>
+
+                  {/* What the student has actually opened. Nothing is drawn until something
+                      has been, because an empty panel reads as "they ignored it" when the truth
+                      is usually that nothing tracked has been sent yet. */}
+                  {opens.length > 0 && (
+                    <section className="py-5 border-b border-gray-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Eye size={14} className="text-gray-400" />
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex-1">
+                          What they opened
+                        </p>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {opens.map(o => (
+                          <li key={o.assetKey} className="flex items-baseline justify-between gap-3 text-sm">
+                            <span className="text-gray-700">{o.assetName ?? o.assetKey}</span>
+                            <span className={`text-xs shrink-0 ${o.opens >= 3 ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
+                              {o.opens === 1 ? 'opened once' : `opened ${o.opens} times`}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      {opens.some(o => o.opens >= 3) && (
+                        <p className="mt-2 text-xs text-emerald-700">
+                          Going back to something repeatedly usually means they are deciding. Worth a call.
+                        </p>
+                      )}
+                    </section>
+                  )}
 
                   {/* Follow-up ladder */}
                   {lead.grade && ladder.length > 0 && (

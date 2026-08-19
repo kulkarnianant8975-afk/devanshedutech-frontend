@@ -142,6 +142,22 @@ export interface LeadDetailDTO {
   lead: LeadDTO;
   activities: LeadActivityDTO[];
   ladder?: LadderStepDTO[];
+  /** What this student opened of what was sent to them. */
+  opens?: AssetOpenDTO[];
+}
+
+/**
+ * How often a student came back to something that was sent to them.
+ *
+ * Repeated opens are the strongest signal available without asking — somebody reading the fee
+ * sheet three times is deciding.
+ */
+export interface AssetOpenDTO {
+  assetKey: string;
+  assetName?: string;
+  opens: number;
+  firstOpenedAt?: string;
+  lastOpenedAt?: string;
 }
 
 export interface LeadPatchDTO {
