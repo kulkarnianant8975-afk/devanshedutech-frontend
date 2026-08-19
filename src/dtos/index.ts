@@ -571,3 +571,26 @@ export interface BatchDTO {
   /** Ready to read out on a call. */
   description: string;
 }
+
+export interface EditablePackDTO {
+  key: string;
+  name: string;
+  situation: string;
+  coverTemplate: string;
+  assetKeys: string[];
+  active: boolean;
+}
+
+export interface AssetSummaryDTO {
+  key: string;
+  name: string;
+  type: string;
+  sizeLabel: string;
+}
+
+export interface ScriptsDTO {
+  packs: EditablePackDTO[];
+  assets: AssetSummaryDTO[];
+  /** Placeholder name to a description of what it fills in. */
+  placeholders: Record<string, string>;
+}

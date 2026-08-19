@@ -16,6 +16,8 @@ import {
   SendPackSummaryDTO,
   PreparedPackDTO,
   SendOutcomeDTO,
+  ScriptsDTO,
+  EditablePackDTO,
   BoardDTO,
   DemoDTO,
   DemoBoardDTO,
@@ -90,6 +92,9 @@ export const leadService = {
 
   /** Message packs: what is about to be sent, and recording that it was. */
   packs: () => api.get<SendPackSummaryDTO[]>('/leads/packs').then(res => res.data),
+  scripts: () => api.get<ScriptsDTO>('/leads/packs/full').then(res => res.data),
+  updatePack: (key: string, changes: Partial<EditablePackDTO>) =>
+    api.patch<EditablePackDTO>(`/leads/packs/${key}`, changes).then(res => res.data),
   preparePack: (id: string, packKey: string) =>
     api.get<PreparedPackDTO>(`/leads/${id}/packs/${packKey}`).then(res => res.data),
   sendPack: (id: string, packKey: string, message: string, assets: string[]) =>
