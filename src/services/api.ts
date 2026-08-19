@@ -13,6 +13,8 @@ import {
   CaptureResponseDTO,
   LadderStepDTO,
   PipelineMetricsDTO,
+  SendPackSummaryDTO,
+  PreparedPackDTO,
   BoardDTO,
   DemoDTO,
   DemoBoardDTO,
@@ -74,6 +76,13 @@ export const leadService = {
   addNote: (id: string, summary: string, detail?: string) =>
     api.post(`/leads/${id}/activity`, { summary, detail, type: 'NOTE' }).then(res => res.data),
   optOut: (id: string) => api.post<LeadDTO>(`/leads/${id}/opt-out`).then(res => res.data),
+
+  /** Message packs: what is about to be sent, and recording that it was. */
+  packs: () => api.get<SendPackSummaryDTO[]>('/leads/packs').then(res => res.data),
+  preparePack: (id: string, packKey: string) =>
+    api.get<PreparedPackDTO>(`/leads/${id}/packs/${packKey}`).then(res => res.data),
+  recordPackSent: (id: string, packKey: string, assets: string[]) =>
+    api.post<LeadDTO>(`/leads/${id}/packs/${packKey}/sent`, { assets }).then(res => res.data),
 
   /** Freezes the follow-up sequence without pretending the lead is lost. */
   pause: (id: string, until: string, reason?: string) =>

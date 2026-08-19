@@ -478,3 +478,31 @@ export interface NotificationListDTO {
   items: NotificationDTO[];
   unread: number;
 }
+
+export interface SendPackSummaryDTO {
+  key: string;
+  name: string;
+  situation: string;
+}
+
+export interface PreparedAssetDTO {
+  key: string;
+  name: string;
+  type: string;
+  url: string;
+  sizeLabel?: string;
+  tracked: boolean;
+}
+
+export interface PreparedPackDTO {
+  packKey: string;
+  packName: string;
+  situation?: string;
+  message: string;
+  assets: PreparedAssetDTO[];
+  /** Minutes of WhatsApp's free-reply window left; null once it has closed. */
+  replyWindowMinutesLeft: number | null;
+  freeReplyOpen: boolean;
+  whatsappUrl: string | null;
+  note: string;
+}

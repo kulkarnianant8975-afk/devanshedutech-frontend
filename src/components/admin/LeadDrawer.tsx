@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, demoService, errorMessage } from '../../services/api';
+import SendPackPanel from './SendPackPanel';
 import { can } from '../../lib/permissions';
 import {
   LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO,
@@ -581,6 +582,19 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                         </div>
                       )}
                     </section>
+                  )}
+
+                  {/* Send pack */}
+                  {canEdit && !lead.optedOut && (
+                    <SendPackPanel
+                      leadId={lead.id}
+                      studentName={lead.fullName}
+                      onSent={() => {
+                        flash('Recorded on the timeline.');
+                        leadService.detail(lead.id).then(applyDetail).catch(() => {});
+                      }}
+                      onError={setError}
+                    />
                   )}
 
                   {/* Demo */}

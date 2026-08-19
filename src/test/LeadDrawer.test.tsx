@@ -7,7 +7,8 @@ import type { LeadDTO, LeadOptionsDTO, UserResponseDTO } from '../dtos';
 
 vi.mock('../services/api', () => ({
   leadService: { detail: vi.fn(), patch: vi.fn(), recordOutcome: vi.fn(), optOut: vi.fn(),
-                 pause: vi.fn(), resume: vi.fn() },
+                 pause: vi.fn(), resume: vi.fn(),
+                 packs: vi.fn(), preparePack: vi.fn(), recordPackSent: vi.fn() },
   userService: { getAssignable: vi.fn() },
   demoService: { book: vi.fn() },
   errorMessage: (_e: unknown, fallback: string) => fallback,
@@ -48,7 +49,22 @@ const openDrawer = (over: Partial<LeadDTO> = {}) => {
 };
 
 describe('Lead workspace', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // The drawer now offers message packs; without these the panel throws and the whole
+    // drawer fails to settle.
+    vi.mocked(leadService.packs).mockResolvedValue([
+      { key: 'guidance', name: 'Post-call guidance pack', situation: 'SOP section 4' },
+    ]);
+    vi.mocked(leadService.preparePack).mockResolvedValue({
+      packKey: 'guidance', packName: 'Post-call guidance pack', situation: 'SOP section 4',
+      message: 'Great speaking with you, Rohit!',
+      assets: [{ key: 'syllabus', name: 'Data Analytics — syllabus', type: 'PDF',
+                 url: '/x.pdf', sizeLabel: 'PDF', tracked: true }],
+      replyWindowMinutesLeft: 145, freeReplyOpen: true,
+      whatsappUrl: 'https://wa.me/919876543210?text=hi', note: '1 attachment plus the message.',
+    });
+  });
 
   it('shows the student and their next touch', async () => {
     openDrawer();
@@ -86,5 +102,75 @@ describe('Lead workspace', () => {
     openDrawer({ optedOut: true });
     expect(await screen.findByText(/opted out/i)).toBeInTheDocument();
     expect(screen.queryByText(/record the contact/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('Send pack', () => {
+  beforeEach(() => {
+    vi.mocked(leadService.packs).mockResolvedValue([
+      { key: 'guidance', name: 'Post-call guidance pack', situation: 'SOP section 4, step 5' },
+      { key: 'dnp', name: 'Missed-call recovery', situation: 'SOP section 6.1' },
+    ]);
+  });
+
+  const prepared = (over = {}) => ({
+    packKey: 'guidance', packName: 'Post-call guidance pack', situation: 'SOP section 4, step 5',
+    message: 'Great speaking with you, Rohit!',
+    assets: [
+      { key: 'syllabus', name: 'Data Analytics — syllabus', type: 'PDF', url: '/x.pdf', sizeLabel: 'PDF', tracked: true },
+      { key: 'demo_link', name: 'Book your free demo', type: 'LINK', url: '/contact', sizeLabel: 'tracked', tracked: true },
+    ],
+    replyWindowMinutesLeft: 145, freeReplyOpen: true,
+    whatsappUrl: 'https://wa.me/919876543210?text=hi',
+    note: '2 attachments plus the message.', ...over,
+  });
+
+  it('shows how long the free reply window has left', async () => {
+    vi.mocked(leadService.preparePack).mockResolvedValue(prepared());
+    openDrawer();
+    expect(await screen.findByText(/free reply open/i)).toBeInTheDocument();
+    expect(screen.getByText(/2h 25m left/)).toBeInTheDocument();
+  });
+
+  it('explains the restriction rather than just refusing, once the window has closed', async () => {
+    vi.mocked(leadService.preparePack).mockResolvedValue(prepared({
+      freeReplyOpen: false, replyWindowMinutesLeft: null,
+      note: 'This student has not messaged in over 24 hours, so WhatsApp only allows an approved template until they reply.',
+    }));
+    openDrawer();
+    expect(await screen.findByText(/window closed · template only/i)).toBeInTheDocument();
+    expect(screen.getByText(/24 hours/)).toBeInTheDocument();
+  });
+
+  it('lets the counsellor edit the message and drop an attachment', async () => {
+    const user = userEvent.setup();
+    vi.mocked(leadService.preparePack).mockResolvedValue(prepared());
+    openDrawer();
+
+    const box = await screen.findByLabelText(/message to rohit deshmukh/i);
+    expect(box).toHaveValue('Great speaking with you, Rohit!');
+    await user.clear(box);
+    await user.type(box, 'My own wording');
+    expect(box).toHaveValue('My own wording');
+
+    // Both attachments are on by default; turning one off is a toggle, not a delete.
+    const attachment = screen.getByRole('button', { name: /book your free demo/i });
+    expect(attachment).toHaveAttribute('aria-pressed', 'true');
+    await user.click(attachment);
+    expect(attachment).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('only records the send after the counsellor confirms they sent it', async () => {
+    const user = userEvent.setup();
+    vi.mocked(leadService.preparePack).mockResolvedValue(prepared());
+    vi.mocked(leadService.recordPackSent).mockResolvedValue({} as never);
+    vi.stubGlobal('open', vi.fn());
+    openDrawer();
+
+    await user.click(await screen.findByRole('button', { name: /open in whatsapp/i }));
+    expect(leadService.recordPackSent).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: /i sent it/i }));
+    expect(leadService.recordPackSent).toHaveBeenCalledWith('l1', 'guidance', ['syllabus', 'demo_link']);
   });
 });
