@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { 
   WorkingHoursDTO,
+  WhatsAppStatusDTO,
+  WhatsAppTestDTO,
   GradeSuggestionDTO,
   HolidayDTO,
   DutyShiftDTO,
@@ -267,6 +269,20 @@ export const scheduleService = {
   removeShift: (id: string) => api.delete(`/schedule/roster/${id}`).then(res => res.data),
 
   onDutyNow: () => api.get<{ userId?: string; name?: string }>('/schedule/on-duty').then(res => res.data),
+};
+
+/**
+ * Proving the WhatsApp connection works before a student is on the other end.
+ *
+ * The failure modes — an expired token, a number not on the allowed list — are invisible until
+ * a message does not arrive, and by then it has not arrived for somebody who matters.
+ */
+export const whatsappService = {
+  status: () => api.get<WhatsAppStatusDTO>('/settings/whatsapp/status').then(res => res.data),
+  sendTemplate: (phone: string) =>
+    api.post<WhatsAppTestDTO>('/settings/whatsapp/test', { phone }).then(res => res.data),
+  sendMessage: (phone: string) =>
+    api.post<WhatsAppTestDTO>('/settings/whatsapp/test-message', { phone }).then(res => res.data),
 };
 
 export const settingsService = {

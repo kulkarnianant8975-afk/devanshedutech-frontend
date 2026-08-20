@@ -3,6 +3,7 @@ import { MessageSquareText, Loader2, AlertCircle, X, CheckCircle2, Save, Eye } f
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, errorMessage } from '../../services/api';
 import { EditablePackDTO, AssetSummaryDTO, UserResponseDTO } from '../../dtos';
+import WhatsAppConnection from './WhatsAppConnection';
 
 /**
  * Editing what gets sent to students.
@@ -84,6 +85,10 @@ const AdminScripts: React.FC<Props> = () => {
 
   return (
     <div className="space-y-5">
+      {/* What carries these messages, and whether it works. Above the scripts themselves
+          because editing the wording is pointless if nothing can send it. */}
+      <WhatsAppConnection />
+
       <AnimatePresence>
         {error && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}

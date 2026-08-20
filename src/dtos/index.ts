@@ -664,3 +664,19 @@ export interface GradeSuggestionDTO {
   reasoning: string;
   applied: boolean;
 }
+
+
+/** What channel is sending, without exposing any part of a key. */
+export interface WhatsAppStatusDTO {
+  channel: string;
+  sendsAutomatically: boolean;
+  /** Only Meta's Cloud API supports the self-test, so the buttons are drawn from this. */
+  canTest: boolean;
+  detail: string;
+}
+
+export interface WhatsAppTestDTO {
+  sent: boolean;
+  detail: string;
+  nextStep: string;
+}
