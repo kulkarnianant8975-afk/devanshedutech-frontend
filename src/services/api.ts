@@ -168,12 +168,53 @@ export const userService = {
 };
 
 /** Pulls the human-readable message out of an axios error, with a sane fallback. */
+/**
+ * Turns whatever went wrong into a sentence a counsellor can act on.
+ *
+ * The server writes real messages — "marking a lead lost needs a reason", "that number is not on
+ * the allowed list" — and those always win. The rest of this exists for the cases where there is
+ * no message to show: a dropped connection, a session that quietly expired, a file the proxy
+ * refused. Axios's own text for those is "Request failed with status code 500", which tells
+ * somebody mid-conversation with a student precisely nothing.
+ */
 export const errorMessage = (err: any, fallback = 'Something went wrong. Please try again.'): string => {
   const data = err?.response?.data;
-  if (typeof data === 'string' && data.trim()) return data;
+
+  // A plain-text body is the backend talking, and it says something useful. An HTML one is not:
+  // it is the reverse proxy's own error page, which is what a counsellor gets when Caddy rejects
+  // an oversized video before the request ever reaches us. Printing that markup at somebody is
+  // worse than saying nothing, so it falls through to the status mapping below instead.
+  if (typeof data === 'string' && data.trim() && !/^\s*<(?:!doctype|html)/i.test(data)) {
+    return data;
+  }
   if (data?.message) return data.message;
-  if (data?.error) return data.error;
-  return err?.message || fallback;
+  if (data?.error && typeof data.error === 'string' && !/^[A-Z][a-z]+ [A-Z]/.test(data.error)) {
+    return data.error;
+  }
+
+  // No response at all: the request never arrived. Usually the network, occasionally the server
+  // restarting mid-deploy.
+  if (err?.code === 'ERR_NETWORK' || err?.message === 'Network Error') {
+    return 'Could not reach the server. Check your connection and try again.';
+  }
+  if (err?.code === 'ECONNABORTED') {
+    return 'The server took too long to answer. It may still have worked — refresh before retrying.';
+  }
+
+  switch (err?.response?.status) {
+    case 401: return 'Your session has ended. Sign in again to continue.';
+    case 403: return 'You do not have permission to do that.';
+    case 404: return 'That is no longer there. Someone may have removed it.';
+    case 409: return 'Someone else changed this while you were working. Refresh and try again.';
+    case 413: return 'That file is too large to upload.';
+    case 415: return 'That file type is not accepted.';
+    case 429: return 'Too many attempts. Wait a moment and try again.';
+    case 502:
+    case 503:
+    case 504: return 'The server is restarting or unreachable. Try again in a moment.';
+    case 500: return 'Something broke on the server. It has been logged — tell an administrator if it keeps happening.';
+    default:  return fallback;
+  }
 };
 
 /** Demo classes and campus visits. */

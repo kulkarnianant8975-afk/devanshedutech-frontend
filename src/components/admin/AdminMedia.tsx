@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   FileText, Video, Link2, Image as ImageIcon, Plus, Upload, Trash2, Loader2,
-  AlertCircle, CheckCircle2, Eye, X
+  AlertCircle, Eye, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { assetService, courseService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { AssetDTO, CourseResponseDTO, UserResponseDTO } from '../../dtos';
@@ -56,12 +57,15 @@ const TONE: Record<string, string> = {
 interface Props { currentUser?: UserResponseDTO | null; }
 
 const AdminMedia: React.FC<Props> = ({ currentUser }) => {
+  const toast = useToast();
   const [assets, setAssets] = useState<AssetDTO[]>([]);
   const [courses, setCourses] = useState<CourseResponseDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen, and it has to still be on screen while the person decides what to do about it.
+  // Everything a person actively did is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showRetired, setShowRetired] = useState(false);
   const [adding, setAdding] = useState<Kind | null>(null);
 
@@ -74,7 +78,7 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       const [list, courseList] = await Promise.all([
         assetService.list(showRetired),
@@ -83,18 +87,13 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
       setAssets(list);
       setCourses(courseList);
     } catch (e) {
-      setError(errorMessage(e, 'Could not load the library.'));
+      setLoadError(errorMessage(e, 'Could not load the library.'));
     } finally {
       setLoading(false);
     }
   }, [showRetired]);
 
   useEffect(() => { load(); }, [load]);
-
-  const flash = (msg: string) => {
-    setSuccess(msg);
-    window.setTimeout(() => setSuccess(null), 3500);
-  };
 
   const reset = () => {
     setForm({ name: '', url: '', courseId: '' });
@@ -106,14 +105,18 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
   const add = async () => {
     if (!adding) return;
     setBusy(true);
-    setError(null);
     try {
       const file = fileRef.current?.files?.[0];
       const uploading = adding !== 'LINK' && mode === 'upload';
       if (uploading) {
-        if (!file) { setError('Choose a file first.'); setBusy(false); return; }
+        if (!file) {
+          toast.error('Choose a file first.', 'Nothing was selected to upload.');
+          setBusy(false);
+          return;
+        }
         const created = await assetService.upload(file, form.name || file.name, adding, form.courseId || undefined);
-        flash(`Uploaded ${created.name} (${created.sizeLabel ?? ''}).`);
+        toast.success(`${created.name} is in the library.`,
+          created.sizeLabel ? `Uploaded — ${created.sizeLabel}.` : 'Uploaded.');
       } else {
         const created = await assetService.create({
           name: form.name,
@@ -121,25 +124,25 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
           url: form.url,
           courseId: form.courseId || undefined,
         });
-        flash(`Added ${created.name}.`);
+        toast.success(`${created.name} is in the library.`,
+          'Counsellors can pick it from the dropdown now.');
       }
       reset();
       await load();
     } catch (e) {
-      setError(errorMessage(e, 'That could not be saved.'));
+      toast.error(errorMessage(e, 'That could not be saved.'));
     } finally {
       setBusy(false);
     }
   };
 
   const retire = async (asset: AssetDTO) => {
-    setError(null);
     try {
       await assetService.retire(asset.id);
-      flash(`${asset.name} is no longer offered.`);
+      toast.success(`${asset.name} was retired.`, 'It no longer appears in the send dropdown.');
       await load();
     } catch (e) {
-      setError(errorMessage(e, 'That could not be retired.'));
+      toast.error(errorMessage(e, 'That could not be retired.'));
     }
   };
 
@@ -154,18 +157,12 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
   return (
     <div className="space-y-6">
       <AnimatePresence>
-        {error && (
+        {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             role="alert"
             className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm">
-            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /><span className="flex-1">{error}</span>
-            <button onClick={() => setError(null)} aria-label="Dismiss"><X className="w-4 h-4" /></button>
-          </motion.div>
-        )}
-        {success && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm">
-            <CheckCircle2 className="w-4 h-4 shrink-0" /><span>{success}</span>
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /><span className="flex-1">{loadError}</span>
+            <button onClick={load} className="font-semibold underline shrink-0">Retry</button>
           </motion.div>
         )}
       </AnimatePresence>

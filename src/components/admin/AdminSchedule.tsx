@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Clock, CalendarOff, UserCheck, Plus, Trash2, Loader2, AlertCircle,
-  CheckCircle2, Save, Radio
+  Save, Radio
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { scheduleService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { WorkingHoursDTO, HolidayDTO, DutyShiftDTO, UserResponseDTO, StaffUserDTO } from '../../dtos';
@@ -39,6 +40,7 @@ const isPast = (iso: string) => {
 interface Props { currentUser?: UserResponseDTO | null; }
 
 const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
+  const toast = useToast();
   const [hours, setHours] = useState<WorkingHoursDTO[]>([]);
   const [holidays, setHolidays] = useState<HolidayDTO[]>([]);
   const [roster, setRoster] = useState<DutyShiftDTO[]>([]);
@@ -47,8 +49,10 @@ const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen and stays put while the person decides what to do. Everything a person
+  // actively did — saved, sent, deleted — is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [newHoliday, setNewHoliday] = useState({ day: '', name: '' });
   const [newShift, setNewShift] = useState({ userId: '', day: 'MONDAY', startsAt: '10:00', endsAt: '14:00' });
@@ -58,7 +62,7 @@ const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       const [h, hol, r, duty] = await Promise.all([
         scheduleService.getHours(),
@@ -75,7 +79,7 @@ const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
         try { setStaff((await userService.getTeam()).users); } catch { /* the roster still reads fine */ }
       }
     } catch (e) {
-      setError(errorMessage(e));
+      setLoadError(errorMessage(e, 'Could not load the schedule.'));
     } finally {
       setLoading(false);
     }
@@ -83,56 +87,48 @@ const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
 
   useEffect(() => { load(); }, [load]);
 
-  const flash = (message: string) => {
-    setSuccess(message);
-    setTimeout(() => setSuccess(null), 3000);
-  };
-
   const editDay = (day: string, patch: Partial<WorkingHoursDTO>) =>
     setHours(prev => prev.map(h => (h.day === day ? { ...h, ...patch } : h)));
 
   const saveHours = async () => {
     setSaving(true);
-    setError(null);
     try {
       setHours(await scheduleService.setHours(hours.map(h => ({
         ...h, opensAt: toInput(h.opensAt), closesAt: toInput(h.closesAt),
       }))));
-      flash('Opening hours saved.');
+      toast.success('Opening hours saved.');
     } catch (e) {
-      setError(errorMessage(e));
+      toast.error(errorMessage(e, 'The opening hours could not be saved.'));
     } finally {
       setSaving(false);
     }
   };
 
   const addHoliday = async () => {
-    if (!newHoliday.day) { setError('Pick the date the institute is closed.'); return; }
-    setError(null);
+    if (!newHoliday.day) { toast.error('Pick the date the institute is closed.'); return; }
     try {
       await scheduleService.addHoliday(newHoliday.day, newHoliday.name);
       setNewHoliday({ day: '', name: '' });
       setHolidays(await scheduleService.getHolidays());
-      flash('Closure added. Follow-ups will move off that day.');
-    } catch (e) { setError(errorMessage(e)); }
+      toast.success('Closure added. Follow-ups will move off that day.');
+    } catch (e) { toast.error(errorMessage(e, 'That closure could not be added.')); }
   };
 
   const removeHoliday = async (day: string) => {
     try {
       await scheduleService.removeHoliday(day);
       setHolidays(prev => prev.filter(h => h.day !== day));
-    } catch (e) { setError(errorMessage(e)); }
+    } catch (e) { toast.error(errorMessage(e, 'That closure could not be removed.')); }
   };
 
   const addShift = async () => {
-    if (!newShift.userId) { setError('Choose who is on duty for this shift.'); return; }
-    setError(null);
+    if (!newShift.userId) { toast.error('Choose who is on duty for this shift.'); return; }
     try {
       await scheduleService.addShift(newShift);
       setRoster(await scheduleService.getRoster());
       setOnDuty(await scheduleService.onDutyNow());
-      flash('Shift added.');
-    } catch (e) { setError(errorMessage(e)); }
+      toast.success('Shift added.');
+    } catch (e) { toast.error(errorMessage(e, 'That shift could not be added.')); }
   };
 
   const removeShift = async (id: string) => {
@@ -140,7 +136,7 @@ const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
       await scheduleService.removeShift(id);
       setRoster(prev => prev.filter(s => s.id !== id));
       setOnDuty(await scheduleService.onDutyNow());
-    } catch (e) { setError(errorMessage(e)); }
+    } catch (e) { toast.error(errorMessage(e, 'That shift could not be removed.')); }
   };
 
   const nameOf = (userId: string) => {
@@ -164,20 +160,12 @@ const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
   return (
     <div className="space-y-6">
       <AnimatePresence>
-        {error && (
+        {loadError && (
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-100 text-red-700 text-sm"
           >
-            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> <span>{error}</span>
-          </motion.div>
-        )}
-        {success && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm"
-          >
-            <CheckCircle2 className="w-4 h-4 shrink-0" /> <span>{success}</span>
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> <span>{loadError}</span>
           </motion.div>
         )}
       </AnimatePresence>

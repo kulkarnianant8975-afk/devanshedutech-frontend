@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Minus, AlertCircle, Loader2, X, RefreshCw,
+  Minus, AlertCircle, Loader2, RefreshCw,
   CheckCircle2, AlertTriangle, Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -212,18 +212,21 @@ interface Props {
 const AdminDashboard: React.FC<Props> = ({ currentUser }) => {
   const [data, setData] = useState<PipelineMetricsDTO | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen and stays put while the person decides what to do. Everything a person
+  // actively did — saved, sent, deleted — is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [weeks, setWeeks] = useState(8);
 
   const seesTeam = can(currentUser, 'REPORT_VIEW_TEAM');
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       setData(await leadService.pipelineMetrics(weeks));
     } catch (err) {
-      setError(errorMessage(err, 'Could not load the numbers. Check your connection and try again.'));
+      setLoadError(errorMessage(err, 'Could not load the numbers. Check your connection and try again.'));
     } finally {
       setLoading(false);
     }
@@ -242,12 +245,12 @@ const AdminDashboard: React.FC<Props> = ({ currentUser }) => {
   return (
     <div className="space-y-5">
       <AnimatePresence>
-        {error && (
+        {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             role="alert" className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl">
             <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium flex-1">{error}</p>
-            <button onClick={() => setError(null)} aria-label="Dismiss"><X size={18} /></button>
+            <p className="text-sm font-medium flex-1">{loadError}</p>
+            <button onClick={load} className="text-sm font-semibold underline shrink-0">Retry</button>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   UserPlus, Shield, Search, Loader2, X, Save, KeyRound, AlertCircle,
-  CheckCircle2, UserX, UserCheck, Lock, ScrollText, RefreshCw
+  UserX, UserCheck, Lock, ScrollText, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import {
@@ -42,11 +43,14 @@ interface Props {
 }
 
 const AdminTeam: React.FC<Props> = ({ currentUser }) => {
+  const toast = useToast();
   const [users, setUsers] = useState<StaffUserDTO[]>([]);
   const [roles, setRoles] = useState<RoleOptionDTO[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen and stays put while the person decides what to do. Everything a person
+  // actively did — saved, sent, deleted — is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -61,20 +65,15 @@ const AdminTeam: React.FC<Props> = ({ currentUser }) => {
   const canAssignRole = can(currentUser, 'ROLE_ASSIGN');
   const canViewAudit = can(currentUser, 'AUDIT_VIEW');
 
-  const flash = (msg: string) => {
-    setSuccess(msg);
-    window.setTimeout(() => setSuccess(null), 4000);
-  };
-
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       const data = await userService.getTeam();
       setUsers(data.users);
       setRoles(data.roles);
     } catch (err) {
-      setError(errorMessage(err, 'Could not load the team. Check your connection and try again.'));
+      setLoadError(errorMessage(err, 'Could not load the team. Check your connection and try again.'));
     } finally {
       setLoading(false);
     }
@@ -87,7 +86,7 @@ const AdminTeam: React.FC<Props> = ({ currentUser }) => {
     try {
       setAudit(await userService.getAudit(0, 60));
     } catch (err) {
-      setError(errorMessage(err, 'Could not load the audit trail.'));
+      setLoadError(errorMessage(err, 'Could not load the audit trail.'));
     } finally {
       setAuditLoading(false);
     }
@@ -102,13 +101,12 @@ const AdminTeam: React.FC<Props> = ({ currentUser }) => {
   const applyRole = async (user: StaffUserDTO, role: RoleName) => {
     if (role === user.role) return;
     setBusyId(user.id);
-    setError(null);
     try {
       const updated = await userService.changeRole(user.id, role);
       setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)));
-      flash(`${updated.displayName} is now ${updated.roleLabel}.`);
+      toast.success(`${updated.displayName} is now ${updated.roleLabel}.`);
     } catch (err) {
-      setError(errorMessage(err, 'Could not change that role.'));
+      toast.error(errorMessage(err, 'Could not change that role.'));
     } finally {
       setBusyId(null);
     }
@@ -118,16 +116,15 @@ const AdminTeam: React.FC<Props> = ({ currentUser }) => {
     if (!confirm) return;
     const { user, activate } = confirm;
     setBusyId(user.id);
-    setError(null);
     try {
       const updated = await userService.setActive(user.id, activate);
       setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)));
-      flash(activate
+      toast.success(activate
         ? `${updated.displayName} can sign in again.`
         : `${updated.displayName} has been deactivated. Their history is kept.`);
       setConfirm(null);
     } catch (err) {
-      setError(errorMessage(err, 'Could not update that account.'));
+      toast.error(errorMessage(err, 'Could not update that account.'));
       setConfirm(null);
     } finally {
       setBusyId(null);
@@ -148,25 +145,15 @@ const AdminTeam: React.FC<Props> = ({ currentUser }) => {
     <div className="space-y-6">
       {/* Feedback */}
       <AnimatePresence>
-        {error && (
+        {loadError && (
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             role="alert"
             className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl"
           >
             <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium flex-1">{error}</p>
-            <button onClick={() => setError(null)} aria-label="Dismiss"><X size={18} /></button>
-          </motion.div>
-        )}
-        {success && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            role="status"
-            className="flex items-start gap-3 bg-emerald-50 border border-emerald-100 text-emerald-700 p-4 rounded-2xl"
-          >
-            <CheckCircle2 size={20} className="flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium flex-1">{success}</p>
+            <p className="text-sm font-medium flex-1">{loadError}</p>
+            <button onClick={load} className="text-sm font-semibold underline shrink-0">Retry</button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -371,8 +358,8 @@ const AdminTeam: React.FC<Props> = ({ currentUser }) => {
         <AddMemberModal
           roles={roles}
           onClose={() => setIsAddOpen(false)}
-          onCreated={(u) => { setUsers(prev => [...prev, u]); setIsAddOpen(false); flash(`${u.displayName} can now sign in.`); }}
-          onError={setError}
+          onCreated={(u) => { setUsers(prev => [...prev, u]); setIsAddOpen(false); toast.success(`${u.displayName} can now sign in.`); }}
+          onError={toast.error}
         />
       )}
 
@@ -380,8 +367,8 @@ const AdminTeam: React.FC<Props> = ({ currentUser }) => {
         <PasswordModal
           user={pwUser}
           onClose={() => setPwUser(null)}
-          onDone={() => { flash(`Password updated for ${pwUser.displayName}.`); setPwUser(null); }}
-          onError={setError}
+          onDone={() => { toast.success(`Password updated for ${pwUser.displayName}.`); setPwUser(null); }}
+          onError={toast.error}
         />
       )}
 

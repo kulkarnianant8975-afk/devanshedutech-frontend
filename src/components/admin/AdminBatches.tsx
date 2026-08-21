@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  CalendarRange, Plus, Loader2, AlertCircle, X, CheckCircle2, Save
+  CalendarRange, Plus, Loader2, AlertCircle, Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { batchService, courseService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { BatchDTO, CourseResponseDTO, UserResponseDTO } from '../../dtos';
@@ -41,11 +42,14 @@ const daysUntil = (iso: string) => {
 interface Props { currentUser?: UserResponseDTO | null; }
 
 const AdminBatches: React.FC<Props> = ({ currentUser }) => {
+  const toast = useToast();
   const [batches, setBatches] = useState<BatchDTO[]>([]);
   const [courses, setCourses] = useState<CourseResponseDTO[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen and stays put while the person decides what to do. Everything a person
+  // actively did — saved, sent, deleted — is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({
@@ -55,13 +59,14 @@ const AdminBatches: React.FC<Props> = ({ currentUser }) => {
   const canManage = can(currentUser, 'CONTENT_MANAGE');
 
   const load = useCallback(async () => {
+    setLoadError(null);
     try {
       const [b, c] = await Promise.all([batchService.list(), courseService.getAll()]);
       setBatches(b);
       setCourses(c);
       if (c.length && !form.courseId) setForm(f => ({ ...f, courseId: c[0].id }));
     } catch (err) {
-      setError(errorMessage(err, 'Could not load the batches.'));
+      setLoadError(errorMessage(err, 'Could not load the batches.'));
     } finally {
       setLoading(false);
     }
@@ -71,22 +76,19 @@ const AdminBatches: React.FC<Props> = ({ currentUser }) => {
 
   useEffect(() => { load(); }, [load]);
 
-  const flash = (m: string) => { setSuccess(m); window.setTimeout(() => setSuccess(null), 3500); };
-
   const create = async () => {
     setSaving(true);
-    setError(null);
     try {
       await batchService.create({
         ...form,
         capacity: form.capacity ? Number(form.capacity) : undefined,
       } as Partial<BatchDTO>);
-      flash(`${form.name} added.`);
+      toast.success(`${form.name} added.`);
       setForm(f => ({ ...f, name: '', startDate: '', timing: '', capacity: '' }));
       setAdding(false);
       load();
     } catch (err) {
-      setError(errorMessage(err, 'Could not create that batch.'));
+      toast.error(errorMessage(err, 'Could not create that batch.'));
     } finally {
       setSaving(false);
     }
@@ -96,9 +98,9 @@ const AdminBatches: React.FC<Props> = ({ currentUser }) => {
     try {
       const updated = await batchService.update(batch.id, { status });
       setBatches(prev => prev.map(b => (b.id === updated.id ? updated : b)));
-      flash(`${batch.name} is now ${status.toLowerCase()}.`);
+      toast.success(`${batch.name} is now ${status.toLowerCase()}.`);
     } catch (err) {
-      setError(errorMessage(err, 'Could not update that batch.'));
+      toast.error(errorMessage(err, 'Could not update that batch.'));
     }
   };
 
@@ -112,18 +114,12 @@ const AdminBatches: React.FC<Props> = ({ currentUser }) => {
   return (
     <div className="space-y-5">
       <AnimatePresence>
-        {error && (
+        {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             role="alert" className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl">
             <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium flex-1">{error}</p>
-            <button onClick={() => setError(null)} aria-label="Dismiss"><X size={18} /></button>
-          </motion.div>
-        )}
-        {success && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            role="status" className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 text-emerald-700 p-3.5 rounded-2xl">
-            <CheckCircle2 size={18} /><p className="text-sm font-medium">{success}</p>
+            <p className="text-sm font-medium flex-1">{loadError}</p>
+            <button onClick={load} className="text-sm font-semibold underline shrink-0">Retry</button>
           </motion.div>
         )}
       </AnimatePresence>

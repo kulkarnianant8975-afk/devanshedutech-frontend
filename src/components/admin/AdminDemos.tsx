@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  AlertCircle, X, CheckCircle2, XCircle, ChevronLeft,
+  AlertCircle, CheckCircle2, XCircle, ChevronLeft,
   ChevronRight, Clock, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { demoService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import LeadDrawer from './LeadDrawer';
@@ -86,26 +87,27 @@ const DemoCard: React.FC<{
 interface Props { currentUser?: UserResponseDTO | null; }
 
 const AdminDemos: React.FC<Props> = ({ currentUser }) => {
+  const toast = useToast();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [board, setBoard] = useState<DemoBoardDTO | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen and stays put while the person decides what to do. Everything a person
+  // actively did — saved, sent, deleted — is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [options, setOptions] = useState<LeadOptionsDTO | null>(null);
   const [staff, setStaff] = useState<StaffUserDTO[]>([]);
 
   const canEdit = can(currentUser, 'LEAD_EDIT');
-  const flash = (m: string) => { setSuccess(m); window.setTimeout(() => setSuccess(null), 3500); };
-
   const load = useCallback(async () => {
-    setError(null);
+    setLoadError(null);
     const end = new Date(weekStart); end.setDate(end.getDate() + 6);
     try {
       setBoard(await demoService.board(iso(weekStart), iso(end)));
     } catch (err) {
-      setError(errorMessage(err, 'Could not load the demo calendar.'));
+      setLoadError(errorMessage(err, 'Could not load the demo calendar.'));
     } finally {
       setLoading(false);
     }
@@ -122,15 +124,14 @@ const AdminDemos: React.FC<Props> = ({ currentUser }) => {
 
   const mark = async (demo: DemoDTO, attended: boolean) => {
     setBusyId(demo.id);
-    setError(null);
     try {
       await demoService.mark(demo.id, attended);
-      flash(attended
+      toast.success(attended
         ? `${demo.studentName} attended — day 1 and day 3 follow-ups booked.`
         : `${demo.studentName} marked as a no-show. A recovery touch is booked for today.`);
       load();
     } catch (err) {
-      setError(errorMessage(err, 'Could not record that.'));
+      toast.error(errorMessage(err, 'Could not record that.'));
     } finally {
       setBusyId(null);
     }
@@ -149,18 +150,12 @@ const AdminDemos: React.FC<Props> = ({ currentUser }) => {
   return (
     <div className="space-y-4">
       <AnimatePresence>
-        {error && (
+        {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             role="alert" className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl">
             <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium flex-1">{error}</p>
-            <button onClick={() => setError(null)} aria-label="Dismiss"><X size={18} /></button>
-          </motion.div>
-        )}
-        {success && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            role="status" className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 text-emerald-700 p-3.5 rounded-2xl">
-            <CheckCircle2 size={18} /><p className="text-sm font-medium">{success}</p>
+            <p className="text-sm font-medium flex-1">{loadError}</p>
+            <button onClick={load} className="text-sm font-semibold underline shrink-0">Retry</button>
           </motion.div>
         )}
       </AnimatePresence>

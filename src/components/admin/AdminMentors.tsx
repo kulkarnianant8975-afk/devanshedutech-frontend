@@ -9,26 +9,24 @@ import {
   X,
   Save,
   Loader2,
-  FileText,
-  AlertCircle,
-  CheckCircle2
+  FileText
 } from 'lucide-react';
 import { mentorService } from '../../services/mentorService';
-import { authService } from '../../services/api';
+import { authService, errorMessage } from '../../services/api';
 import { MentorResponseDTO as Mentor } from '../../dtos';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { resolveImageUrl, uploadImageToCDN, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
 import { backendUrl } from '../../services/api';
 
 const AdminMentors = () => {
+  const toast = useToast();
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMentor, setEditingMentor] = useState<Mentor | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [showDraftPrompt, setShowDraftPrompt] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -43,8 +41,7 @@ const AdminMentors = () => {
 
   const saveToDraft = () => {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
-    setSuccess("Draft saved successfully!");
-    setTimeout(() => setSuccess(null), 3000);
+    toast.success('Draft saved.', 'It will still be here if you close this and come back.');
   };
 
   const loadDraft = () => {
@@ -52,8 +49,7 @@ const AdminMentors = () => {
     if (draft) {
       setFormData(JSON.parse(draft));
       setShowDraftPrompt(false);
-      setSuccess("Draft restored!");
-      setTimeout(() => setSuccess(null), 3000);
+      toast.success('Draft restored.', 'What you had typed before is back in the form.');
     }
   };
 
@@ -102,20 +98,17 @@ const AdminMentors = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
-    setSuccess(null);
     try {
       console.log("Attempting to save mentor with role:", userRole);
       if (editingMentor) {
         await mentorService.update(editingMentor.id, formData);
-        setSuccess("Mentor updated successfully!");
+        toast.success(`${formData.name} was updated.`);
       } else {
         await mentorService.create(formData);
-        setSuccess("Mentor created successfully!");
+        toast.success(`${formData.name} was added to the mentors page.`);
       }
       
       clearDraft();
-      setTimeout(() => setSuccess(null), 5000);
       
       setIsModalOpen(false);
       setEditingMentor(null);
@@ -123,14 +116,10 @@ const AdminMentors = () => {
       fetchMentors();
     } catch (err: any) {
       console.error("Error saving mentor:", err);
-      const statusCode = err?.response?.status;
-      if (statusCode === 401) {
-        setError("Your session has expired. Please log in again.");
-      } else if (statusCode === 403) {
-        setError(`Access denied. You need ADMIN permissions. Your current role is: ${userRole || 'Unknown'}`);
-      } else {
-        setError(err?.response?.data?.error || err?.response?.data?.message || err.message || "Failed to save mentor. Try again.");
-      }
+      // This used to hand-roll its own status handling, and told a counsellor their "current role
+      // is: Unknown" — true, and no use to anybody. errorMessage says the same thing in words
+      // that suggest what to do next, and stays consistent with every other screen.
+      toast.error(errorMessage(err, 'That mentor could not be saved.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -138,7 +127,6 @@ const AdminMentors = () => {
 
   const handleEdit = (mentor: Mentor) => {
     setEditingMentor(mentor);
-    setError(null);
     setFormData({
       name: mentor.name,
       role: mentor.role,
@@ -175,7 +163,6 @@ const AdminMentors = () => {
         <button 
           onClick={() => {
             setEditingMentor(null);
-            setError(null);
             setFormData({ name: '', role: '', description: '', imageUrl: '', linkedinUrl: '' });
             setIsModalOpen(true);
           }}
@@ -187,17 +174,6 @@ const AdminMentors = () => {
       </div>
 
       <AnimatePresence>
-        {success && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-green-50 text-green-700 p-4 rounded-2xl border border-green-100 flex items-center space-x-3 shadow-sm"
-          >
-            <CheckCircle2 size={20} />
-            <span className="font-medium">{success}</span>
-          </motion.div>
-        )}
       </AnimatePresence>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {loading ? (
@@ -290,13 +266,6 @@ const AdminMentors = () => {
               </div>
               
               <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
-                {error && (
-                  <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 text-sm font-medium flex items-center space-x-3">
-                    <AlertCircle size={20} />
-                    <span>{error}</span>
-                  </div>
-                )}
-
                 {showDraftPrompt && !editingMentor && (
                   <div className="bg-orange-50 text-orange-700 p-4 rounded-2xl border border-orange-100 text-sm font-medium flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -393,7 +362,7 @@ const AdminMentors = () => {
                                   setFormData({ ...formData, imageUrl: cdnUrl });
                                 } catch (error: any) {
                                   console.error("Error uploading image:", error);
-                                  setError(error.message || "Image upload failed. Please try again.");
+                                  toast.error(errorMessage(error, 'That image could not be uploaded.'));
                                 } finally {
                                   setIsUploadingImage(false);
                                 }

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Megaphone, Loader2, AlertCircle, X, CheckCircle2, Users, Send, Info
+  Megaphone, Loader2, AlertCircle, Users, Send, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { broadcastService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { SegmentDTO, BroadcastDTO, UserResponseDTO } from '../../dtos';
@@ -28,12 +29,15 @@ const STATUS_TONE: Record<string, string> = {
 interface Props { currentUser?: UserResponseDTO | null; }
 
 const AdminBroadcasts: React.FC<Props> = ({ currentUser }) => {
+  const toast = useToast();
   const [segments, setSegments] = useState<SegmentDTO[]>([]);
   const [canSend, setCanSend] = useState(false);
   const [history, setHistory] = useState<BroadcastDTO[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen and stays put while the person decides what to do. Everything a person
+  // actively did — saved, sent, deleted — is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
   const [segment, setSegment] = useState('COLD');
@@ -44,6 +48,7 @@ const AdminBroadcasts: React.FC<Props> = ({ currentUser }) => {
   const chosen = segments.find(s => s.segment === segment);
 
   const load = useCallback(async () => {
+    setLoadError(null);
     try {
       const [seg, recent] = await Promise.all([
         broadcastService.segments(),
@@ -53,7 +58,7 @@ const AdminBroadcasts: React.FC<Props> = ({ currentUser }) => {
       setCanSend(seg.canSend);
       setHistory(recent);
     } catch (err) {
-      setError(errorMessage(err, 'Could not load broadcasts.'));
+      setLoadError(errorMessage(err, 'Could not load broadcasts.'));
     } finally {
       setLoading(false);
     }
@@ -70,17 +75,15 @@ const AdminBroadcasts: React.FC<Props> = ({ currentUser }) => {
     if (!ok) return;
 
     setSending(true);
-    setError(null);
     try {
       const result = await broadcastService.send(title, message, segment);
-      setSuccess(result.status === 'SENT'
+      toast.success(result.status === 'SENT'
         ? `Sent to ${result.sentCount} of ${result.recipientCount}.`
         : `Recorded, but nothing was sent — connect a messaging provider first.`);
       setTitle(''); setMessage('');
       load();
-      window.setTimeout(() => setSuccess(null), 6000);
     } catch (err) {
-      setError(errorMessage(err, 'Could not send that broadcast.'));
+      toast.error(errorMessage(err, 'Could not send that broadcast.'));
     } finally {
       setSending(false);
     }
@@ -93,18 +96,12 @@ const AdminBroadcasts: React.FC<Props> = ({ currentUser }) => {
   return (
     <div className="space-y-5">
       <AnimatePresence>
-        {error && (
+        {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             role="alert" className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl">
             <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium flex-1">{error}</p>
-            <button onClick={() => setError(null)} aria-label="Dismiss"><X size={18} /></button>
-          </motion.div>
-        )}
-        {success && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            role="status" className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 text-emerald-700 p-4 rounded-2xl">
-            <CheckCircle2 size={20} /><p className="text-sm font-medium">{success}</p>
+            <p className="text-sm font-medium flex-1">{loadError}</p>
+            <button onClick={load} className="text-sm font-semibold underline shrink-0">Retry</button>
           </motion.div>
         )}
       </AnimatePresence>

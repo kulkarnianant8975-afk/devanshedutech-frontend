@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, Loader2, CheckCircle2, AlertCircle, Send } from 'lucide-react';
 import { whatsappService, errorMessage } from '../../services/api';
+import { useToast } from '../../lib/toast';
 import { WhatsAppStatusDTO, WhatsAppTestDTO } from '../../dtos';
 
 /**
@@ -16,11 +17,11 @@ import { WhatsAppStatusDTO, WhatsAppTestDTO } from '../../dtos';
  */
 
 const WhatsAppConnection: React.FC = () => {
+  const toast = useToast();
   const [status, setStatus] = useState<WhatsAppStatusDTO | null>(null);
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState<null | 'template' | 'message'>(null);
   const [result, setResult] = useState<WhatsAppTestDTO | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -31,16 +32,15 @@ const WhatsAppConnection: React.FC = () => {
   }, []);
 
   const send = async (what: 'template' | 'message') => {
-    if (!phone.trim()) { setError('Enter the number to test with, including the country code.'); return; }
+    if (!phone.trim()) { toast.error('Enter the number to test with, including the country code.'); return; }
     setBusy(what);
-    setError(null);
     setResult(null);
     try {
       setResult(what === 'template'
         ? await whatsappService.sendTemplate(phone.trim())
         : await whatsappService.sendMessage(phone.trim()));
     } catch (e) {
-      setError(errorMessage(e, 'The test could not be run.'));
+      toast.error(errorMessage(e, 'The test could not be run.'));
     } finally {
       setBusy(null);
     }
@@ -105,12 +105,6 @@ const WhatsAppConnection: React.FC = () => {
               Send the template first — a phone that has never messaged the institute can only
               receive one. Reply to it, and the second button will then work.
             </p>
-
-            {error && (
-              <p className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> <span>{error}</span>
-              </p>
-            )}
 
             {result && (
               <div className={`rounded-lg px-3 py-2 border text-sm ${

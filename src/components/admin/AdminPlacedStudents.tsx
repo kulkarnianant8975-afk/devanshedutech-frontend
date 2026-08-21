@@ -14,17 +14,18 @@ import {
 import { placedStudentService } from '../../services/placedStudentService';
 import { PlacedStudentResponseDTO as PlacedStudent } from '../../dtos';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { resolveImageUrl, uploadImageToCDN, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../utils/imageUtils';
-import { backendUrl } from '../../services/api';
+import { backendUrl, errorMessage } from '../../services/api';
 
 const AdminPlacedStudents = () => {
+  const toast = useToast();
   const [students, setStudents] = useState<PlacedStudent[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<PlacedStudent | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -54,7 +55,6 @@ const AdminPlacedStudents = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
     try {
       if (editingStudent) {
         await placedStudentService.update(editingStudent.id, formData);
@@ -67,7 +67,7 @@ const AdminPlacedStudents = () => {
       fetchStudents();
     } catch (err: any) {
       console.error("Error saving student:", err);
-      setError(err?.response?.data?.error || err?.response?.data?.message || err.message || "Failed to save student. Try again.");
+      toast.error(errorMessage(err, 'That student could not be saved.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,7 +75,6 @@ const AdminPlacedStudents = () => {
 
   const handleEdit = (student: PlacedStudent) => {
     setEditingStudent(student);
-    setError(null);
     setFormData({
       name: student.name,
       company: student.company,
@@ -124,7 +123,6 @@ const AdminPlacedStudents = () => {
         <button 
           onClick={() => {
             setEditingStudent(null);
-            setError(null);
             setFormData({ name: '', company: '', role: '', salaryPackage: '', testimonial: '', imageUrl: '' });
             setIsModalOpen(true);
           }}
@@ -225,11 +223,6 @@ const AdminPlacedStudents = () => {
               </div>
               
               <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
-                {error && (
-                  <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 text-sm font-medium">
-                    {error}
-                  </div>
-                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Student Name</label>
@@ -328,7 +321,7 @@ const AdminPlacedStudents = () => {
                                   setFormData({ ...formData, imageUrl: cdnUrl });
                                 } catch (error: any) {
                                   console.error("Error uploading image:", error);
-                                  setError(error.message || "Image upload failed. Please try again.");
+                                  toast.error(errorMessage(error, 'That image could not be uploaded.'));
                                 } finally {
                                   setIsUploadingImage(false);
                                 }

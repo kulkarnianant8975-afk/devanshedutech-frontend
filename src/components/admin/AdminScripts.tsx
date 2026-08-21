@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { MessageSquareText, Loader2, AlertCircle, X, CheckCircle2, Save, Eye } from 'lucide-react';
+import { MessageSquareText, Loader2, AlertCircle, Save, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { leadService, errorMessage } from '../../services/api';
 import { EditablePackDTO, AssetSummaryDTO, UserResponseDTO } from '../../dtos';
 import WhatsAppConnection from './WhatsAppConnection';
@@ -32,18 +33,22 @@ const preview = (template: string) =>
 interface Props { currentUser?: UserResponseDTO | null; }
 
 const AdminScripts: React.FC<Props> = () => {
+  const toast = useToast();
   const [packs, setPacks] = useState<EditablePackDTO[]>([]);
   const [assets, setAssets] = useState<AssetSummaryDTO[]>([]);
   const [placeholders, setPlaceholders] = useState<Record<string, string>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [attachments, setAttachments] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen and stays put while the person decides what to do. Everything a person
+  // actively did — saved, sent, deleted — is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    setLoadError(null);
     try {
       const data = await leadService.scripts();
       setPacks(data.packs);
@@ -51,7 +56,7 @@ const AdminScripts: React.FC<Props> = () => {
       setPlaceholders(data.placeholders);
       setAttachments(Object.fromEntries(data.packs.map(p => [p.key, p.assetKeys])));
     } catch (err) {
-      setError(errorMessage(err, 'Could not load the message scripts.'));
+      setLoadError(errorMessage(err, 'Could not load the message scripts.'));
     } finally {
       setLoading(false);
     }
@@ -61,7 +66,6 @@ const AdminScripts: React.FC<Props> = () => {
 
   const save = async (pack: EditablePackDTO) => {
     setSavingKey(pack.key);
-    setError(null);
     try {
       const updated = await leadService.updatePack(pack.key, {
         coverTemplate: drafts[pack.key] ?? pack.coverTemplate,
@@ -69,11 +73,10 @@ const AdminScripts: React.FC<Props> = () => {
       });
       setPacks(prev => prev.map(p => (p.key === updated.key ? updated : p)));
       setDrafts(d => { const next = { ...d }; delete next[pack.key]; return next; });
-      setSuccess(`"${pack.name}" saved. It applies to the next message sent.`);
-      window.setTimeout(() => setSuccess(null), 4000);
+      toast.success(`"${pack.name}" saved. It applies to the next message sent.`);
     } catch (err) {
       // The server rejects an unknown placeholder with an explanation; show it as written.
-      setError(errorMessage(err, 'Could not save that script.'));
+      toast.error(errorMessage(err, 'Could not save that script.'));
     } finally {
       setSavingKey(null);
     }
@@ -90,18 +93,12 @@ const AdminScripts: React.FC<Props> = () => {
       <WhatsAppConnection />
 
       <AnimatePresence>
-        {error && (
+        {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             role="alert" className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl">
             <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium flex-1">{error}</p>
-            <button onClick={() => setError(null)} aria-label="Dismiss"><X size={18} /></button>
-          </motion.div>
-        )}
-        {success && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            role="status" className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 text-emerald-700 p-3.5 rounded-2xl">
-            <CheckCircle2 size={18} /><p className="text-sm font-medium">{success}</p>
+            <p className="text-sm font-medium flex-1">{loadError}</p>
+            <button onClick={load} className="text-sm font-semibold underline shrink-0">Retry</button>
           </motion.div>
         )}
       </AnimatePresence>

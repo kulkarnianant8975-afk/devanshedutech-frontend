@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Loader2, Check, X, ClipboardCopy } from 'lucide-react';
 import { assistantService, errorMessage } from '../../services/api';
+import { useToast } from '../../lib/toast';
 import { GradeName, GradeSuggestionDTO } from '../../dtos';
 
 /**
@@ -45,9 +46,9 @@ interface Props {
 }
 
 const AssistantPanel: React.FC<Props> = ({ leadId, canEdit, onApplyGrade, onUseDraft }) => {
+  const toast = useToast();
   const [available, setAvailable] = useState(false);
   const [busy, setBusy] = useState<Task | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const [suggestion, setSuggestion] = useState<GradeSuggestionDTO | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
@@ -56,7 +57,7 @@ const AssistantPanel: React.FC<Props> = ({ leadId, canEdit, onApplyGrade, onUseD
 
   useEffect(() => {
     let live = true;
-    setSuggestion(null); setSummary(null); setDraft(null); setError(null);
+    setSuggestion(null); setSummary(null); setDraft(null);
     assistantService.available(leadId)
       .then(a => live && setAvailable(a))
       .catch(() => live && setAvailable(false));
@@ -67,13 +68,12 @@ const AssistantPanel: React.FC<Props> = ({ leadId, canEdit, onApplyGrade, onUseD
 
   const run = async (what: Task) => {
     setBusy(what);
-    setError(null);
     try {
       if (what === 'grade') setSuggestion(await assistantService.suggestGrade(leadId));
       if (what === 'summary') setSummary(await assistantService.summarise(leadId));
       if (what === 'draft') setDraft(await assistantService.draft(leadId, intent || undefined));
     } catch (e) {
-      setError(errorMessage(e, 'The assistant could not answer. Write it yourself for now.'));
+      toast.error(errorMessage(e, 'The assistant could not answer. Write it yourself for now.'));
     } finally {
       setBusy(null);
     }
@@ -93,8 +93,6 @@ const AssistantPanel: React.FC<Props> = ({ leadId, canEdit, onApplyGrade, onUseD
         {canEdit && <AskButton what="grade" label="Suggest a grade" busy={busy} onRun={run} />}
         {canEdit && <AskButton what="draft" label="Draft a message" busy={busy} onRun={run} />}
       </div>
-
-      {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
 
       {summary && (
         <div className="mb-3 p-3 rounded-xl bg-gray-50 border border-gray-100">

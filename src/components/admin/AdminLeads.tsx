@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search, Download, Trash2, Phone, MapPin, GraduationCap, AlertCircle, UserPlus,
-  CheckCircle2, Loader2, X, ChevronLeft, ChevronRight, CalendarClock, Inbox
+  Loader2, ChevronLeft, ChevronRight, CalendarClock, Inbox
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import LeadDrawer from './LeadDrawer';
 import AddLeadModal from './AddLeadModal';
 import { leadService, userService, errorMessage } from '../../services/api';
@@ -49,13 +50,16 @@ interface Props {
 }
 
 const AdminLeads: React.FC<Props> = ({ currentUser }) => {
+  const toast = useToast();
   const [leads, setLeads] = useState<LeadDTO[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen and stays put while the person decides what to do. Everything a person
+  // actively did — saved, sent, deleted — is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
 
@@ -75,11 +79,6 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
   const seesEveryone = can(currentUser, 'LEAD_VIEW_ALL');
   const canViewStaff = can(currentUser, 'USER_VIEW');
 
-  const flash = (msg: string) => {
-    setSuccess(msg);
-    window.setTimeout(() => setSuccess(null), 3500);
-  };
-
   // Debounced so typing a name does not fire a request per keystroke.
   const debounce = useRef<number | undefined>(undefined);
   const [query, setQuery] = useState('');
@@ -91,7 +90,7 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       const data = await leadService.list({
         page,
@@ -106,7 +105,7 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
       setTotal(data.total);
       setTotalPages(data.totalPages);
     } catch (err) {
-      setError(errorMessage(err, 'Could not load leads. Check your connection and try again.'));
+      setLoadError(errorMessage(err, 'Could not load leads. Check your connection and try again.'));
     } finally {
       setLoading(false);
     }
@@ -129,13 +128,12 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
 
   const patch = async (lead: LeadDTO, changes: Parameters<typeof leadService.patch>[1], note: string) => {
     setBusyId(lead.id);
-    setError(null);
     try {
       const updated = await leadService.patch(lead.id, changes);
       setLeads(prev => prev.map(l => (l.id === updated.id ? updated : l)));
-      flash(note);
+      toast.success(note);
     } catch (err) {
-      setError(errorMessage(err, 'Could not update that lead.'));
+      toast.error(errorMessage(err, 'Could not update that lead.'));
     } finally {
       setBusyId(null);
     }
@@ -153,9 +151,9 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
       await leadService.delete(lead.id);
       setLeads(prev => prev.filter(l => l.id !== lead.id));
       setTotal(t => t - 1);
-      flash(`${lead.fullName} deleted.`);
+      toast.success(`${lead.fullName} deleted.`);
     } catch (err) {
-      setError(errorMessage(err, 'Could not delete that lead.'));
+      toast.error(errorMessage(err, 'Could not delete that lead.'));
     } finally {
       setBusyId(null);
     }
@@ -190,10 +188,10 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       if (all.total > all.items.length) {
-        flash(`Exported the first ${all.items.length} of ${all.total} matching leads.`);
+        toast.success(`Exported the first ${all.items.length} of ${all.total} matching leads.`);
       }
     } catch (err) {
-      setError(errorMessage(err, 'Could not export those leads.'));
+      toast.error(errorMessage(err, 'Could not export those leads.'));
     }
   };
 
@@ -220,8 +218,7 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
             onClose={() => setAdding(false)}
             onCreated={(leadId, duplicate, message) => {
               setAdding(false);
-              setSuccess(message);
-              window.setTimeout(() => setSuccess(null), 4000);
+              toast.success(message);
               // Opened straight away, duplicate or not — the counsellor is mid-conversation and
               // the next thing they need is the student's history, not a list.
               setOpenLeadId(leadId);
@@ -232,18 +229,12 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {error && (
+        {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             role="alert" className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl">
             <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium flex-1">{error}</p>
-            <button onClick={() => setError(null)} aria-label="Dismiss"><X size={18} /></button>
-          </motion.div>
-        )}
-        {success && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            role="status" className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 text-emerald-700 p-4 rounded-2xl">
-            <CheckCircle2 size={20} /><p className="text-sm font-medium">{success}</p>
+            <p className="text-sm font-medium flex-1">{loadError}</p>
+            <button onClick={load} className="text-sm font-semibold underline shrink-0">Retry</button>
           </motion.div>
         )}
       </AnimatePresence>

@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AssistantPanel from '../components/admin/AssistantPanel';
+import { ToastProvider } from '../lib/toast';
 import { assistantService } from '../services/api';
 
 vi.mock('../services/api', () => ({
@@ -12,14 +13,18 @@ vi.mock('../services/api', () => ({
   errorMessage: (e: unknown, fallback: string) => fallback,
 }));
 
+// Wrapped in the real provider rather than a stub: the panel reports failures by raising a
+// toast now, so a test that renders it bare would assert against a message nothing displays.
 const panel = (props: Partial<ComponentProps<typeof AssistantPanel>> = {}) =>
   render(
-    <AssistantPanel
-      leadId="l1" canEdit
-      onApplyGrade={props.onApplyGrade ?? (() => {})}
-      onUseDraft={props.onUseDraft ?? (() => {})}
-      {...props}
-    />
+    <ToastProvider>
+      <AssistantPanel
+        leadId="l1" canEdit
+        onApplyGrade={props.onApplyGrade ?? (() => {})}
+        onUseDraft={props.onUseDraft ?? (() => {})}
+        {...props}
+      />
+    </ToastProvider>
   );
 
 describe('Assistant', () => {

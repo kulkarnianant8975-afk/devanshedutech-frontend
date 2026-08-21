@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Phone, Mail, MapPin, GraduationCap, CalendarClock, Loader2, AlertCircle,
-  CheckCircle2, MessageSquare, PhoneCall, ArrowRightLeft, Sparkles, StickyNote,
+  MessageSquare, PhoneCall, ArrowRightLeft, Sparkles, StickyNote,
   Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks, CalendarPlus, Eye, GraduationCap as Cap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../lib/toast';
 import { leadService, demoService, errorMessage } from '../../services/api';
 import SendPackPanel from './SendPackPanel';
 import { batchService } from '../../services/api';
@@ -79,6 +80,7 @@ interface Props {
 }
 
 const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onClose, onUpdated }) => {
+  const toast = useToast();
   const [lead, setLead] = useState<LeadDTO | null>(null);
   const [activities, setActivities] = useState<LeadActivityDTO[]>([]);
   const [ladder, setLadder] = useState<LadderStepDTO[]>([]);
@@ -87,8 +89,10 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
   const [batches, setBatches] = useState<BatchDTO[]>([]);
   const [enrolling, setEnrolling] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Only a failure to LOAD lives here. A banner is right for that: it explains an empty
+  // screen and stays put while the person decides what to do. Everything a person
+  // actively did — saved, sent, deleted — is reported by a toast instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [pendingOutcome, setPendingOutcome] = useState<OptionDTO | null>(null);
@@ -103,11 +107,6 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
 
   const canEdit = can(currentUser, 'LEAD_EDIT');
   const canAssign = can(currentUser, 'LEAD_ASSIGN');
-
-  const flash = (msg: string) => {
-    setSuccess(msg);
-    window.setTimeout(() => setSuccess(null), 3000);
-  };
 
   /**
    * Held in a ref rather than named as a dependency. Every screen passes this as an inline
@@ -132,11 +131,11 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
     if (!leadId) { setLead(null); setActivities(NO_ACTIVITIES); setLadder(NO_LADDER); setOpens(NO_OPENS); return; }
     let cancelled = false;
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     setPendingOutcome(null);
     leadService.detail(leadId)
       .then(d => { if (!cancelled) applyDetail(d); })
-      .catch(err => { if (!cancelled) setError(errorMessage(err, 'Could not open that lead.')); })
+      .catch(err => { if (!cancelled) setLoadError(errorMessage(err, 'Could not open that lead.')); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [leadId, applyDetail]);
@@ -164,17 +163,16 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
   const patch = async (changes: Parameters<typeof leadService.patch>[1], note: string) => {
     if (!lead) return;
     setSaving(true);
-    setError(null);
     try {
       const updated = await leadService.patch(lead.id, changes);
       setLead(updated);
       setNextTouch(updated.nextTouchOn ?? '');
       onUpdated(updated);
-      flash(note);
+      toast.success(note);
       // Transitions are written to the timeline, so pull it back in.
       leadService.detail(lead.id).then(d => setActivities(d.activities)).catch(() => {});
     } catch (err) {
-      setError(errorMessage(err, 'Could not save that change.'));
+      toast.error(errorMessage(err, 'Could not save that change.'));
     } finally {
       setSaving(false);
     }
@@ -183,7 +181,6 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
   const submitOutcome = async () => {
     if (!lead || !pendingOutcome) return;
     setSaving(true);
-    setError(null);
     try {
       const detail = await leadService.recordOutcome(lead.id, {
         outcome: pendingOutcome.value as OutcomeName,
@@ -191,12 +188,12 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
         lostReason: lostReason || undefined,
       });
       applyDetail(detail);
-      flash(`Recorded: ${pendingOutcome.label}.`);
+      toast.success(`Recorded: ${pendingOutcome.label}.`);
       setPendingOutcome(null);
       setOutcomeNote('');
       setLostReason('');
     } catch (err) {
-      setError(errorMessage(err, 'Could not record that outcome.'));
+      toast.error(errorMessage(err, 'Could not record that outcome.'));
     } finally {
       setSaving(false);
     }
@@ -222,9 +219,9 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
       const updated = await leadService.pause(lead.id, until, reason);
       setLead(updated);
       onUpdated(updated);
-      flash('Follow-ups paused.');
+      toast.success('Follow-ups paused.');
     } catch (err) {
-      setError(errorMessage(err, 'Could not pause that sequence.'));
+      toast.error(errorMessage(err, 'Could not pause that sequence.'));
     } finally {
       setSaving(false);
     }
@@ -237,9 +234,9 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
       const updated = await leadService.resume(lead.id);
       setLead(updated);
       onUpdated(updated);
-      flash('Follow-ups resumed.');
+      toast.success('Follow-ups resumed.');
     } catch (err) {
-      setError(errorMessage(err, 'Could not resume that sequence.'));
+      toast.error(errorMessage(err, 'Could not resume that sequence.'));
     } finally {
       setSaving(false);
     }
@@ -264,10 +261,10 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
       setLead(updated);
       onUpdated(updated);
       setEnrolling(false);
-      flash('Enrolled. Their week-one check-in is booked.');
+      toast.success('Enrolled. Their week-one check-in is booked.');
       leadService.detail(lead.id).then(applyDetail).catch(() => {});
     } catch (err) {
-      setError(errorMessage(err, 'Could not record that enrolment.'));
+      toast.error(errorMessage(err, 'Could not record that enrolment.'));
     } finally {
       setSaving(false);
     }
@@ -289,9 +286,9 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
       await demoService.book(lead.id, `${date}T${time}:00`);
       const detail = await leadService.detail(lead.id);
       applyDetail(detail);
-      flash('Demo booked. Confirm it with the student in writing.');
+      toast.success('Demo booked. Confirm it with the student in writing.');
     } catch (err) {
-      setError(errorMessage(err, 'Could not book that demo.'));
+      toast.error(errorMessage(err, 'Could not book that demo.'));
     } finally {
       setSaving(false);
     }
@@ -310,9 +307,9 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
       const updated = await leadService.optOut(lead.id);
       setLead(updated);
       onUpdated(updated);
-      flash('Marked as opted out.');
+      toast.success('Marked as opted out.');
     } catch (err) {
-      setError(errorMessage(err, 'Could not update that lead.'));
+      toast.error(errorMessage(err, 'Could not update that lead.'));
     } finally {
       setSaving(false);
     }
@@ -349,10 +346,10 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
           >
             {loading || !lead ? (
               <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
-                {error ? (
+                {loadError ? (
                   <>
                     <AlertCircle size={36} className="text-red-400" />
-                    <p className="text-sm text-red-600 text-center max-w-xs">{error}</p>
+                    <p className="text-sm text-red-600 text-center max-w-xs">{loadError}</p>
                     <button onClick={onClose} className="px-5 py-2.5 bg-gray-100 rounded-2xl font-bold text-sm">Close</button>
                   </>
                 ) : (
@@ -404,22 +401,6 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                     <X size={20} />
                   </button>
                 </header>
-
-                {/* Feedback */}
-                <AnimatePresence>
-                  {(error || success) && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                      <div className={`mx-5 mt-4 p-3 rounded-2xl text-sm font-medium flex items-start gap-2.5 ${
-                        error ? 'bg-red-50 text-red-700 border border-red-100'
-                              : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
-                        role={error ? 'alert' : 'status'}>
-                        {error ? <AlertCircle size={17} className="flex-shrink-0 mt-0.5" /> : <CheckCircle2 size={17} className="flex-shrink-0 mt-0.5" />}
-                        <span className="flex-1">{error || success}</span>
-                        {error && <button onClick={() => setError(null)} aria-label="Dismiss"><X size={15} /></button>}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
 
                 <div className="flex-1 overflow-y-auto px-5 pb-10">
                   {/* Next touch — the SOP's golden rule */}
@@ -683,10 +664,10 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                       leadId={lead.id}
                       studentName={lead.fullName}
                       onSent={() => {
-                        flash('Recorded on the timeline.');
+                        toast.success('Recorded on the timeline.');
                         leadService.detail(lead.id).then(applyDetail).catch(() => {});
                       }}
-                      onError={setError}
+                      onError={toast.error}
                     />
                   )}
 
