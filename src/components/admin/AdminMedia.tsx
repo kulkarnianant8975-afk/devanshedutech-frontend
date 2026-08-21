@@ -20,11 +20,26 @@ import { AssetDTO, CourseResponseDTO, UserResponseDTO } from '../../dtos';
 
 type Kind = 'PDF' | 'VIDEO' | 'LINK' | 'IMAGE';
 
+/**
+ * WhatsApp's own limits, shown before the upload rather than discovered after it.
+ *
+ * Meta refuses anything larger outright, so a bigger file could be stored and never sent — and
+ * the moment to learn that is not while a student is waiting for it.
+ */
+const UPLOAD: Record<string, { accept: string; limit: string; note: string }> = {
+  PDF:   { accept: 'application/pdf', limit: '100 MB',
+           note: 'PDF, up to 100 MB.' },
+  VIDEO: { accept: 'video/mp4,video/3gpp', limit: '16 MB',
+           note: 'MP4, up to 16 MB — about a minute of 720p. WhatsApp refuses anything larger, so put a longer film on YouTube and add the link instead.' },
+  IMAGE: { accept: 'image/jpeg,image/png', limit: '5 MB',
+           note: 'JPG or PNG, up to 5 MB.' },
+};
+
 const KINDS: { type: Kind; label: string; icon: typeof FileText; hint: string }[] = [
   { type: 'PDF',   label: 'Documents', icon: FileText,  hint: 'Syllabus, fee sheet, brochure' },
-  { type: 'VIDEO', label: 'Videos',    icon: Video,     hint: 'A YouTube or Drive link — not the file itself' },
+  { type: 'VIDEO', label: 'Videos',    icon: Video,     hint: 'Upload an MP4 up to 16 MB, or add a link for anything longer' },
   { type: 'LINK',  label: 'Links',     icon: Link2,     hint: 'Booking forms, the courses page, a map' },
-  { type: 'IMAGE', label: 'Images',    icon: ImageIcon, hint: 'Posters, batch photos' },
+  { type: 'IMAGE', label: 'Images',    icon: ImageIcon, hint: 'Posters and batch photos, up to 5 MB' },
 ];
 
 const ICONS: Record<string, typeof FileText> = {
@@ -51,6 +66,8 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
   const [adding, setAdding] = useState<Kind | null>(null);
 
   const [form, setForm] = useState({ name: '', url: '', courseId: '' });
+  // Video and image can be either; a document is always a file and a link is always a link.
+  const [mode, setMode] = useState<'upload' | 'link'>('upload');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const mayEdit = can(currentUser, 'SETTINGS_MANAGE');
@@ -81,6 +98,7 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
 
   const reset = () => {
     setForm({ name: '', url: '', courseId: '' });
+    setMode('upload');
     setAdding(null);
     if (fileRef.current) fileRef.current.value = '';
   };
@@ -91,8 +109,10 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
     setError(null);
     try {
       const file = fileRef.current?.files?.[0];
-      if (adding === 'PDF' && file) {
-        const created = await assetService.upload(file, form.name || file.name, form.courseId || undefined);
+      const uploading = adding !== 'LINK' && mode === 'upload';
+      if (uploading) {
+        if (!file) { setError('Choose a file first.'); setBusy(false); return; }
+        const created = await assetService.upload(file, form.name || file.name, adding, form.courseId || undefined);
         flash(`Uploaded ${created.name} (${created.sizeLabel ?? ''}).`);
       } else {
         const created = await assetService.create({
@@ -262,16 +282,26 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl" />
                 </div>
 
-                {adding === 'PDF' ? (
+                {adding !== 'LINK' && adding !== 'PDF' && (
+                  <div className="flex gap-1 p-0.5 bg-gray-100 rounded-xl">
+                    {(['upload', 'link'] as const).map(m => (
+                      <button key={m} type="button" onClick={() => setMode(m)}
+                        className={`flex-1 py-1.5 text-xs font-semibold rounded-lg ${
+                          mode === m ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
+                        {m === 'upload' ? 'Upload a file' : 'Use a link'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {adding !== 'LINK' && (adding === 'PDF' || mode === 'upload') ? (
                   <div>
                     <label htmlFor="am-file" className="block text-xs font-semibold text-gray-500 mb-1">
                       The file
                     </label>
-                    <input id="am-file" ref={fileRef} type="file" accept="application/pdf"
+                    <input id="am-file" ref={fileRef} type="file" accept={UPLOAD[adding].accept}
                       className="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-gray-200 file:text-sm file:bg-gray-50" />
-                    <p className="text-[11px] text-gray-400 mt-1">
-                      PDF, up to 25 MB. A video belongs on YouTube — add its link instead.
-                    </p>
+                    <p className="text-[11px] text-gray-400 mt-1">{UPLOAD[adding].note}</p>
                   </div>
                 ) : (
                   <div>
@@ -300,8 +330,9 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
                 <button onClick={add} disabled={busy}
                   className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 disabled:opacity-50">
                   {busy ? <Loader2 className="w-4 h-4 animate-spin" />
-                        : adding === 'PDF' ? <Upload className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                  {adding === 'PDF' ? 'Upload' : 'Add'}
+                        : (adding !== 'LINK' && (adding === 'PDF' || mode === 'upload'))
+                          ? <Upload className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {(adding !== 'LINK' && (adding === 'PDF' || mode === 'upload')) ? 'Upload' : 'Add'}
                 </button>
               </div>
             </motion.div>

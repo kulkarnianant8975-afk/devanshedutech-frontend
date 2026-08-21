@@ -268,10 +268,11 @@ export const assetService = {
   update: (id: string, changes: Partial<AssetDTO>) =>
     api.patch<AssetDTO>(`/assets/${id}`, changes).then(res => res.data),
   retire: (id: string) => api.delete(`/assets/${id}`).then(res => res.data),
-  upload: (file: File, name: string, courseId?: string) => {
+  upload: (file: File, name: string, type: string, courseId?: string) => {
     const form = new FormData();
     form.append('file', file);
     form.append('name', name);
+    form.append('type', type);
     if (courseId) form.append('courseId', courseId);
     return api.post<AssetDTO>('/assets/upload', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
