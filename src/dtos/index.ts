@@ -692,6 +692,8 @@ export interface AssetDTO {
   url: string;
   courseId?: string;
   sizeLabel?: string;
+  /** Exact size. WhatsApp carries a video only up to 16 MB; larger ones are sent as a link. */
+  sizeBytes?: number;
   /** Only links this application serves can be observed being opened. */
   tracked?: boolean;
   active?: boolean;

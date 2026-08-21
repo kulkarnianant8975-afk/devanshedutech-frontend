@@ -29,15 +29,15 @@ type Kind = 'PDF' | 'VIDEO' | 'LINK' | 'IMAGE';
 const UPLOAD: Record<string, { accept: string; limit: string; note: string }> = {
   PDF:   { accept: 'application/pdf', limit: '100 MB',
            note: 'PDF, up to 100 MB.' },
-  VIDEO: { accept: 'video/mp4,video/3gpp', limit: '16 MB',
-           note: 'MP4, up to 16 MB — about a minute of 720p. WhatsApp refuses anything larger, so put a longer film on YouTube and add the link instead.' },
+  VIDEO: { accept: 'video/mp4,video/3gpp', limit: '200 MB',
+           note: 'MP4, up to 200 MB. Under 16 MB it arrives as a video in the chat; larger films are hosted here and sent as a link that streams — WhatsApp will not carry a bigger file inside a message.' },
   IMAGE: { accept: 'image/jpeg,image/png', limit: '5 MB',
            note: 'JPG or PNG, up to 5 MB.' },
 };
 
 const KINDS: { type: Kind; label: string; icon: typeof FileText; hint: string }[] = [
   { type: 'PDF',   label: 'Documents', icon: FileText,  hint: 'Syllabus, fee sheet, brochure' },
-  { type: 'VIDEO', label: 'Videos',    icon: Video,     hint: 'Upload an MP4 up to 16 MB, or add a link for anything longer' },
+  { type: 'VIDEO', label: 'Videos',    icon: Video,     hint: 'Up to 200 MB. Under 16 MB plays in the chat; larger ones send as a streaming link' },
   { type: 'LINK',  label: 'Links',     icon: Link2,     hint: 'Booking forms, the courses page, a map' },
   { type: 'IMAGE', label: 'Images',    icon: ImageIcon, hint: 'Posters and batch photos, up to 5 MB' },
 ];
@@ -225,6 +225,12 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
                             {a.url}
                           </span>
                         </span>
+                        {a.type === 'VIDEO' && a.sizeBytes != null && a.sizeBytes > 16 * 1024 * 1024 && (
+                          <span title="Too large for a WhatsApp video message, so it is sent as a link that streams"
+                            className="hidden sm:inline-flex items-center text-[11px] text-violet-700 bg-violet-50 border border-violet-100 px-1.5 py-0.5 rounded-md shrink-0">
+                            sends as link
+                          </span>
+                        )}
                         {a.tracked && (
                           <span title="Opening this is recorded against the lead"
                             className="hidden sm:inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-md shrink-0">
