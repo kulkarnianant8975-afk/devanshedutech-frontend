@@ -27,14 +27,20 @@ type Kind = 'PDF' | 'VIDEO' | 'LINK' | 'IMAGE';
  * Meta refuses anything larger outright, so a bigger file could be stored and never sent — and
  * the moment to learn that is not while a student is waiting for it.
  */
-const UPLOAD: Record<string, { accept: string; limit: string; note: string }> = {
-  PDF:   { accept: 'application/pdf', limit: '100 MB',
+const MB = 1024 * 1024;
+
+const UPLOAD: Record<string, { accept: string; limit: string; bytes: number; note: string }> = {
+  PDF:   { accept: 'application/pdf', limit: '100 MB', bytes: 100 * MB,
            note: 'PDF, up to 100 MB.' },
-  VIDEO: { accept: 'video/mp4,video/3gpp', limit: '200 MB',
+  VIDEO: { accept: 'video/mp4,video/3gpp', limit: '200 MB', bytes: 200 * MB,
            note: 'MP4, up to 200 MB. Under 16 MB it arrives as a video in the chat; larger films are hosted here and sent as a link that streams — WhatsApp will not carry a bigger file inside a message.' },
-  IMAGE: { accept: 'image/jpeg,image/png', limit: '5 MB',
+  IMAGE: { accept: 'image/jpeg,image/png', limit: '5 MB', bytes: 5 * MB,
            note: 'JPG or PNG, up to 5 MB.' },
 };
+
+/** "126 MB", for telling somebody how far over they are rather than just that they are. */
+const human = (bytes: number): string =>
+  bytes >= MB ? `${Math.round(bytes / MB)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
 const KINDS: { type: Kind; label: string; icon: typeof FileText; hint: string }[] = [
   { type: 'PDF',   label: 'Documents', icon: FileText,  hint: 'Syllabus, fee sheet, brochure' },
@@ -111,6 +117,19 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
       if (uploading) {
         if (!file) {
           toast.error('Choose a file first.', 'Nothing was selected to upload.');
+          setBusy(false);
+          return;
+        }
+        // Checked here, before a single byte leaves. The server refuses an oversized file just
+        // as firmly, but only after it has been sent — and on the office connection a 126 MB
+        // video is minutes of waiting to be told no. The browser already knows the size.
+        const cap = UPLOAD[adding];
+        if (cap && file.size > cap.bytes) {
+          const noun = adding === 'VIDEO' ? 'video' : adding === 'PDF' ? 'document' : 'image';
+          toast.error(`That ${noun} is ${human(file.size)} — the limit is ${cap.limit}.`,
+            adding === 'VIDEO'
+              ? 'Nothing was uploaded. Export it smaller, or put it on YouTube or Drive and add it here as a link instead.'
+              : 'Nothing was uploaded. Compress it and try again.');
           setBusy(false);
           return;
         }
