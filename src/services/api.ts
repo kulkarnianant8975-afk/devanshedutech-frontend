@@ -85,6 +85,14 @@ export const leadService = {
 
   create: (lead: LeadRequestDTO) =>
     api.post<CaptureResponseDTO>('/leads', lead).then(res => res.data),
+  /**
+   * A lead a counsellor enters: a walk-in, a phone enquiry, a name from a seminar.
+   *
+   * Not the public endpoint — this one is not rate limited, records who added it, and assigns
+   * it to them. Somebody standing in front of a student is already the owner.
+   */
+  createManual: (lead: LeadRequestDTO) =>
+    api.post<CaptureResponseDTO>('/leads/manual', lead).then(res => res.data),
   patch: (id: string, changes: LeadPatchDTO) =>
     api.patch<LeadDTO>(`/leads/${id}`, changes).then(res => res.data),
   recordOutcome: (id: string, outcome: OutcomeDTO) =>

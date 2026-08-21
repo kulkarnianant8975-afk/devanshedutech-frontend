@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Search, Download, Trash2, Phone, MapPin, GraduationCap, AlertCircle,
+  Search, Download, Trash2, Phone, MapPin, GraduationCap, AlertCircle, UserPlus,
   CheckCircle2, Loader2, X, ChevronLeft, ChevronRight, CalendarClock, Inbox
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LeadDrawer from './LeadDrawer';
+import AddLeadModal from './AddLeadModal';
 import { leadService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import {
@@ -65,6 +66,7 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
   const [openOnly, setOpenOnly] = useState(false);
 
   const [options, setOptions] = useState<LeadOptionsDTO | null>(null);
+  const [adding, setAdding] = useState(false);
   const [staff, setStaff] = useState<StaffUserDTO[]>([]);
 
   const canAssign = can(currentUser, 'LEAD_ASSIGN');
@@ -199,6 +201,36 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
 
   return (
     <div className="space-y-5">
+      {/* A walk-in or a phone enquiry has to be able to enter the pipeline, or the follow-up
+          rules only protect the students who happened to arrive through a form. */}
+      {can(currentUser, 'LEAD_CREATE') && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setAdding(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-orange-600">
+            <UserPlus size={16} /> Add a student
+          </button>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {adding && (
+          <AddLeadModal
+            options={options}
+            onClose={() => setAdding(false)}
+            onCreated={(leadId, duplicate, message) => {
+              setAdding(false);
+              setSuccess(message);
+              window.setTimeout(() => setSuccess(null), 4000);
+              // Opened straight away, duplicate or not — the counsellor is mid-conversation and
+              // the next thing they need is the student's history, not a list.
+              setOpenLeadId(leadId);
+              load();
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {error && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
