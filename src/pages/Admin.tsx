@@ -19,7 +19,8 @@ import {
   Megaphone,
   CalendarRange,
   MessageSquareText,
-  Clock
+  Clock,
+  FolderOpen
 } from 'lucide-react';
 import { authService } from '../services/api';
 import { UserResponseDTO as User } from '../dtos';
@@ -41,6 +42,7 @@ import AdminSettings from '../components/admin/AdminSettings';
 import AdminBroadcasts from '../components/admin/AdminBroadcasts';
 import AdminBatches from '../components/admin/AdminBatches';
 import AdminSchedule from '../components/admin/AdminSchedule';
+import AdminMedia from '../components/admin/AdminMedia';
 import AdminScripts from '../components/admin/AdminScripts';
 import LeadDrawer from '../components/admin/LeadDrawer';
 
@@ -53,7 +55,7 @@ const Admin = () => {
   // True when the signed-in user holds any permission at all, not when they are an admin.
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'myday' | 'board' | 'demos' | 'dashboard' | 'courses' | 'leads' | 'hiring' | 'mentors' | 'placed_students' | 'broadcasts' | 'batches' | 'team' | 'settings' | 'scripts'>('myday');
+  const [activeTab, setActiveTab] = useState<'myday' | 'board' | 'demos' | 'dashboard' | 'courses' | 'leads' | 'hiring' | 'mentors' | 'placed_students' | 'broadcasts' | 'batches' | 'team' | 'settings' | 'scripts' | 'media'>('myday');
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [authError, setAuthError] = useState<React.ReactNode>('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -246,6 +248,7 @@ const Admin = () => {
     { id: 'placed_students', label: 'Success Stories', icon: Award,           show: can(user, 'CONTENT_MANAGE') },
     { id: 'team',            label: 'Team & Access',   icon: Shield,          show: can(user, 'USER_VIEW') },
     { id: 'schedule',        label: 'Hours & Duty',    icon: Clock,           show: canAny(user, 'LEAD_VIEW_ALL', 'LEAD_VIEW_OWN') },
+    { id: 'media',           label: 'Media Library',   icon: FolderOpen,      show: canAny(user, 'LEAD_VIEW_ALL', 'LEAD_VIEW_OWN') },
     { id: 'scripts',         label: 'Message Scripts', icon: MessageSquareText, show: can(user, 'SETTINGS_MANAGE') },
     { id: 'settings',        label: 'Follow-up Setup', icon: Sliders,         show: can(user, 'SETTINGS_MANAGE') },
   ].filter(item => item.show);
@@ -391,6 +394,7 @@ const Admin = () => {
             {currentTab === 'broadcasts' && <AdminBroadcasts currentUser={user} />}
             {currentTab === 'batches' && <AdminBatches currentUser={user} />}
             {currentTab === 'schedule' && <AdminSchedule currentUser={user} />}
+            {currentTab === 'media' && <AdminMedia currentUser={user} />}
             {currentTab === 'dashboard' && <AdminDashboard currentUser={user} />}
             {currentTab === 'leads' && <AdminLeads currentUser={user} />}
             {currentTab === 'courses' && <AdminCourses />}

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { 
   WorkingHoursDTO,
+  AssetDTO,
   WhatsAppStatusDTO,
   WhatsAppTestDTO,
   GradeSuggestionDTO,
@@ -251,6 +252,31 @@ export const assistantService = {
     api.post<{ summary: string }>(`/leads/${leadId}/ai/summary`).then(res => res.data.summary),
   draft: (leadId: string, intent?: string) =>
     api.post<{ draft: string }>(`/leads/${leadId}/ai/draft`, { intent }).then(res => res.data.draft),
+};
+
+/**
+ * The media library — everything that can be attached to a message.
+ *
+ * Adding a brochure or a video used to need a deployment, which is the wrong shape for the thing
+ * that changes most often.
+ */
+export const assetService = {
+  list: (includeInactive = false) =>
+    api.get<AssetDTO[]>(`/assets?includeInactive=${includeInactive}`).then(res => res.data),
+  create: (asset: Partial<AssetDTO>) =>
+    api.post<AssetDTO>('/assets', asset).then(res => res.data),
+  update: (id: string, changes: Partial<AssetDTO>) =>
+    api.patch<AssetDTO>(`/assets/${id}`, changes).then(res => res.data),
+  retire: (id: string) => api.delete(`/assets/${id}`).then(res => res.data),
+  upload: (file: File, name: string, courseId?: string) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('name', name);
+    if (courseId) form.append('courseId', courseId);
+    return api.post<AssetDTO>('/assets/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(res => res.data);
+  },
 };
 
 export const scheduleService = {

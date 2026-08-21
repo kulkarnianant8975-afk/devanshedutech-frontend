@@ -680,3 +680,19 @@ export interface WhatsAppTestDTO {
   detail: string;
   nextStep: string;
 }
+
+
+/** Something a counsellor can attach to a message: a brochure, a video, a form link. */
+export interface AssetDTO {
+  id: string;
+  key: string;
+  name: string;
+  /** PDF | VIDEO | LINK | IMAGE */
+  type: string;
+  url: string;
+  courseId?: string;
+  sizeLabel?: string;
+  /** Only links this application serves can be observed being opened. */
+  tracked?: boolean;
+  active?: boolean;
+}

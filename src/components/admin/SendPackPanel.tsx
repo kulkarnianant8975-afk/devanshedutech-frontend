@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, CheckCircle2, Clock, AlertTriangle, FileText, Video, Link2, Image, Zap } from 'lucide-react';
 import SwipeToSend from './SwipeToSend';
-import { leadService, errorMessage } from '../../services/api';
-import { SendPackSummaryDTO, PreparedPackDTO } from '../../dtos';
+import { leadService, assetService, errorMessage } from '../../services/api';
+import { SendPackSummaryDTO, PreparedPackDTO, AssetDTO } from '../../dtos';
 
 /**
  * Composing what goes to a student.
@@ -74,7 +74,24 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
 
   useEffect(() => { if (selected) prepare(selected); }, [selected, prepare]);
 
-  const included = (prepared?.assets ?? []).filter(a => !excluded.has(a.key));
+  // Anything else from the media library the counsellor chooses to add. A pack names sensible
+  // defaults for its situation, but somebody on a call learns things a template cannot know —
+  // that this student wants the placement record rather than the syllabus.
+  const [library, setLibrary] = useState<AssetDTO[]>([]);
+  const [extra, setExtra] = useState<Set<string>>(new Set());
+  const [showLibrary, setShowLibrary] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    assetService.list().then(a => live && setLibrary(a)).catch(() => { /* the pack still sends */ });
+    return () => { live = false; };
+  }, []);
+
+  const packAssets = (prepared?.assets ?? []).filter(a => !excluded.has(a.key));
+  const extraAssets = library.filter(a => extra.has(a.key) && !packAssets.some(p => p.key === a.key));
+  const included = [...packAssets, ...extraAssets.map(a => ({
+    key: a.key, name: a.name, type: a.type, url: a.url, sizeLabel: a.sizeLabel, tracked: a.tracked,
+  }))];
 
   /**
    * One swipe sends it. With a provider configured the message goes straight to the student;
@@ -170,6 +187,55 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
           <p className="text-[11px] text-gray-400 mt-1">
             Edit freely — what you send is what goes, not the template.
           </p>
+
+          {library.length > 0 && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setShowLibrary(v => !v)}
+                className="text-xs font-semibold text-gray-500 hover:text-gray-800 inline-flex items-center gap-1">
+                {showLibrary ? 'Hide' : 'Add something else'}
+                {extraAssets.length > 0 && (
+                  <span className="ml-1 text-[11px] bg-gray-900 text-white rounded-full px-1.5">
+                    {extraAssets.length}
+                  </span>
+                )}
+              </button>
+
+              {showLibrary && (
+                <ul className="mt-2 space-y-1 max-h-56 overflow-y-auto pr-1">
+                  {library.map(a => {
+                    const inPack = packAssets.some(p => p.key === a.key);
+                    return (
+                      <li key={a.id}>
+                        <label className={`flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg ${
+                          inPack ? 'text-gray-400' : 'text-gray-700 hover:bg-gray-50 cursor-pointer'}`}>
+                          <input
+                            type="checkbox"
+                            disabled={inPack}
+                            checked={inPack || extra.has(a.key)}
+                            onChange={e => {
+                              const next = new Set(extra);
+                              if (e.target.checked) next.add(a.key); else next.delete(a.key);
+                              setExtra(next);
+                            }}
+                            className="rounded border-gray-300" />
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400 w-10 shrink-0">
+                            {a.type}
+                          </span>
+                          <span className="truncate flex-1">{a.name}</span>
+                          {inPack && <span className="text-[11px] shrink-0">already included</span>}
+                          {a.sizeLabel && !inPack && (
+                            <span className="text-[11px] text-gray-400 shrink-0">{a.sizeLabel}</span>
+                          )}
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
 
           {prepared.assets.length > 0 && (
             <ul className="mt-3 space-y-1.5">

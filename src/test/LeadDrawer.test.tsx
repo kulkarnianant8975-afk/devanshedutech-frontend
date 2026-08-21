@@ -10,6 +10,8 @@ vi.mock('../services/api', () => ({
                  pause: vi.fn(), resume: vi.fn(),
                  packs: vi.fn(), preparePack: vi.fn(), recordPackSent: vi.fn(), sendPack: vi.fn() },
   // The assistant hides itself when unavailable, which is what these tests want.
+  // The send panel reads the media library; an empty one keeps these tests about the pack.
+  assetService: { list: vi.fn().mockResolvedValue([]) },
   assistantService: { available: vi.fn().mockResolvedValue(false), suggestGrade: vi.fn(), summarise: vi.fn(), draft: vi.fn() },
   userService: { getAssignable: vi.fn() },
   demoService: { book: vi.fn() },
