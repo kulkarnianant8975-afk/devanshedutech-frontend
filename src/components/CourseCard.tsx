@@ -8,14 +8,28 @@ import { resolveImageUrl } from '../utils/imageUtils';
 
 interface CourseCardProps {
   course: Course;
+  /**
+   * Position in the grid. Only used to decide whether this card's image is something the visitor
+   * is already looking at, or something they may never scroll to.
+   */
+  index?: number;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
+/** Roughly the first row on a wide screen — the images a visitor is actually waiting for. */
+const ABOVE_THE_FOLD = 4;
+
+const CourseCard: React.FC<CourseCardProps> = ({ course, index = 0 }) => {
   const [isBrochureModalOpen, setIsBrochureModalOpen] = useState(false);
   const Icon = course.icon;
 
-
   const [isImageLoading, setIsImageLoading] = useState(true);
+  // A URL that will not load is not the same as no URL at all, and the difference used to be
+  // invisible: onLoad never fired, so the image stayed at opacity-0 and the card sat under a
+  // spinner forever. Falling back to the same placeholder an image-less course gets is honest,
+  // and it ends.
+  const [imageBroken, setImageBroken] = useState(false);
+  const showImage = Boolean(course.image) && !imageBroken;
+  const eager = index < ABOVE_THE_FOLD;
 
   return (
     <>
@@ -24,7 +38,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group"
     >
       <div className="relative h-48 overflow-hidden bg-gray-100">
-        {course.image ? (
+        {showImage ? (
           <>
             {isImageLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-50 animate-pulse">
@@ -32,10 +46,15 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
               </div>
             )}
             <img 
-              src={resolveImageUrl(course.image)} 
+              // 600px covers the card at 2x on a phone; the slot itself is nowhere near that.
+              src={resolveImageUrl(course.image, 600)} 
               alt={course.name} 
               onLoad={() => setIsImageLoading(false)}
-              loading="lazy"
+              onError={() => { setImageBroken(true); setIsImageLoading(false); }}
+              // The first row is the page. Deferring those is asking the browser to wait before
+              // fetching the one thing the visitor came to look at; everything below can wait.
+              loading={eager ? 'eager' : 'lazy'}
+              fetchPriority={eager ? 'high' : 'auto'}
               decoding="async"
               className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${
                 isImageLoading ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'

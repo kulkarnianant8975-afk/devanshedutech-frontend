@@ -18,8 +18,8 @@ const SuccessStoryCard: React.FC<SuccessStoryCardProps> = ({
   onToggle 
 }) => {
   const [isImageLoading, setIsImageLoading] = useState(true);
-  const imageUrl = resolveImageUrl(story.imageUrl) || `https://i.pravatar.cc/150?u=${story.id}`;
-  const largeImageUrl = resolveImageUrl(story.imageUrl) || `https://i.pravatar.cc/1000?u=${story.id}`;
+  const imageUrl = resolveImageUrl(story.imageUrl, 300) || `https://i.pravatar.cc/150?u=${story.id}`;
+  const largeImageUrl = resolveImageUrl(story.imageUrl, 1000) || `https://i.pravatar.cc/1000?u=${story.id}`;
 
   return (
     <motion.div 

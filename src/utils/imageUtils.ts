@@ -62,15 +62,24 @@ import { backendUrl } from '../services/api';
  *  - Backend API paths (/api/...)  → prepends backendUrl for production
  *  - Local public paths (/images/) → returned as-is (served by Vite / Vercel)
  *  - Empty / undefined             → returns empty string
+ *
+ * `width` asks Cloudinary for an image sized for the slot it is going into. This matters more
+ * than it sounds: measured on 2026-08-21, six course thumbnails came to 296 KB, one of them
+ * 167 KB on its own — full-resolution photographs downloaded to paint a card 192px tall. Format
+ * and quality were already being negotiated; the dimensions never were.
+ *
+ * `c_limit` is the important half of the pair. It shrinks an image that is larger than the slot
+ * and leaves a smaller one alone, so a modest upload never gets stretched into a blurry one.
  */
-export const resolveImageUrl = (url: string | undefined): string => {
+export const resolveImageUrl = (url: string | undefined, width?: number): string => {
   if (!url) return '';
 
   // Full external URLs
   if (url.startsWith('http')) {
     // Optimization: If it's a Cloudinary URL, inject auto-format and auto-quality
     if (url.includes('cloudinary.com') && url.includes('/upload/')) {
-      return url.replace('/upload/', '/upload/f_auto,q_auto/');
+      const transform = width ? `f_auto,q_auto,w_${width},c_limit` : 'f_auto,q_auto';
+      return url.replace('/upload/', `/upload/${transform}/`);
     }
     return url;
   }

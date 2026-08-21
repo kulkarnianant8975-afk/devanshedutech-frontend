@@ -198,10 +198,10 @@ const About = () => {
                 >
                   <div 
                     className="aspect-[4/5] w-full overflow-hidden cursor-zoom-in bg-gray-100"
-                    onClick={() => setSelectedImage(resolveImageUrl(mentor.imageUrl) || `https://picsum.photos/seed/${mentor.id}/800/1000`)}
+                    onClick={() => setSelectedImage(resolveImageUrl(mentor.imageUrl, 1000) || `https://picsum.photos/seed/${mentor.id}/800/1000`)}
                   >
                     <img
-                      src={resolveImageUrl(mentor.imageUrl) || `https://picsum.photos/seed/${mentor.id}/400/500`}
+                      src={resolveImageUrl(mentor.imageUrl, 500) || `https://picsum.photos/seed/${mentor.id}/400/500`}
                       alt={mentor.name}
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                       referrerPolicy="no-referrer"

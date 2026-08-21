@@ -183,8 +183,8 @@ const Home = () => {
             <p className="text-center text-gray-500">New courses are on the way — check back soon.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {popularCourses.map((course) => (
-                <CourseCard key={course.id} course={course} />
+              {popularCourses.map((course, index) => (
+                <CourseCard key={course.id} course={course} index={index} />
               ))}
             </div>
           )}
