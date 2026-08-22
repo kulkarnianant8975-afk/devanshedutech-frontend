@@ -11,6 +11,7 @@ import SendPackPanel from './SendPackPanel';
 import { batchService } from '../../services/api';
 import AssistantPanel from './AssistantPanel';
 import { can } from '../../lib/permissions';
+import { FOLLOW_UP_CHOICES, dateInDays, formatBooked } from '../../lib/followUp';
 import {
   LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO, BatchDTO,
   AssetOpenDTO,
@@ -422,17 +423,35 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                         {lead.nextTouchNote || 'An active lead must always carry a future date until it enrols or is marked lost.'}
                       </p>
                       {canEdit && !lead.optedOut && (
-                        <div className="flex items-center gap-2 mt-3">
-                          <input type="date" value={nextTouch} min={today()}
-                            onChange={e => setNextTouch(e.target.value)}
-                            aria-label="Next touch date"
-                            className="text-sm px-3 py-2 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-primary/20 outline-none" />
-                          <button
-                            onClick={() => patch({ nextTouchOn: nextTouch }, 'Next touch updated.')}
-                            disabled={!nextTouch || nextTouch === (lead.nextTouchOn ?? '') || saving}
-                            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold disabled:opacity-40 hover:bg-orange-600 transition-colors">
-                            Set
-                          </button>
+                        <div className="mt-3 space-y-2">
+                          {/* One click for the three answers a counsellor actually gives. The
+                              date field below still takes anything, but reaching for a date
+                              picker to say "tomorrow" is the friction that leaves leads with no
+                              date at all. */}
+                          <div className="flex flex-wrap gap-2" role="group"
+                            aria-label="Set the next touch">
+                            {FOLLOW_UP_CHOICES.map(option => (
+                              <button key={option.days}
+                                onClick={() => patch({ nextTouchOn: dateInDays(option.days) },
+                                  `Next follow-up booked for ${formatBooked(dateInDays(option.days))}.`)}
+                                disabled={saving}
+                                className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary disabled:opacity-50 transition-colors">
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input type="date" value={nextTouch} min={today()}
+                              onChange={e => setNextTouch(e.target.value)}
+                              aria-label="Next touch date"
+                              className="text-sm px-3 py-2 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-primary/20 outline-none" />
+                            <button
+                              onClick={() => patch({ nextTouchOn: nextTouch }, 'Next touch updated.')}
+                              disabled={!nextTouch || nextTouch === (lead.nextTouchOn ?? '') || saving}
+                              className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold disabled:opacity-40 hover:bg-orange-600 transition-colors">
+                              Set
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>

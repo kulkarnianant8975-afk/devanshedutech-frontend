@@ -4,6 +4,7 @@ import SwipeToSend from './SwipeToSend';
 import { leadService, assetService, errorMessage } from '../../services/api';
 import { whatsappLinks, openInApp } from '../../lib/whatsapp';
 import { useToast } from '../../lib/toast';
+import { FOLLOW_UP_CHOICES, dateInDays, formatBooked } from '../../lib/followUp';
 import { SendPackSummaryDTO, PreparedPackDTO, AssetDTO } from '../../dtos';
 
 /**
@@ -171,16 +172,14 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
   /**
    * Books the next follow-up without leaving the send panel.
    *
-   * The drawer has a date field further down, and in practice nobody scrolled back to it — the
-   * message goes, the panel closes, and the lead is left with no future date on it. That is the
-   * one state the SOP does not allow an active lead to be in, because nothing will ever bring it
-   * back up. The moment a counsellor has just spoken to somebody is the moment they know when to
-   * speak to them again, so it is offered here.
+   * Offered whether or not a message went. It was originally shown only after a successful send,
+   * which had it backwards: a send that failed is exactly when a lead is most likely to be left
+   * with no future date, because the counsellor is dealing with the failure and the panel offers
+   * them nothing else. A call that went unanswered needs a date just as much as a message that
+   * went out.
    */
   const bookFollowUp = async (days: number) => {
-    const when = new Date();
-    when.setDate(when.getDate() + days);
-    const on = when.toISOString().slice(0, 10);
+    const on = dateInDays(days);
     setSending(true);
     try {
       await leadService.patch(leadId, { nextTouchOn: on });
@@ -373,24 +372,23 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
           </div>
 
           {/* The golden rule of the SOP: an active lead always carries a future date. This is
-              the moment a counsellor knows what that date should be. */}
-          {sent && (
+              the moment a counsellor knows what that date should be — whether the message went,
+              failed, or was never sent at all. */}
+          {prepared && (
             <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-3">
               {bookedFor ? (
                 <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
                   <CheckCircle2 size={15} className="shrink-0" />
-                  Next follow-up booked for {new Date(bookedFor + 'T00:00:00')
-                    .toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}.
+                  Next follow-up booked for {formatBooked(bookedFor)}.
                 </p>
               ) : (
                 <>
                   <p className="text-xs font-semibold text-gray-700 mb-2">
                     When will you follow up with {studentName.split(' ')[0]}?
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {[{ label: 'Tomorrow', days: 1 },
-                      { label: 'In 3 days', days: 3 },
-                      { label: 'Next week', days: 7 }].map(option => (
+                  <div className="flex flex-wrap gap-2" role="group"
+                    aria-label="Book the next follow-up">
+                    {FOLLOW_UP_CHOICES.map(option => (
                       <button key={option.days} onClick={() => bookFollowUp(option.days)}
                         disabled={sending}
                         className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary disabled:opacity-50 transition-colors">

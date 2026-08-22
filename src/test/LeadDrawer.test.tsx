@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import LeadDrawer from '../components/admin/LeadDrawer';
 import { leadService } from '../services/api';
+import { dateInDays } from '../lib/followUp';
 import type { LeadDTO, LeadOptionsDTO, UserResponseDTO, AssetOpenDTO } from '../dtos';
 
 vi.mock('../services/api', () => ({
@@ -317,7 +318,10 @@ describe('Send pack', () => {
     await user.type(await screen.findByRole('button', { name: /swipe to send/i }), '{Enter}');
     await user.click(await screen.findByRole('button', { name: /i sent it/i }));
 
-    await user.click(await screen.findByRole('button', { name: /in 3 days/i }));
+    // Scoped: the same three choices also sit on the Next touch card at the top of the drawer,
+    // which is deliberate — this one is the offer made at the end of a send.
+    const panel = await screen.findByRole('group', { name: /book the next follow-up/i });
+    await user.click(within(panel).getByRole('button', { name: /in 3 days/i }));
 
     const [, changes] = vi.mocked(leadService.patch).mock.calls.at(-1)!;
     const expected = new Date();
@@ -325,6 +329,32 @@ describe('Send pack', () => {
     expect(changes.nextTouchOn).toBe(expected.toISOString().slice(0, 10));
 
     expect(await screen.findByText(/Next follow-up booked/i)).toBeInTheDocument();
+  });
+
+  it('still offers the next follow-up when nothing could be sent', async () => {
+    // The complaint that produced this: the prompt only appeared after a successful send, so a
+    // failed one left the counsellor with no way to book anything. That is backwards — a failed
+    // send is exactly when a lead is most likely to be left with no future date, because the
+    // counsellor is busy dealing with the failure.
+    const user = userEvent.setup();
+    vi.mocked(leadService.preparePack).mockResolvedValue(prepared());
+    vi.mocked(leadService.sendPack).mockResolvedValue({
+      sent: false, status: 'failed', detail: 'The WhatsApp access token has expired.',
+      handoffUrl: null, channel: 'Meta Cloud API',
+    } as never);
+    vi.mocked(leadService.patch).mockResolvedValue({} as never);
+    captureAppLinks();
+    openDrawer();
+
+    // Open the pack, then watch the send fail outright.
+    await user.type(await screen.findByRole('button', { name: /swipe to send/i }), '{Enter}');
+
+    // The question is still asked, and answering it still works.
+    const panel = await screen.findByRole('group', { name: /book the next follow-up/i });
+    await user.click(within(panel).getByRole('button', { name: /tomorrow/i }));
+
+    const [, changes] = vi.mocked(leadService.patch).mock.calls.at(-1)!;
+    expect(changes.nextTouchOn).toBe(dateInDays(1));
   });
 
   it('shows what the student opened, and calls out repeat opens', async () => {
