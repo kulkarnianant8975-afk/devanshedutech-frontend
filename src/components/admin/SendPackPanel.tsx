@@ -5,6 +5,7 @@ import { leadService, assetService, errorMessage } from '../../services/api';
 import { whatsappLinks, openInApp } from '../../lib/whatsapp';
 import { useToast } from '../../lib/toast';
 import { FOLLOW_UP_CHOICES, dateInDays, formatBooked } from '../../lib/followUp';
+import { attachable, canShareFiles, fetchFiles, shareFiles, downloadFiles } from '../../lib/attachFiles';
 import { SendPackSummaryDTO, PreparedPackDTO, AssetDTO } from '../../dtos';
 
 /**
@@ -100,6 +101,7 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
   const [extra, setExtra] = useState<Set<string>>(new Set());
   const [showLibrary, setShowLibrary] = useState(false);
   const [libraryError, setLibraryError] = useState<string | null>(null);
+  const [attaching, setAttaching] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -209,6 +211,44 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
       onError(errorMessage(err, 'Could not book that follow-up.'));
     } finally {
       setSending(false);
+    }
+  };
+
+  /**
+   * Puts the actual files into the chat, rather than links to them.
+   *
+   * The deep link that opens WhatsApp carries text only — no parameter attaches a file, and none
+   * exists. So this is a separate action: the share sheet takes the real bytes and produces a
+   * genuine attachment, and where the browser will not do that the files are saved so they can
+   * be dragged into WhatsApp Desktop.
+   */
+  const attachTheFiles = async () => {
+    const files = attachable(included as AssetDTO[]);
+    if (files.length === 0) {
+      toast.info('Nothing to attach.', 'Links are already written into the message.');
+      return;
+    }
+
+    setAttaching(true);
+    try {
+      if (canShareFiles()) {
+        const { files: ready, skipped } = await fetchFiles(included as AssetDTO[]);
+        if (await shareFiles(withAttachments(message), ready)) {
+          if (skipped.length) {
+            toast.info(`${skipped.length} file(s) were too large to attach.`,
+              'Those stay in the message as links, which is how they would have been sent anyway.');
+          }
+          return;
+        }
+      }
+      // The share sheet was unavailable or refused. Saving them is slower and always works.
+      const saved = downloadFiles(included as AssetDTO[]);
+      toast.success(`${saved} file(s) saved to this computer.`,
+        'Drag them into the WhatsApp window to attach them to the message.');
+    } catch (err) {
+      toast.error(errorMessage(err, 'Those files could not be prepared.'));
+    } finally {
+      setAttaching(false);
     }
   };
 
@@ -403,6 +443,26 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
                   {sending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                   I sent it — record on the timeline
                 </button>
+
+                {/* The deep link brought the message and the links. This brings the files
+                    themselves, which no link format can carry. */}
+                {attachable(included as AssetDTO[]).length > 0 && (
+                  <>
+                    <button onClick={attachTheFiles} disabled={attaching}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl border border-gray-300 bg-white text-sm font-bold text-gray-800 hover:border-primary hover:text-primary disabled:opacity-50 transition-colors">
+                      {attaching
+                        ? <Loader2 size={15} className="animate-spin" />
+                        : <Paperclip size={15} />}
+                      Attach the {attachable(included as AssetDTO[]).length} file
+                      {attachable(included as AssetDTO[]).length === 1 ? '' : 's'} to the chat
+                    </button>
+                    <p className="text-[11px] text-gray-400 text-center leading-relaxed">
+                      The message and links are already in WhatsApp. This sends the brochure and
+                      video as real attachments — on a phone through the share sheet, on this
+                      computer by saving them to drag into the chat.
+                    </p>
+                  </>
+                )}
 
                 {/* A protocol nothing handles fails silently, and the screen looks identical
                     whether WhatsApp opened or did nothing at all. This is the way out. */}
