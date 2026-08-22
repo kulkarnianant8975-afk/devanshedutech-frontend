@@ -38,10 +38,15 @@ vi.mock('framer-motion', () => {
 
 const Harness = () => {
   const toast = useToast();
+  // Distinct messages where the test is about how many toasts survive, because identical ones
+  // are deliberately collapsed into one.
+  const n = React.useRef(0);
   return (
     <div>
       <button onClick={() => toast.success('Saved.', 'It is in the library now.')}>ok</button>
       <button onClick={() => toast.error('That could not be saved.')}>fail</button>
+      <button onClick={() => toast.error(`Send ${++n.current} failed.`)}>fail-distinct</button>
+      <button onClick={() => toast.success(`Row ${++n.current} saved.`)}>ok-distinct</button>
     </div>
   );
 };
@@ -109,11 +114,22 @@ describe('toasts', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Saved.');
   });
 
+  it('says the same thing once, however many times it is reported', async () => {
+    // A screen that loads two things reports the same expired token from both, and two
+    // identical red cards read as two separate problems.
+    const user = mount();
+    await user.click(screen.getByText('fail'));
+    await user.click(screen.getByText('fail'));
+    await user.click(screen.getByText('fail'));
+
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+  });
+
   it('never drops a failure to keep the stack short', async () => {
     // Seven failed sends are seven students who did not get their message. Evicting three of
     // them to tidy the corner would undo the reason failures do not auto-dismiss at all.
     const user = mount();
-    for (let i = 0; i < 7; i++) await user.click(screen.getByText('fail'));
+    for (let i = 0; i < 7; i++) await user.click(screen.getByText('fail-distinct'));
 
     await waitFor(() => expect(screen.getAllByRole('alert')).toHaveLength(7));
   });
@@ -121,7 +137,7 @@ describe('toasts', () => {
   it('lets confirmations give up their place in a burst', async () => {
     // These are the disposable ones — each repeats something the person just did.
     const user = mount();
-    for (let i = 0; i < 7; i++) await user.click(screen.getByText('ok'));
+    for (let i = 0; i < 7; i++) await user.click(screen.getByText('ok-distinct'));
 
     await waitFor(() => expect(screen.getAllByRole('status').length).toBeLessThanOrEqual(4));
   });

@@ -3,6 +3,7 @@ import { Loader2, CheckCircle2, Clock, AlertTriangle, FileText, Video, Link2, Im
 import SwipeToSend from './SwipeToSend';
 import { leadService, assetService, errorMessage } from '../../services/api';
 import { whatsappLinks, openInApp } from '../../lib/whatsapp';
+import { useToast } from '../../lib/toast';
 import { SendPackSummaryDTO, PreparedPackDTO, AssetDTO } from '../../dtos';
 
 /**
@@ -41,6 +42,7 @@ interface Props {
 }
 
 const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }) => {
+  const toast = useToast();
   const [packs, setPacks] = useState<SendPackSummaryDTO[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [prepared, setPrepared] = useState<PreparedPackDTO | null>(null);
@@ -140,6 +142,14 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
         if (!links) {
           onError('This student has no usable phone number, so WhatsApp cannot be opened.');
           return;
+        }
+        // The provider tried and could not — an expired token, a lapsed account, an outage.
+        // WhatsApp still opens, but silently swapping to a hand-off would leave a counsellor
+        // believing the CRM sent it automatically when it did not, and the confirm step below
+        // would look like an odd extra click rather than a necessary one.
+        if (outcome.status === 'handoff_after_failure') {
+          toast.info('Automatic sending is unavailable right now.',
+            'Your own WhatsApp is opening with the message and files ready instead.');
         }
         // The app, not the browser. On a desk that is WhatsApp Desktop opening on this number
         // rather than WhatsApp Web asking for a QR code.

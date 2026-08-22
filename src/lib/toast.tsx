@@ -89,7 +89,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const push = useCallback((tone: Tone, message: string, detail?: string) => {
     const id = nextId++;
-    setToasts(current => trim([...current, { id, tone, message, detail }]));
+    setToasts(current => {
+      // The same sentence twice is never more informative than once, and it happens easily:
+      // a screen that loads two things reports the same expired token from both. Two identical
+      // red cards read as two separate problems.
+      if (current.some(t => t.tone === tone && t.message === message)) return current;
+      return trim([...current, { id, tone, message, detail }]);
+    });
 
     const after = DISMISS_AFTER[tone];
     if (after) window.setTimeout(() => dismiss(id), after);

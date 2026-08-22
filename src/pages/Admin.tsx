@@ -20,11 +20,13 @@ import {
   CalendarRange,
   MessageSquareText,
   Clock,
-  FolderOpen
+  FolderOpen,
+  UserPlus,
 } from 'lucide-react';
 import { authService } from '../services/api';
 import { UserResponseDTO as User } from '../dtos';
 import { canAccessPortal, can, canAny, roleLabel } from '../lib/permissions';
+import AddLeadModal from '../components/admin/AddLeadModal';
 
 // Admin Components
 import AdminDashboard from '../components/admin/AdminDashboard';
@@ -68,6 +70,7 @@ const Admin = () => {
   // Opening a lead from a notification works from whichever screen you are on, so the drawer
   // lives in the shell rather than inside any one tab.
   const [notifiedLeadId, setNotifiedLeadId] = useState<string | null>(null);
+  const [addingLead, setAddingLead] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -352,6 +355,19 @@ const Admin = () => {
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            {/* Reachable from every screen, not only Student Leads.
+                A walk-in arrives while you are mid-way through My Day or looking at a batch, and
+                asking somebody to navigate elsewhere first is how an enquiry ends up on a sticky
+                note instead of in the pipeline. */}
+            {can(user, 'LEAD_CREATE') && (
+              <button
+                onClick={() => setAddingLead(true)}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-orange-600 transition-colors"
+                title="Add a walk-in or phone enquiry">
+                <UserPlus size={16} />
+                <span className="hidden sm:inline">Add a student</span>
+              </button>
+            )}
             <NotificationBell onOpenLead={setNotifiedLeadId} />
             <div className="text-right hidden sm:block">
               <p className="font-bold text-sm">{user.displayName}</p>
@@ -407,6 +423,22 @@ const Admin = () => {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* A walk-in, added from wherever the counsellor happens to be. The lead opens straight
+          afterwards using the same drawer a notification uses — mid-conversation, the next thing
+          needed is the student's history, not a list. */}
+      <AnimatePresence>
+        {addingLead && (
+          <AddLeadModal
+            options={null}
+            onClose={() => setAddingLead(false)}
+            onCreated={(leadId) => {
+              setAddingLead(false);
+              setNotifiedLeadId(leadId);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Only mounted when a notification actually opens a lead, so it never overlaps the
           drawer a screen is already showing. */}
