@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import LeadDrawer from '../components/admin/LeadDrawer';
-import { leadService } from '../services/api';
+import { leadService, assetService } from '../services/api';
 import { dateInDays } from '../lib/followUp';
 import type { LeadDTO, LeadOptionsDTO, UserResponseDTO, AssetOpenDTO } from '../dtos';
 
@@ -355,6 +355,38 @@ describe('Send pack', () => {
 
     const [, changes] = vi.mocked(leadService.patch).mock.calls.at(-1)!;
     expect(changes.nextTouchOn).toBe(dateInDays(1));
+  });
+
+  it('says what is in the Media Library and lets it be attached', async () => {
+    // The complaint behind this: the picker was a faint grey "Add something else" link, and
+    // counsellors went looking for a way to attach the brochure and concluded there wasn't one.
+    const user = userEvent.setup();
+    vi.mocked(leadService.preparePack).mockResolvedValue(prepared());
+    vi.mocked(assetService.list).mockResolvedValue([
+      { id: 'x1', key: 'brochure', name: 'Institute brochure', type: 'PDF',
+        url: 'https://example.test/b', sizeLabel: '2 MB', tracked: true, active: true },
+      { id: 'x2', key: 'review', name: 'Student Review', type: 'VIDEO',
+        url: 'https://example.test/v', sizeLabel: '12 MB', tracked: true, active: true },
+    ] as never);
+    openDrawer();
+
+    // The control names itself and says how much is behind it.
+    const opener = await screen.findByRole('button', { name: /media library — 2 available/i });
+    await user.click(opener);
+
+    // Grouped, because a flat list is hard to scan with a student waiting.
+    expect(await screen.findByText('Documents')).toBeInTheDocument();
+    expect(screen.getByText('Videos')).toBeInTheDocument();
+    expect(screen.getByText('Student Review')).toBeInTheDocument();
+  });
+
+  it('says so when the Media Library cannot be loaded', async () => {
+    // It used to fail silently, so an expired session looked exactly like an empty library.
+    vi.mocked(leadService.preparePack).mockResolvedValue(prepared());
+    vi.mocked(assetService.list).mockRejectedValue(new Error('401'));
+    openDrawer();
+
+    expect(await screen.findByRole('button', { name: /could not be loaded/i })).toBeInTheDocument();
   });
 
   it('shows what the student opened, and calls out repeat opens', async () => {

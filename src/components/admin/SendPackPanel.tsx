@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, CheckCircle2, Clock, AlertTriangle, FileText, Video, Link2, Image, Zap } from 'lucide-react';
+import { Loader2, CheckCircle2, Clock, AlertTriangle, FileText, Video, Link2, Image, Zap, Paperclip, ChevronDown } from 'lucide-react';
 import SwipeToSend from './SwipeToSend';
 import { leadService, assetService, errorMessage } from '../../services/api';
 import { whatsappLinks, openInApp } from '../../lib/whatsapp';
@@ -34,6 +34,19 @@ const windowLabel = (mins: number | null) => {
   const m = mins % 60;
   return h > 0 ? `${h}h ${String(m).padStart(2, '0')}m left` : `${m}m left`;
 };
+
+/**
+ * The Media Library, split the way the library itself presents it.
+ *
+ * A flat list of everything is hard to scan when a counsellor is looking for one brochure with a
+ * student waiting, and the type badge alone did not do the job.
+ */
+const GROUPS: { type: string; label: string }[] = [
+  { type: 'PDF',   label: 'Documents' },
+  { type: 'VIDEO', label: 'Videos' },
+  { type: 'IMAGE', label: 'Images' },
+  { type: 'LINK',  label: 'Links' },
+];
 
 interface Props {
   leadId: string;
@@ -86,10 +99,17 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
   const [library, setLibrary] = useState<AssetDTO[]>([]);
   const [extra, setExtra] = useState<Set<string>>(new Set());
   const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryError, setLibraryError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
-    assetService.list().then(a => live && setLibrary(a)).catch(() => { /* the pack still sends */ });
+    // The failure used to be swallowed entirely, which meant a counsellor whose session had
+    // expired saw an empty picker and concluded the library was empty. The pack can still be
+    // sent without it, so this reports rather than blocks.
+    assetService.list()
+      .then(a => { if (live) { setLibrary(a); setLibraryError(null); } })
+      .catch(e => live && setLibraryError(
+        errorMessage(e, 'The Media Library could not be loaded. The pack can still be sent.')));
     return () => { live = false; };
   }, []);
 
@@ -258,23 +278,57 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
             Edit freely — what you send is what goes, not the template.
           </p>
 
-          {library.length > 0 && (
-            <div className="mt-2">
-              <button
-                type="button"
-                onClick={() => setShowLibrary(v => !v)}
-                className="text-xs font-semibold text-gray-500 hover:text-gray-800 inline-flex items-center gap-1">
-                {showLibrary ? 'Hide' : 'Add something else'}
-                {extraAssets.length > 0 && (
-                  <span className="ml-1 text-[11px] bg-gray-900 text-white rounded-full px-1.5">
-                    {extraAssets.length}
-                  </span>
-                )}
-              </button>
+          {/* This was a faint grey text link reading "Add something else", and counsellors did
+              not find it — they went looking for a way to attach the brochure and concluded
+              there wasn't one. It is the same control; it now looks like a control, says how
+              much is behind it, and explains itself when there is nothing there. */}
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setShowLibrary(v => !v)}
+              disabled={library.length === 0}
+              aria-expanded={showLibrary}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:border-primary hover:text-primary disabled:opacity-60 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-colors">
+              <Paperclip size={15} className="shrink-0" />
+              <span className="flex-1 text-left">
+                {libraryError
+                  ? 'Media Library could not be loaded'
+                  : library.length === 0
+                    ? 'Nothing in the Media Library yet'
+                    : `Attach from the Media Library — ${library.length} available`}
+              </span>
+              {extraAssets.length > 0 && (
+                <span className="text-[11px] bg-gray-900 text-white rounded-full px-1.5 py-0.5">
+                  {extraAssets.length} added
+                </span>
+              )}
+              {library.length > 0 && (
+                <ChevronDown size={15}
+                  className={`shrink-0 transition-transform ${showLibrary ? 'rotate-180' : ''}`} />
+              )}
+            </button>
 
-              {showLibrary && (
-                <ul className="mt-2 space-y-1 max-h-56 overflow-y-auto pr-1">
-                  {library.map(a => {
+            {libraryError && (
+              <p className="text-[11px] text-red-600 mt-1.5">{libraryError}</p>
+            )}
+            {!libraryError && library.length === 0 && (
+              <p className="text-[11px] text-gray-400 mt-1.5">
+                Brochures, videos and links added under Media Library appear here straight away.
+              </p>
+            )}
+
+            {showLibrary && library.length > 0 && (
+              <div className="mt-2 max-h-64 overflow-y-auto pr-1 border border-gray-100 rounded-xl p-1">
+                {GROUPS.map(group => {
+                  const items = library.filter(a => a.type === group.type);
+                  if (items.length === 0) return null;
+                  return (
+                    <section key={group.type} className="mb-1 last:mb-0">
+                      <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2 py-1">
+                        {group.label}
+                      </h4>
+                      <ul className="space-y-0.5">
+                  {items.map(a => {
                     const inPack = packAssets.some(p => p.key === a.key);
                     return (
                       <li key={a.id}>
@@ -302,10 +356,13 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
                       </li>
                     );
                   })}
-                </ul>
-              )}
-            </div>
-          )}
+                      </ul>
+                    </section>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {prepared.assets.length > 0 && (
             <ul className="mt-3 space-y-1.5">
