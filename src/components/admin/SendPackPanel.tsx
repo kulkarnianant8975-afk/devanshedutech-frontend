@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, CheckCircle2, Clock, AlertTriangle, FileText, Video, Link2, Image, Zap } from 'lucide-react';
 import SwipeToSend from './SwipeToSend';
 import { leadService, assetService, errorMessage } from '../../services/api';
+import { whatsappLinks, openInApp } from '../../lib/whatsapp';
 import { SendPackSummaryDTO, PreparedPackDTO, AssetDTO } from '../../dtos';
 
 /**
@@ -49,6 +50,8 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
+  const [webFallback, setWebFallback] = useState<string | null>(null);
+  const [bookedFor, setBookedFor] = useState<string | null>(null);
 
   useEffect(() => {
     leadService.packs()
@@ -132,15 +135,49 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
         // text is rebuilt here rather than the hand-off URL being opened as returned. But the
         // edited text is only the covering note — the brochure and the video have to be put
         // back, or WhatsApp opens with a friendly message and none of the things it promises.
-        const phoneUrl = outcome.handoffUrl.split('?text=')[0];
-        window.open(`${phoneUrl}?text=${encodeURIComponent(withAttachments(message))}`,
-          '_blank', 'noopener');
+        const number = outcome.handoffUrl.split('wa.me/')[1]?.split('?')[0] ?? '';
+        const links = whatsappLinks(number, withAttachments(message));
+        if (!links) {
+          onError('This student has no usable phone number, so WhatsApp cannot be opened.');
+          return;
+        }
+        // The app, not the browser. On a desk that is WhatsApp Desktop opening on this number
+        // rather than WhatsApp Web asking for a QR code.
+        openInApp(links.app);
+        // Kept for the fallback below: a protocol nothing handles fails silently, and a
+        // counsellor left staring at an unchanged screen needs somewhere to go.
+        setWebFallback(links.web);
         setAwaitingConfirm(true);
       } else {
         onError(outcome.detail);
       }
     } catch (err) {
       onError(errorMessage(err, 'Could not send that message.'));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  /**
+   * Books the next follow-up without leaving the send panel.
+   *
+   * The drawer has a date field further down, and in practice nobody scrolled back to it — the
+   * message goes, the panel closes, and the lead is left with no future date on it. That is the
+   * one state the SOP does not allow an active lead to be in, because nothing will ever bring it
+   * back up. The moment a counsellor has just spoken to somebody is the moment they know when to
+   * speak to them again, so it is offered here.
+   */
+  const bookFollowUp = async (days: number) => {
+    const when = new Date();
+    when.setDate(when.getDate() + days);
+    const on = when.toISOString().slice(0, 10);
+    setSending(true);
+    try {
+      await leadService.patch(leadId, { nextTouchOn: on });
+      setBookedFor(on);
+      onSent();
+    } catch (err) {
+      onError(errorMessage(err, 'Could not book that follow-up.'));
     } finally {
       setSending(false);
     }
@@ -294,11 +331,25 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
 
           <div className="mt-3">
             {awaitingConfirm ? (
-              <button onClick={confirmSent} disabled={sending}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 transition-colors">
-                {sending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                I sent it — record on the timeline
-              </button>
+              <div className="space-y-2">
+                <button onClick={confirmSent} disabled={sending}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+                  {sending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                  I sent it — record on the timeline
+                </button>
+
+                {/* A protocol nothing handles fails silently, and the screen looks identical
+                    whether WhatsApp opened or did nothing at all. This is the way out. */}
+                {webFallback && (
+                  <p className="text-[11px] text-gray-500 text-center">
+                    WhatsApp did not open?{' '}
+                    <a href={webFallback} target="_blank" rel="noopener noreferrer"
+                      className="font-semibold text-primary underline">
+                      Use WhatsApp Web instead
+                    </a>
+                  </p>
+                )}
+              </div>
             ) : (
               <SwipeToSend
                 label={`Swipe to send ${included.length + 1} message${included.length ? 's' : ''}`}
@@ -310,6 +361,40 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
               />
             )}
           </div>
+
+          {/* The golden rule of the SOP: an active lead always carries a future date. This is
+              the moment a counsellor knows what that date should be. */}
+          {sent && (
+            <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-3">
+              {bookedFor ? (
+                <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+                  <CheckCircle2 size={15} className="shrink-0" />
+                  Next follow-up booked for {new Date(bookedFor + 'T00:00:00')
+                    .toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}.
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs font-semibold text-gray-700 mb-2">
+                    When will you follow up with {studentName.split(' ')[0]}?
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[{ label: 'Tomorrow', days: 1 },
+                      { label: 'In 3 days', days: 3 },
+                      { label: 'Next week', days: 7 }].map(option => (
+                      <button key={option.days} onClick={() => bookFollowUp(option.days)}
+                        disabled={sending}
+                        className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary disabled:opacity-50 transition-colors">
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-2">
+                    Leave it and this lead has no future date — nothing will bring it back up.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
 
           <p className="text-[11px] text-gray-400 mt-2 leading-relaxed flex items-start gap-1.5">
             {prepared.sendsAutomatically && <Zap size={12} className="mt-0.5 flex-shrink-0 text-emerald-600" />}

@@ -52,6 +52,23 @@ const openDrawer = (over: Partial<LeadDTO> = {}, opens: AssetOpenDTO[] = []) => 
   );
 };
 
+/**
+ * Records the links the panel hands to the operating system.
+ *
+ * The hand-off no longer goes through window.open: a blank tab left sitting there once the app
+ * takes over is worse than no tab, so it clicks an anchor carrying the whatsapp:// protocol
+ * instead. jsdom has nothing to open, which is the point — what matters is the address.
+ */
+const captureAppLinks = (): string[] => {
+  const seen: string[] = [];
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    seen.push(this.getAttribute('href') ?? '');
+  });
+  return seen;
+};
+
 describe('Lead workspace', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -241,13 +258,15 @@ describe('Send pack', () => {
       sent: false, status: 'manual', detail: 'Opens in your WhatsApp.',
       handoffUrl: 'https://wa.me/919876543210?text=hi', channel: 'Manual WhatsApp',
     });
-    const opened = vi.fn();
-    vi.stubGlobal('open', opened);
+    const opened = captureAppLinks();
     openDrawer();
 
     await user.type(await screen.findByRole('button', { name: /swipe to send/i }), '{Enter}');
 
-    const url = decodeURIComponent(opened.mock.calls[0][0] as string);
+    const url = decodeURIComponent(opened[0]);
+    // The app's own protocol, not wa.me. On a desk the browser route means WhatsApp Web — a
+    // second login, a QR code when it lapses, and a different set of chats from the phone.
+    expect(url.startsWith('whatsapp://send?phone=919876543210')).toBe(true);
     expect(url).toContain('Great speaking with you, Rohit!');
     expect(url).toContain('Data Analytics — syllabus');
     expect(url).toContain('/api/public/a/tok1');
@@ -269,16 +288,43 @@ describe('Send pack', () => {
       sent: false, status: 'manual', detail: 'Opens in your WhatsApp.',
       handoffUrl: 'https://wa.me/919876543210?text=hi', channel: 'Manual WhatsApp',
     });
-    const opened = vi.fn();
-    vi.stubGlobal('open', opened);
+    const opened = captureAppLinks();
     openDrawer();
 
     await user.type(await screen.findByRole('button', { name: /swipe to send/i }), '{Enter}');
 
-    const url = decodeURIComponent(opened.mock.calls[0][0] as string);
+    const url = decodeURIComponent(opened[0]);
     const first = url.indexOf('/api/public/a/tok1');
     expect(first).toBeGreaterThan(-1);
     expect(url.indexOf('/api/public/a/tok1', first + 1)).toBe(-1);
+  });
+
+  it('asks for the next follow-up as soon as the send is recorded', async () => {
+    // The drawer has a date field further down and nobody scrolled back to it, so leads were
+    // being left with no future date — the one state the SOP does not allow, because nothing
+    // will ever bring that lead back up.
+    const user = userEvent.setup();
+    vi.mocked(leadService.preparePack).mockResolvedValue(prepared());
+    vi.mocked(leadService.sendPack).mockResolvedValue({
+      sent: false, status: 'manual', detail: 'Opens in your WhatsApp.',
+      handoffUrl: 'https://wa.me/919876543210?text=hi', channel: 'Manual WhatsApp',
+    });
+    vi.mocked(leadService.recordPackSent).mockResolvedValue({} as never);
+    vi.mocked(leadService.patch).mockResolvedValue({} as never);
+    captureAppLinks();
+    openDrawer();
+
+    await user.type(await screen.findByRole('button', { name: /swipe to send/i }), '{Enter}');
+    await user.click(await screen.findByRole('button', { name: /i sent it/i }));
+
+    await user.click(await screen.findByRole('button', { name: /in 3 days/i }));
+
+    const [, changes] = vi.mocked(leadService.patch).mock.calls.at(-1)!;
+    const expected = new Date();
+    expected.setDate(expected.getDate() + 3);
+    expect(changes.nextTouchOn).toBe(expected.toISOString().slice(0, 10));
+
+    expect(await screen.findByText(/Next follow-up booked/i)).toBeInTheDocument();
   });
 
   it('shows what the student opened, and calls out repeat opens', async () => {
