@@ -94,6 +94,25 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
   }))];
 
   /**
+   * The message as WhatsApp will receive it, with every chosen file as a link.
+   *
+   * Nothing can be pre-attached to a WhatsApp deep link — it carries text and nothing else. So a
+   * brochure or a video travels as a URL, which is also the only form that works here: those
+   * files sit on the server, and "attach the brochure" asks a counsellor to download it to their
+   * phone first, mid-conversation. Nobody does that, so in practice it never arrived.
+   *
+   * Anything already named in the text is left alone. Link-type assets are appended by the
+   * server when the message is prepared, and the same URL twice in one message reads to the
+   * student as a mistake.
+   */
+  const withAttachments = (text: string): string => {
+    const missing = included.filter(a => a.url && !text.includes(a.url));
+    return missing.length
+      ? [text, ...missing.map(a => `${a.name}:\n${a.url}`)].join('\n\n')
+      : text;
+  };
+
+  /**
    * One swipe sends it. With a provider configured the message goes straight to the student;
    * without one the server returns a hand-off link, WhatsApp opens with the message ready, and
    * nothing is written to the timeline until the counsellor confirms they actually sent it.
@@ -109,8 +128,13 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
         setSent(true);
         onSent();
       } else if (outcome.handoffUrl) {
+        // The counsellor's edits win over the server's copy of the message, which is why the
+        // text is rebuilt here rather than the hand-off URL being opened as returned. But the
+        // edited text is only the covering note — the brochure and the video have to be put
+        // back, or WhatsApp opens with a friendly message and none of the things it promises.
         const phoneUrl = outcome.handoffUrl.split('?text=')[0];
-        window.open(`${phoneUrl}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+        window.open(`${phoneUrl}?text=${encodeURIComponent(withAttachments(message))}`,
+          '_blank', 'noopener');
         setAwaitingConfirm(true);
       } else {
         onError(outcome.detail);
@@ -293,7 +317,9 @@ const SendPackPanel: React.FC<Props> = ({ leadId, studentName, onSent, onError }
               {prepared.note}
               {prepared.sendsAutomatically
                 ? ` Sent through ${prepared.channel}, one student at a time — nothing goes out on its own.`
-                : ' WhatsApp opens with the message ready; confirm once you have sent it.'}
+                : included.length
+                  ? ` WhatsApp opens with the message and ${included.length} link${included.length === 1 ? '' : 's'} ready — press send there, then confirm here.`
+                  : ' WhatsApp opens with the message ready — press send there, then confirm here.'}
             </span>
           </p>
         </>

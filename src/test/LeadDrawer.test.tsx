@@ -223,6 +223,64 @@ describe('Send pack', () => {
     expect(leadService.recordPackSent).toHaveBeenCalledWith('l1', 'guidance', ['syllabus', 'demo_link']);
   });
 
+  it('opens WhatsApp with the brochure and the video in the message', async () => {
+    // The whole point of the hand-off. A deep link cannot carry a file, and the files are on
+    // the server — so "attach the brochure" would mean downloading it to a phone first,
+    // mid-conversation. As links they simply arrive.
+    const user = userEvent.setup();
+    vi.mocked(leadService.preparePack).mockResolvedValue({
+      ...prepared(),
+      assets: [
+        { key: 'syllabus', name: 'Data Analytics — syllabus', type: 'PDF',
+          url: 'https://www.devanshedutech.com/api/public/a/tok1', sizeLabel: 'PDF', tracked: true },
+        { key: 'review', name: 'Student review', type: 'VIDEO',
+          url: 'https://www.devanshedutech.com/api/public/a/tok2', sizeLabel: '18 MB', tracked: true },
+      ],
+    });
+    vi.mocked(leadService.sendPack).mockResolvedValue({
+      sent: false, status: 'manual', detail: 'Opens in your WhatsApp.',
+      handoffUrl: 'https://wa.me/919876543210?text=hi', channel: 'Manual WhatsApp',
+    });
+    const opened = vi.fn();
+    vi.stubGlobal('open', opened);
+    openDrawer();
+
+    await user.type(await screen.findByRole('button', { name: /swipe to send/i }), '{Enter}');
+
+    const url = decodeURIComponent(opened.mock.calls[0][0] as string);
+    expect(url).toContain('Great speaking with you, Rohit!');
+    expect(url).toContain('Data Analytics — syllabus');
+    expect(url).toContain('/api/public/a/tok1');
+    expect(url).toContain('Student review');
+    expect(url).toContain('/api/public/a/tok2');
+  });
+
+  it('does not repeat a link the message already carries', async () => {
+    // Link-type assets are appended by the server when the pack is prepared. The same URL twice
+    // in one message reads to the student as a mistake.
+    const user = userEvent.setup();
+    vi.mocked(leadService.preparePack).mockResolvedValue({
+      ...prepared(),
+      message: 'Have a look:\n\nhttps://www.devanshedutech.com/api/public/a/tok1',
+      assets: [{ key: 'syllabus', name: 'Data Analytics — syllabus', type: 'LINK',
+                 url: 'https://www.devanshedutech.com/api/public/a/tok1', sizeLabel: '', tracked: true }],
+    });
+    vi.mocked(leadService.sendPack).mockResolvedValue({
+      sent: false, status: 'manual', detail: 'Opens in your WhatsApp.',
+      handoffUrl: 'https://wa.me/919876543210?text=hi', channel: 'Manual WhatsApp',
+    });
+    const opened = vi.fn();
+    vi.stubGlobal('open', opened);
+    openDrawer();
+
+    await user.type(await screen.findByRole('button', { name: /swipe to send/i }), '{Enter}');
+
+    const url = decodeURIComponent(opened.mock.calls[0][0] as string);
+    const first = url.indexOf('/api/public/a/tok1');
+    expect(first).toBeGreaterThan(-1);
+    expect(url.indexOf('/api/public/a/tok1', first + 1)).toBe(-1);
+  });
+
   it('shows what the student opened, and calls out repeat opens', async () => {
     openDrawer({}, [
       { assetKey: 'fees', assetName: 'Fee sheet', opens: 3 },
