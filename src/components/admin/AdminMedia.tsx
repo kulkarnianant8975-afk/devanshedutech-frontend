@@ -332,8 +332,18 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
                     </label>
                     <input id="am-url" value={form.url}
                       onChange={e => setForm({ ...form, url: e.target.value })}
-                      placeholder="https://…"
+                      placeholder="https://drive.google.com/…"
                       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl" />
+                    {/* The trade-off is the whole reason to pick one over the other, and it was
+                        invisible: an uploaded file is opened through this CRM, so opens can be
+                        counted; a Drive or YouTube URL is opened on somebody else's server and
+                        nothing here can see it. Saying so up front beats an empty opens column
+                        that reads as "nobody looked". */}
+                    <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
+                      A Google Drive, YouTube or any other link works, and there is no size limit.
+                      Opens cannot be counted for it though — only files uploaded here are opened
+                      through the CRM, which is what makes tracking possible.
+                    </p>
                   </div>
                 )}
 
