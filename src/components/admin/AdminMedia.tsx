@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   FileText, Video, Link2, Image as ImageIcon, Plus, Upload, Trash2, Loader2,
-  AlertCircle, Eye, X
+  AlertCircle, Eye, X, Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../lib/toast';
@@ -155,6 +155,19 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
     }
   };
 
+  const toggleWebsite = async (asset: AssetDTO) => {
+    try {
+      const updated = await assetService.update(asset.id, { showOnWebsite: !asset.showOnWebsite });
+      toast.success(updated.showOnWebsite
+        ? `${asset.name} is now on the Student Reviews page.`
+        : `${asset.name} was taken off the website.`,
+        updated.showOnWebsite ? 'Visitors can watch it straight away.' : undefined);
+      await load();
+    } catch (e) {
+      toast.error(errorMessage(e, 'That could not be changed.'));
+    }
+  };
+
   const retire = async (asset: AssetDTO) => {
     try {
       await assetService.retire(asset.id);
@@ -253,8 +266,30 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
                             <Eye className="w-3 h-3" /> tracked
                           </span>
                         )}
+                        {a.showOnWebsite && (
+                          <span title="Playing on the Student Reviews page of the website"
+                            className="hidden sm:inline-flex items-center gap-1 text-[11px] text-orange-700 bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded-md shrink-0">
+                            <Globe className="w-3 h-3" /> on the website
+                          </span>
+                        )}
                         {a.active === false && (
                           <span className="text-[11px] text-gray-400 shrink-0">retired</span>
+                        )}
+                        {/* Videos only. Everything else in here is a fee sheet or an internal
+                            note, and neither belongs on a public page. */}
+                        {mayEdit && a.active !== false && a.type === 'VIDEO' && (
+                          <button onClick={() => toggleWebsite(a)}
+                            title={a.showOnWebsite
+                              ? 'Remove from the Student Reviews page'
+                              : 'Show on the Student Reviews page'}
+                            className={`p-1 shrink-0 ${a.showOnWebsite
+                              ? 'text-orange-500 hover:text-orange-700'
+                              : 'text-gray-300 hover:text-orange-500'}`}
+                            aria-label={a.showOnWebsite
+                              ? `Remove ${a.name} from the website`
+                              : `Show ${a.name} on the website`}>
+                            <Globe className="w-4 h-4" />
+                          </button>
                         )}
                         {mayEdit && a.active !== false && (
                           <button onClick={() => retire(a)}

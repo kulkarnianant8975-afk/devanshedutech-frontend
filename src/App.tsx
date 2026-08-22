@@ -35,6 +35,7 @@ const AIChatbot      = lazyWithRetry(() => import('./components/AIChatbot'));
 const Home       = lazyWithRetry(() => import('./pages/Home'));
 const About      = lazyWithRetry(() => import('./pages/About'));
 const AllCourses = lazyWithRetry(() => import('./pages/AllCourses'));
+const StudentReviews = lazyWithRetry(() => import('./pages/StudentReviews'));
 const CourseLanding = lazyWithRetry(() => import('./pages/CourseLanding'));
 const Contact    = lazyWithRetry(() => import('./pages/Contact'));
 const Admin      = lazyWithRetry(() => import('./pages/Admin'));
@@ -105,6 +106,7 @@ const AppContent = () => {
               <Route path="/"        element={<Home />} />
               <Route path="/about"   element={<About />} />
               <Route path="/courses" element={<AllCourses />} />
+              <Route path="/reviews" element={<StudentReviews />} />
               {/* One page per course, so an advertisement has somewhere specific to land. */}
               <Route path="/courses/:slug" element={<CourseLanding />} />
               <Route path="/contact" element={<Contact />} />

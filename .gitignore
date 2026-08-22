@@ -8,3 +8,12 @@ coverage/
 !.env.example
 backend-springboot/
 devanshedutech-backend/
+
+# Source video for the Student Reviews page.
+#
+# Three reels are over three hundred megabytes. Git keeps them in history forever, so every
+# clone and every deploy would pay for them permanently. They belong in the Media Library
+# instead — uploaded once through the CRM, served from the server's media volume, and swappable
+# without a deploy. The poster frames under public/images/reviews are committed: they are ~50 KB
+# each and the page needs them immediately.
+public/student review video/
