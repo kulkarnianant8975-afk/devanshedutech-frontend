@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../lib/toast';
 import LeadDrawer from './LeadDrawer';
 import AddLeadModal from './AddLeadModal';
+import LastFollowUp from './LastFollowUp';
 import { leadService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import {
@@ -297,6 +298,7 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Contact</th>
                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Grade</th>
                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Stage</th>
+                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Last follow-up</th>
                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Next touch</th>
                 {seesEveryone && <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Owner</th>}
                 <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Source</th>
@@ -377,6 +379,9 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
                     {lead.lostReason && (
                       <p className="text-[11px] text-gray-400 mt-0.5">{lead.lostReason.replace(/_/g, ' ').toLowerCase()}</p>
                     )}
+                  </td>
+                  <td className="p-4">
+                    <LastFollowUp at={lead.lastTouchAt} note={lead.lastTouchNote} />
                   </td>
                   <td className="p-4">
                     {lead.nextTouchOn ? (

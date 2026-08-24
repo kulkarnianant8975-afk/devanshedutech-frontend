@@ -68,6 +68,13 @@ const Row: React.FC<{ lead: LeadDTO; right?: React.ReactNode; onOpen: (id: strin
         {[lead.courseInterested, lead.cityName].filter(Boolean).join(' · ')}
         {lead.nextTouchNote ? ` — ${lead.nextTouchNote}` : ''}
       </p>
+      {/* What came of the last attempt. Without it the list says who is due today and nothing
+          about who has already been rung four times without an answer. */}
+      {(lead.lastTouchAt || lead.lastTouchNote) && (
+        <p className="text-[11px] text-gray-400 truncate mt-0.5">
+          Last: {lead.lastTouchNote || 'contacted'}
+        </p>
+      )}
     </div>
     <div className="flex items-center gap-2 flex-shrink-0">
       {right}

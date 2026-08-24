@@ -105,6 +105,14 @@ const Column: React.FC<{
             <p className="text-[11px] text-gray-500 mt-1 truncate pl-3.5">
               {lead.courseInterested || 'General enquiry'}
             </p>
+            {/* A card this small can afford one more line, and this is the line worth spending it
+                on: a column of leads all sitting in "Contacted" looks identical until you can see
+                which of them anybody has actually spoken to. */}
+            {lead.lastTouchNote && (
+              <p className="text-[10px] text-gray-400 mt-0.5 truncate pl-3.5" title={lead.lastTouchNote}>
+                {lead.lastTouchNote}
+              </p>
+            )}
             <div className="flex items-center gap-2 mt-2 pl-3.5 flex-wrap">
               {lead.nextTouchOn ? (
                 <span className={`text-[10px] font-bold flex items-center gap-1 tabular-nums ${
