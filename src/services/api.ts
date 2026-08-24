@@ -12,6 +12,7 @@ import {
   LeadRequestDTO, 
   LeadDTO,
   LeadDetailDTO,
+  ContactLogDTO,
   LeadPatchDTO,
   LeadQueryParams,
   LeadOptionsDTO,
@@ -95,6 +96,10 @@ export const leadService = {
     api.post<CaptureResponseDTO>('/leads/manual', lead).then(res => res.data),
   patch: (id: string, changes: LeadPatchDTO) =>
     api.patch<LeadDTO>(`/leads/${id}`, changes).then(res => res.data),
+  /** Every follow-up made in a window, across all leads the caller may see. */
+  activity: (from?: string, to?: string, counsellorId?: string) =>
+    api.get<ContactLogDTO[]>('/leads/activity', { params: { from, to, counsellorId } })
+      .then(res => res.data),
   recordOutcome: (id: string, outcome: OutcomeDTO) =>
     api.post<LeadDetailDTO>(`/leads/${id}/outcome`, outcome).then(res => res.data),
   addNote: (id: string, summary: string, detail?: string) =>

@@ -33,8 +33,18 @@ export const dateInDays = (days: number): string => {
   return `${when.getFullYear()}-${month}-${day}`;
 };
 
+/**
+ * The locale these dates are read in.
+ *
+ * Fixed rather than left to the browser. An undefined locale follows whatever the machine is set
+ * to, which in practice meant "Aug 25" — correct in America and backwards to everyone in
+ * Parbhani, who writes 25 Aug. A date that reads backwards is not a small thing on a screen
+ * whose entire job is telling somebody which day to call.
+ */
+export const LOCALE = 'en-IN';
+
 /** "Fri, 29 Aug" — for confirming back what was just booked. */
 export const formatBooked = (iso: string): string =>
-  new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+  new Date(`${iso}T00:00:00`).toLocaleDateString(LOCALE, {
     weekday: 'short', day: 'numeric', month: 'short',
   });

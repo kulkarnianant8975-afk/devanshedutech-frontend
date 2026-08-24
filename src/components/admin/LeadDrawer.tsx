@@ -12,6 +12,7 @@ import { batchService } from '../../services/api';
 import AssistantPanel from './AssistantPanel';
 import { can } from '../../lib/permissions';
 import { FOLLOW_UP_CHOICES, dateInDays, formatBooked } from '../../lib/followUp';
+import FollowUpFlow from './FollowUpFlow';
 import {
   LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO, BatchDTO,
   AssetOpenDTO,
@@ -456,6 +457,11 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                       )}
                     </div>
                   </section>
+
+                  {/* Placed here, above everything else, because it answers the question asked
+                      immediately before a call: what did they say last time, and when am I due
+                      back. */}
+                  <FollowUpFlow activities={activities} />
 
                   {/* What the student has actually opened. Nothing is drawn until something
                       has been, because an empty panel reads as "they ignored it" when the truth

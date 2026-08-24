@@ -142,6 +142,20 @@ export interface LeadActivityDTO {
   createdAt: string;
 }
 
+/** One follow-up in the cross-lead activity log. */
+export interface ContactLogDTO {
+  id: string;
+  leadId: string;
+  studentName: string;
+  course?: string;
+  type: string;
+  outcomeLabel?: string;
+  note?: string;
+  counsellor?: string;
+  at: string;
+  nextTouchOn?: string | null;
+}
+
 export interface LadderStepDTO {
   id: string;
   grade: GradeName;

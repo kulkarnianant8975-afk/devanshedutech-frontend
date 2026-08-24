@@ -22,6 +22,7 @@ import {
   Clock,
   FolderOpen,
   UserPlus,
+  History,
 } from 'lucide-react';
 import { authService } from '../services/api';
 import { UserResponseDTO as User } from '../dtos';
@@ -45,6 +46,7 @@ import AdminBroadcasts from '../components/admin/AdminBroadcasts';
 import AdminBatches from '../components/admin/AdminBatches';
 import AdminSchedule from '../components/admin/AdminSchedule';
 import AdminMedia from '../components/admin/AdminMedia';
+import AdminActivity from '../components/admin/AdminActivity';
 import AdminScripts from '../components/admin/AdminScripts';
 import LeadDrawer from '../components/admin/LeadDrawer';
 
@@ -243,6 +245,7 @@ const Admin = () => {
     { id: 'board',           label: 'Pipeline',        icon: Columns3,        show: can(user, 'LEAD_VIEW_ALL') || can(user, 'LEAD_VIEW_OWN') },
     { id: 'leads',           label: 'Student Leads',   icon: Users,           show: can(user, 'LEAD_VIEW_ALL') || can(user, 'LEAD_VIEW_OWN') },
     { id: 'demos',           label: 'Demos',           icon: CalendarDays,    show: can(user, 'LEAD_VIEW_ALL') || can(user, 'LEAD_VIEW_OWN') },
+    { id: 'activity',        label: 'Follow-up log',   icon: History,         show: canAny(user, 'LEAD_VIEW_ALL', 'LEAD_VIEW_OWN') },
     { id: 'broadcasts',      label: 'Broadcasts',      icon: Megaphone,       show: can(user, 'LEAD_VIEW_ALL') },
     { id: 'batches',         label: 'Batches',         icon: CalendarRange,   show: can(user, 'LEAD_VIEW_ALL') || can(user, 'LEAD_VIEW_OWN') },
     { id: 'courses',         label: 'Manage Courses',  icon: BookOpen,        show: can(user, 'CONTENT_MANAGE') },
@@ -407,6 +410,7 @@ const Admin = () => {
             {currentTab === 'myday' && <MyDay currentUser={user} />}
             {currentTab === 'board' && <PipelineBoard currentUser={user} />}
             {currentTab === 'demos' && <AdminDemos currentUser={user} />}
+            {currentTab === 'activity' && <AdminActivity currentUser={user} />}
             {currentTab === 'broadcasts' && <AdminBroadcasts currentUser={user} />}
             {currentTab === 'batches' && <AdminBatches currentUser={user} />}
             {currentTab === 'schedule' && <AdminSchedule currentUser={user} />}
