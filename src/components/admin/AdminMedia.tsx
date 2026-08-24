@@ -9,6 +9,7 @@ import { assetService, courseService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { AssetDTO, CourseResponseDTO, UserResponseDTO } from '../../dtos';
 import SearchBar from './SearchBar';
+import SectionIntro from './SectionIntro';
 
 /**
  * The media library.
@@ -206,6 +207,17 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
         )}
       </AnimatePresence>
 
+      <SectionIntro
+        screen="AdminMedia"
+        purpose="Everything a counsellor can attach to a message. Anything added here appears in the send panel immediately — no deploy, no waiting."
+        steps={[
+          "Add a document, video, image or link. Videos up to 200 MB; under 16 MB they play inside the chat, larger ones send as a streaming link.",
+          "A file uploaded here can be tracked, so you see who opened the syllabus and how often. A Google Drive or YouTube link has no size limit but its opens cannot be counted.",
+          "The globe on a video puts it on the public Student Reviews page.",
+          "Retire anything out of date. It stays in messages already sent but stops being offered.",
+        ]}
+      />
+
       <SearchBar
         value={search}
         onChange={setSearch}
@@ -215,8 +227,7 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
 
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <p className="text-sm text-gray-500 max-w-xl">
-          Everything a counsellor can attach to a WhatsApp message. Anything added here appears in
-          the send panel immediately — no deployment, no waiting.
+          Everything a counsellor can attach to a WhatsApp message.
         </p>
         <label className="flex items-center gap-1.5 text-xs text-gray-500 shrink-0">
           <input type="checkbox" checked={showRetired}

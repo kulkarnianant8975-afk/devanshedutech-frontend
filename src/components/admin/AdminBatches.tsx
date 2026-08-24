@@ -7,6 +7,7 @@ import { useToast } from '../../lib/toast';
 import { batchService, courseService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { BatchDTO, CourseResponseDTO, UserResponseDTO } from '../../dtos';
+import SectionIntro from './SectionIntro';
 
 /**
  * Course intakes.
@@ -113,6 +114,16 @@ const AdminBatches: React.FC<Props> = ({ currentUser }) => {
 
   return (
     <div className="space-y-5">
+      <SectionIntro
+        screen="AdminBatches"
+        purpose="The batches students enrol into, and when each one starts."
+        steps={[
+          "Create a batch with its course, start date and capacity.",
+          "Batch dates appear in message packs, so a counsellor can answer “when does it start” without asking.",
+          "Close a batch once it is full so it stops being offered.",
+        ]}
+      />
+
       <AnimatePresence>
         {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}

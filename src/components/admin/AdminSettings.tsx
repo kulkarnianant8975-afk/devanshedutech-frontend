@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../lib/toast';
 import { leadService, errorMessage } from '../../services/api';
 import { LadderStepDTO, GradeName, UserResponseDTO } from '../../dtos';
+import SectionIntro from './SectionIntro';
 
 /**
  * Follow-up settings.
@@ -74,6 +75,16 @@ const AdminSettings: React.FC<Props> = () => {
 
   return (
     <div className="space-y-5">
+      <SectionIntro
+        screen="AdminSettings"
+        purpose="The follow-up ladders — what the CRM schedules on its own for each grade."
+        steps={[
+          "Hot runs seven touches over seven days, warm over three weeks, cold by announcement only.",
+          "Changing a day here changes when that step lands for every student on that lane.",
+          "A lead that finishes its lane without joining drops to the next grade down.",
+        ]}
+      />
+
       <AnimatePresence>
         {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}

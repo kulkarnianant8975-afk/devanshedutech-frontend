@@ -9,6 +9,7 @@ import { demoService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import LeadDrawer from './LeadDrawer';
 import { DemoBoardDTO, DemoDTO, LeadOptionsDTO, StaffUserDTO, UserResponseDTO } from '../../dtos';
+import SectionIntro from './SectionIntro';
 import { leadService, userService } from '../../services/api';
 
 /**
@@ -149,6 +150,16 @@ const AdminDemos: React.FC<Props> = ({ currentUser }) => {
 
   return (
     <div className="space-y-4">
+      <SectionIntro
+        screen="AdminDemos"
+        purpose="Demo classes and campus visits, a week at a time."
+        steps={[
+          "Demos are booked from inside a student's record, not from here.",
+          "Mark attendance the same day — the CRM books the follow-ups that come after.",
+          "A no-show books a recovery call for today rather than letting the student drift.",
+        ]}
+      />
+
       <AnimatePresence>
         {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}

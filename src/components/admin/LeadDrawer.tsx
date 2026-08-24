@@ -450,7 +450,7 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                               onClick={() => patch({ nextTouchOn: nextTouch }, 'Next touch updated.')}
                               disabled={!nextTouch || nextTouch === (lead.nextTouchOn ?? '') || saving}
                               className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold disabled:opacity-40 hover:bg-orange-600 transition-colors">
-                              Set
+                              Set date
                             </button>
                           </div>
                         </div>

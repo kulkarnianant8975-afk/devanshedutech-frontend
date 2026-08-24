@@ -8,6 +8,7 @@ import { useToast } from '../../lib/toast';
 import { scheduleService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { WorkingHoursDTO, HolidayDTO, DutyShiftDTO, UserResponseDTO, StaffUserDTO } from '../../dtos';
+import SectionIntro from './SectionIntro';
 
 /**
  * Opening hours, closures, and who is watching enquiries.
@@ -159,6 +160,16 @@ const AdminSchedule: React.FC<Props> = ({ currentUser }) => {
 
   return (
     <div className="space-y-6">
+      <SectionIntro
+        screen="AdminSchedule"
+        purpose="Working hours, holidays, and who picks up an enquiry arriving right now."
+        steps={[
+          "Opening hours decide what counts as a five-minute reply — nothing is overdue outside them.",
+          "Add closures so follow-ups move off days the institute is shut.",
+          "Duty shifts decide who a new enquiry is assigned to.",
+        ]}
+      />
+
       <AnimatePresence>
         {loadError && (
           <motion.div

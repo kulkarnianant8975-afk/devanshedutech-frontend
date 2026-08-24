@@ -9,6 +9,7 @@ import { dateInDays, LOCALE } from '../../lib/followUp';
 import { ContactLogDTO, UserResponseDTO } from '../../dtos';
 import LeadDrawer from './LeadDrawer';
 import SearchBar from './SearchBar';
+import SectionIntro from './SectionIntro';
 
 /**
  * What was actually done, across every student.
@@ -118,6 +119,17 @@ const AdminActivity: React.FC<Props> = ({ currentUser }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SectionIntro
+        screen="AdminActivity"
+        purpose="Every follow-up that actually happened, across all students — the answer to “what did we do this week”."
+        steps={[
+          "Pick a period, then a counsellor if you want just one person's work.",
+          "Each entry shows the student, what came of the call, and what they said.",
+          "A red “No next follow-up booked” means that student was left with no future date — that is how a lead quietly stops being worked.",
+          "Click any entry to open the student.",
+        ]}
+      />
 
       <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex flex-wrap items-center gap-3">
         <div className="flex gap-1.5">

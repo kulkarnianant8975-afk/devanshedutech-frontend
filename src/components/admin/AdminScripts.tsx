@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../lib/toast';
 import { leadService, errorMessage } from '../../services/api';
 import { EditablePackDTO, AssetSummaryDTO, UserResponseDTO } from '../../dtos';
+import SectionIntro from './SectionIntro';
 import WhatsAppConnection from './WhatsAppConnection';
 
 /**
@@ -88,6 +89,16 @@ const AdminScripts: React.FC<Props> = () => {
 
   return (
     <div className="space-y-5">
+      <SectionIntro
+        screen="AdminScripts"
+        purpose="The message packs counsellors send, and which files go with each."
+        steps={[
+          "Each pack is written for a situation — after a call, after a demo, a fee discussion.",
+          "Placeholders like {{first_name}} and {{course}} are filled in per student when it is sent.",
+          "Attach the brochures and videos a pack should carry by default; counsellors can still add more.",
+        ]}
+      />
+
       {/* What carries these messages, and whether it works. Above the scripts themselves
           because editing the wording is pointless if nothing can send it. */}
       <WhatsAppConnection />

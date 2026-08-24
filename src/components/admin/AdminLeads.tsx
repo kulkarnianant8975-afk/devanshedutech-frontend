@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../lib/toast';
 import LeadDrawer from './LeadDrawer';
+import SectionIntro from './SectionIntro';
 import AddLeadModal from './AddLeadModal';
 import LastFollowUp from './LastFollowUp';
 import { leadService, userService, errorMessage } from '../../services/api';
@@ -200,6 +201,17 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
 
   return (
     <div className="space-y-5">
+      <SectionIntro
+        screen="AdminLeads"
+        purpose="Every student who has ever enquired, with filters and a spreadsheet export."
+        steps={[
+          "Filter by grade, stage, owner or source to narrow the list.",
+          "Add a student records a walk-in or a phone enquiry into the pipeline.",
+          "Click any row to open that student and record what happened.",
+          "Export downloads exactly what the filters are showing, not everything.",
+        ]}
+      />
+
       {/* A walk-in or a phone enquiry has to be able to enter the pipeline, or the follow-up
           rules only protect the students who happened to arrive through a form. */}
       {can(currentUser, 'LEAD_CREATE') && (

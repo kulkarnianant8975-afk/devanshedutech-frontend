@@ -5,6 +5,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../lib/toast';
 import SearchBar from './SearchBar';
+import SectionIntro from './SectionIntro';
 import { leadService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import LeadDrawer from './LeadDrawer';
@@ -197,6 +198,17 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
 
   return (
     <div className="space-y-5">
+      <SectionIntro
+        screen="MyDay"
+        purpose="Your day, in the order the SOP asks for. When this screen is empty you are genuinely done — not guessing."
+        steps={[
+          "Answer new enquiries first. Within five minutes during working hours: the first institute to reply usually gets the conversation.",
+          "Clear anything overdue. Those are the students most likely to go cold while you are busy with someone new.",
+          "Work today's list — open the student, call, then record what happened.",
+          "Give a date to anyone with no next step before you close the CRM. A lead without one is never raised again.",
+        ]}
+      />
+
       <AnimatePresence>
         {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}

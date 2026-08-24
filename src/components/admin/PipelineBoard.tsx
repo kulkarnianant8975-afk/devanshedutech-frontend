@@ -7,6 +7,7 @@ import { useToast } from '../../lib/toast';
 import { leadService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import LeadDrawer from './LeadDrawer';
+import SectionIntro from './SectionIntro';
 import {
   BoardDTO, BoardColumnDTO, LeadDTO, LeadOptionsDTO, StageName, GradeName,
   StaffUserDTO, UserResponseDTO
@@ -242,6 +243,17 @@ const PipelineBoard: React.FC<Props> = ({ currentUser }) => {
 
   return (
     <div className="space-y-4">
+      <SectionIntro
+        screen="PipelineBoard"
+        purpose="The same students as Student Leads, arranged by how far each has got."
+        steps={[
+          "Drag a card into another column to move that student's stage.",
+          "The dot is their grade: red hot, amber warm, blue cold.",
+          "Red text means their follow-up is overdue; “No next step” means nothing will ever raise them.",
+          "Click a card to open the student and record a call.",
+        ]}
+      />
+
       <AnimatePresence>
         {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}

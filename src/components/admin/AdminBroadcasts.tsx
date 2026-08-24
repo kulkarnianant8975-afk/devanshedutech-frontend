@@ -7,6 +7,7 @@ import { useToast } from '../../lib/toast';
 import { broadcastService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { SegmentDTO, BroadcastDTO, UserResponseDTO } from '../../dtos';
+import SectionIntro from './SectionIntro';
 
 /**
  * Announcements to the people nobody is chasing.
@@ -95,6 +96,16 @@ const AdminBroadcasts: React.FC<Props> = ({ currentUser }) => {
 
   return (
     <div className="space-y-5">
+      <SectionIntro
+        screen="AdminBroadcasts"
+        purpose="One message to a whole group — a new batch, a workshop, placement results."
+        steps={[
+          "Choose the group: cold leads, updates-only, lost students or enrolled ones.",
+          "Write the message and send. It goes one student at a time, never as a bulk blast.",
+          "This is how cold leads are worked — announcements only, no counsellor time.",
+        ]}
+      />
+
       <AnimatePresence>
         {loadError && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
