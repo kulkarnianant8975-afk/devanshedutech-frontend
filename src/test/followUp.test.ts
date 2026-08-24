@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { dateInDays, formatBooked, FOLLOW_UP_CHOICES } from '../lib/followUp';
+import { dateInDays, isoDate, formatBooked, FOLLOW_UP_CHOICES } from '../lib/followUp';
 
 /**
  * The date a follow-up actually lands on.
@@ -35,6 +35,16 @@ describe('dateInDays', () => {
     const tomorrow = dateInDays(1);
     expect(tomorrow).not.toBe('2026-08-22');
     expect(tomorrow).toBe('2026-08-23');
+  });
+
+  it('is the same date the CRM would compute at any hour of the night', () => {
+    // The exact condition that broke a deploy: CI ran at 18:47 UTC, which is 00:17 the next day
+    // in IST. A UTC-based date was a full day behind the one the app produced, and the failure
+    // was invisible during office hours.
+    atIST('2026-08-24T18:47:00Z');
+    expect(dateInDays(0)).toBe('2026-08-25');
+    expect(dateInDays(3)).toBe('2026-08-28');
+    expect(isoDate(new Date())).toBe('2026-08-25');
   });
 
   it('rolls over the end of a month', () => {

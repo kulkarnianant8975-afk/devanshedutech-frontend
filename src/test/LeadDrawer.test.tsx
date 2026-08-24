@@ -324,9 +324,11 @@ describe('Send pack', () => {
     await user.click(within(panel).getByRole('button', { name: /in 3 days/i }));
 
     const [, changes] = vi.mocked(leadService.patch).mock.calls.at(-1)!;
-    const expected = new Date();
-    expected.setDate(expected.getDate() + 3);
-    expect(changes.nextTouchOn).toBe(expected.toISOString().slice(0, 10));
+    // dateInDays, not a hand-rolled toISOString. The helper exists precisely because toISOString
+    // converts to UTC first, and IST runs 5:30 ahead — so between midnight and half five in the
+    // morning the two disagree by a day. This assertion had the very bug the helper was written
+    // to fix, and it passed all day and failed at 00:17 IST.
+    expect(changes.nextTouchOn).toBe(dateInDays(3));
 
     expect(await screen.findByText(/Next follow-up booked/i)).toBeInTheDocument();
   });

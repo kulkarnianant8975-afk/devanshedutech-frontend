@@ -9,6 +9,7 @@ import { demoService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import LeadDrawer from './LeadDrawer';
 import { DemoBoardDTO, DemoDTO, LeadOptionsDTO, StaffUserDTO, UserResponseDTO } from '../../dtos';
+import { isoDate } from '../../lib/followUp';
 import SectionIntro from './SectionIntro';
 import { leadService, userService } from '../../services/api';
 
@@ -29,7 +30,7 @@ const startOfWeek = (d: Date) => {
   return copy;
 };
 
-const iso = (d: Date) => d.toISOString().split('T')[0];
+const iso = (d: Date) => isoDate(d);
 const dayLabel = (d: Date) => d.toLocaleDateString('en-IN', { weekday: 'short' });
 const dateLabel = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 const timeLabel = (s: string) => new Date(s).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });

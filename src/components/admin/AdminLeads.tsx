@@ -9,6 +9,7 @@ import LeadDrawer from './LeadDrawer';
 import SectionIntro from './SectionIntro';
 import AddLeadModal from './AddLeadModal';
 import LastFollowUp from './LastFollowUp';
+import { isoDate } from '../../lib/followUp';
 import { leadService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import {
@@ -184,7 +185,7 @@ const AdminLeads: React.FC<Props> = ({ currentUser }) => {
       const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
       const link = document.createElement('a');
       link.href = url;
-      link.download = `leads_${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `leads_${isoDate(new Date())}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

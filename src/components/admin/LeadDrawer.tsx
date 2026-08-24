@@ -11,7 +11,7 @@ import SendPackPanel from './SendPackPanel';
 import { batchService } from '../../services/api';
 import AssistantPanel from './AssistantPanel';
 import { can } from '../../lib/permissions';
-import { FOLLOW_UP_CHOICES, dateInDays, formatBooked } from '../../lib/followUp';
+import { FOLLOW_UP_CHOICES, dateInDays, formatBooked, isoDate } from '../../lib/followUp';
 import FollowUpFlow from './FollowUpFlow';
 import {
   LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO, BatchDTO,
@@ -57,7 +57,7 @@ const NO_LADDER: LadderStepDTO[] = [];
 // Stable empty arrays, so a lead with no data does not retrigger effects on every render.
 const NO_OPENS: AssetOpenDTO[] = [];
 
-const today = () => new Date().toISOString().split('T')[0];
+const today = () => isoDate(new Date());
 
 const formatStamp = (iso: string) => {
   const d = new Date(iso);
@@ -212,7 +212,7 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
       'Pause follow-ups until which date? (YYYY-MM-DD)\n\n' +
       'The lead stays in the pipeline and simply stops being chased — use this for exams, ' +
       'a holiday, or a gap between intakes, rather than marking them lost to silence them.',
-      new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
+      isoDate(new Date(Date.now() + 14 * 86400000))
     );
     if (!until) return;
     const reason = window.prompt('Why? (optional)') ?? undefined;
@@ -277,7 +277,7 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
     const date = window.prompt(
       'Demo date? (YYYY-MM-DD)\n\nBooking it moves the lead to "Demo booked" and points the ' +
       'next touch at the demo day.',
-      new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0]
+      isoDate(new Date(Date.now() + 2 * 86400000))
     );
     if (!date) return;
     const time = window.prompt('Time? (HH:MM, 24-hour)', '17:00');

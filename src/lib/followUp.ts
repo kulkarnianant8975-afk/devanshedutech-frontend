@@ -21,16 +21,26 @@ export const FOLLOW_UP_CHOICES: FollowUpChoice[] = [
   { label: 'Next week', days: 7 },
 ];
 
+/**
+ * A date as the plain YYYY-MM-DD the API expects, read in local time.
+ *
+ * <p>The one function every date in the CRM should go through. `toISOString().slice(0, 10)` is
+ * the obvious way to write this and is wrong here: it converts to UTC first, and IST runs 5:30
+ * ahead, so between midnight and half past five in the morning it returns yesterday. That is a
+ * bug which passes every test run during office hours and fails silently at night — a follow-up
+ * booked for tomorrow landing today, a demo week showing the wrong seven days.</p>
+ */
+export const isoDate = (when: Date): string => {
+  const month = String(when.getMonth() + 1).padStart(2, '0');
+  const day = String(when.getDate()).padStart(2, '0');
+  return `${when.getFullYear()}-${month}-${day}`;
+};
+
 /** A date this many days from today, as the plain YYYY-MM-DD the API expects. */
 export const dateInDays = (days: number): string => {
   const when = new Date();
   when.setDate(when.getDate() + days);
-  // Built from local parts rather than toISOString, which converts to UTC first. IST runs 5:30
-  // ahead, so anything booked before 5:30am is still "yesterday" in UTC and the follow-up lands
-  // a day early. Rare, and silently wrong when it happens, which is the worst combination.
-  const month = String(when.getMonth() + 1).padStart(2, '0');
-  const day = String(when.getDate()).padStart(2, '0');
-  return `${when.getFullYear()}-${month}-${day}`;
+  return isoDate(when);
 };
 
 /**
