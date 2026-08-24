@@ -8,6 +8,7 @@ import { useToast } from '../../lib/toast';
 import { assetService, courseService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { AssetDTO, CourseResponseDTO, UserResponseDTO } from '../../dtos';
+import SearchBar from './SearchBar';
 
 /**
  * The media library.
@@ -73,6 +74,7 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
   // Everything a person actively did is reported by a toast instead.
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showRetired, setShowRetired] = useState(false);
+  const [search, setSearch] = useState('');
   const [adding, setAdding] = useState<Kind | null>(null);
 
   const [form, setForm] = useState({ name: '', url: '', courseId: '' });
@@ -81,6 +83,11 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const mayEdit = can(currentUser, 'SETTINGS_MANAGE');
+
+  // Matched on the name only. A counsellor hunting for a brochure knows what it is called, not
+  // what its URL is or which course it happens to be filed under.
+  const term = search.trim().toLowerCase();
+  const visible = term ? assets.filter(a => a.name.toLowerCase().includes(term)) : assets;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -199,6 +206,13 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
         )}
       </AnimatePresence>
 
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Search brochures, videos and links by name"
+        count={`${visible.length} of ${assets.length}`}
+      />
+
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <p className="text-sm text-gray-500 max-w-xl">
           Everything a counsellor can attach to a WhatsApp message. Anything added here appears in
@@ -213,7 +227,7 @@ const AdminMedia: React.FC<Props> = ({ currentUser }) => {
       </div>
 
       {KINDS.map(({ type, label, icon: Icon, hint }) => {
-        const items = assets.filter(a => a.type === type);
+        const items = visible.filter(a => a.type === type);
         return (
           <section key={type} className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
             <header className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">

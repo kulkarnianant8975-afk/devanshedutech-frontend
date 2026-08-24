@@ -8,6 +8,7 @@ import { can } from '../../lib/permissions';
 import { dateInDays, LOCALE } from '../../lib/followUp';
 import { ContactLogDTO, UserResponseDTO } from '../../dtos';
 import LeadDrawer from './LeadDrawer';
+import SearchBar from './SearchBar';
 
 /**
  * What was actually done, across every student.
@@ -58,6 +59,7 @@ const AdminActivity: React.FC<Props> = ({ currentUser }) => {
   const [days, setDays] = useState(6);
   const [counsellorId, setCounsellorId] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   // Only somebody who can see every lead can meaningfully filter by counsellor — the server
   // pins everybody else to their own work regardless of what is asked for.
@@ -86,8 +88,16 @@ const AdminActivity: React.FC<Props> = ({ currentUser }) => {
       .catch(() => { /* the log still reads without the filter */ });
   }, [seesEveryone]);
 
+  // Student name, outcome and the note itself — somebody looking back for "who mentioned EMI"
+  // is searching what was said, not who said it.
+  const term = search.trim().toLowerCase();
+  const shown = term
+    ? log.filter(e => [e.studentName, e.outcomeLabel, e.note, e.course]
+        .some(field => field?.toLowerCase().includes(term)))
+    : log;
+
   // Grouped by day so a week reads as a week rather than one long list.
-  const byDay = log.reduce<Record<string, ContactLogDTO[]>>((acc, entry) => {
+  const byDay = shown.reduce<Record<string, ContactLogDTO[]>>((acc, entry) => {
     const key = dayLabel(entry.at);
     (acc[key] ??= []).push(entry);
     return acc;
@@ -132,8 +142,15 @@ const AdminActivity: React.FC<Props> = ({ currentUser }) => {
           </select>
         )}
 
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by student, outcome or what they said"
+          count={`${shown.length} of ${log.length}`}
+        />
+
         <span className="text-xs text-gray-400 ml-auto">
-          {loading ? 'Loading…' : `${log.length} follow-up${log.length === 1 ? '' : 's'}`}
+          {loading ? 'Loading…' : `${shown.length} follow-up${shown.length === 1 ? '' : 's'}`}
         </span>
       </div>
 
@@ -141,7 +158,7 @@ const AdminActivity: React.FC<Props> = ({ currentUser }) => {
         <div className="flex items-center justify-center py-20 text-gray-400">
           <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading the activity log…
         </div>
-      ) : log.length === 0 ? (
+      ) : shown.length === 0 ? (
         <div className="bg-white rounded-3xl border border-gray-100 p-10 text-center">
           <PhoneCall className="w-8 h-8 text-gray-200 mx-auto mb-3" />
           <p className="text-sm text-gray-500">

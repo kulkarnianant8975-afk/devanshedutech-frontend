@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Clock, AlertTriangle, CalendarCheck, CircleAlert, Loader2, RefreshCw,
-  ChevronRight, Inbox, CheckCircle2, AlertCircle
-} from 'lucide-react';
+  ChevronRight, Inbox, CheckCircle2, AlertCircle, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../lib/toast';
+import SearchBar from './SearchBar';
 import { leadService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import LeadDrawer from './LeadDrawer';
@@ -121,6 +121,7 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
   // screen and stays put while the person decides what to do. Everything a person
   // actively did — saved, sent, deleted — is reported by a toast instead.
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [options, setOptions] = useState<LeadOptionsDTO | null>(null);
   const [staff, setStaff] = useState<StaffUserDTO[]>([]);
@@ -178,11 +179,21 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
     );
   }
 
-  const awaiting = data?.awaitingFirstReply ?? [];
-  const overdue = data?.overdue ?? [];
-  const due = data?.dueToday ?? [];
-  const blank = data?.blankNextTouch ?? [];
+  // Applied to each group rather than across the day, so a search still shows which list a
+  // student is in — finding them is rarely the whole question; "are they overdue" usually is.
+  const term = search.trim().toLowerCase();
+  const match = (leads: LeadDTO[]) => term
+    ? leads.filter(l => [l.fullName, l.mobileNumber, l.courseInterested, l.cityName]
+        .some(field => field?.toLowerCase().includes(term)))
+    : leads;
+
+  const awaiting = match(data?.awaitingFirstReply ?? []);
+  const overdue = match(data?.overdue ?? []);
+  const due = match(data?.dueToday ?? []);
+  const blank = match(data?.blankNextTouch ?? []);
   const allClear = awaiting.length + overdue.length + due.length + blank.length === 0;
+  const total = (data?.awaitingFirstReply?.length ?? 0) + (data?.overdue?.length ?? 0)
+              + (data?.dueToday?.length ?? 0) + (data?.blankNextTouch?.length ?? 0);
 
   return (
     <div className="space-y-5">
@@ -217,7 +228,29 @@ const MyDay: React.FC<Props> = ({ currentUser }) => {
         </div>
       </div>
 
-      {allClear ? (
+      {total > 0 && (
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Find a student in today's lists by name, number or course"
+          count={`${awaiting.length + overdue.length + due.length + blank.length} of ${total}`}
+        />
+      )}
+
+      {allClear && term ? (
+        /* Distinct from a clear list on purpose. "Your list is clear" in response to a search
+           that matched nothing would be a lie about the day's work, and a reassuring one. */
+        <div className="bg-white rounded-[28px] border border-gray-100 shadow-sm p-12 text-center">
+          <Search size={40} className="mx-auto text-gray-200 mb-4" />
+          <h3 className="font-bold text-lg text-gray-900">Nobody in today&rsquo;s lists matches that</h3>
+          <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
+            They may still be in the pipeline — this searches only what is due today.{' '}
+            <button onClick={() => setSearch('')} className="text-primary font-semibold underline">
+              Clear the search
+            </button>
+          </p>
+        </div>
+      ) : allClear ? (
         <div className="bg-white rounded-[28px] border border-gray-100 shadow-sm p-12 text-center">
           <CheckCircle2 size={44} className="mx-auto text-emerald-400 mb-4" />
           <h3 className="font-bold text-lg text-gray-900">Your list is clear</h3>
