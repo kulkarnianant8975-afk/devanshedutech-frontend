@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Minus, AlertCircle, Loader2, RefreshCw,
+  AlertCircle, Loader2, RefreshCw,
   CheckCircle2, AlertTriangle, Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, errorMessage } from '../../services/api';
+import DailyLeadsChart from './DailyLeadsChart';
+import CounsellorTable from './CounsellorTable';
 import { can } from '../../lib/permissions';
 import {
   PipelineMetricsDTO, MetricDTO, FunnelStepDTO, SourcePerformanceDTO,
@@ -31,6 +33,23 @@ const formatValue = (m: MetricDTO) => {
   const rounded = Number.isInteger(m.value) ? m.value : m.value.toFixed(1);
   return `${rounded}`;
 };
+
+/**
+ * One number, large, with what it counts underneath.
+ *
+ * A stat tile rather than a chart because there is no shape to a total — and a bar chart of five
+ * unrelated totals invites comparing figures that have nothing to do with each other.
+ */
+const Headline: React.FC<{ label: string; value: number; hint: string; tone?: 'good' }> =
+  ({ label, value, hint, tone }) => (
+  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3">
+    <p className={`text-2xl font-bold tabular-nums ${tone === 'good' ? 'text-emerald-700' : 'text-gray-900'}`}>
+      {value.toLocaleString('en-IN')}
+    </p>
+    <p className="text-xs font-semibold text-gray-700 mt-0.5">{label}</p>
+    <p className="text-[11px] text-gray-400">{hint}</p>
+  </div>
+);
 
 const MetricTile: React.FC<{ metric: MetricDTO }> = ({ metric }) => {
   const unknown = metric.value == null;
@@ -274,6 +293,37 @@ const AdminDashboard: React.FC<Props> = ({ currentUser }) => {
 
       {data && (
         <>
+          {/* The five counts a person opens this screen to read. Stat tiles rather than a
+              chart: each is one number with no shape to it, and a bar chart of five unrelated
+              totals compares things that have nothing to do with each other. */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <Headline label="Total leads" value={data.totalLeads} hint="all time" />
+            <Headline label="New enquiries" value={data.newLeadsInWindow} hint="this period" />
+            <Headline label="Follow-ups made" value={data.followUpsInWindow} hint="this period" />
+            <Headline label="Demos booked" value={data.demosBookedInWindow} hint="this period" />
+            <Headline label="Enrolled" value={data.enrolmentsInWindow} hint="this period" tone="good" />
+          </div>
+
+          {data.missedFollowUps > 0 && (
+            <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-2xl p-4">
+              <AlertTriangle size={18} className="text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-red-800">
+                  {data.missedFollowUps} follow-up{data.missedFollowUps === 1 ? '' : 's'} overdue
+                </p>
+                <p className="text-xs text-red-700 mt-0.5">
+                  Active students whose follow-up date has passed. Every day one waits, it gets
+                  harder to restart the conversation.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <section className="bg-white rounded-[28px] border border-gray-100 shadow-sm p-5">
+            <h3 className="font-bold text-sm text-gray-900 mb-3">New enquiries per day</h3>
+            <DailyLeadsChart daily={data.daily ?? []} />
+          </section>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.metrics.map(m => <MetricTile key={m.key} metric={m} />)}
           </div>
@@ -286,51 +336,16 @@ const AdminDashboard: React.FC<Props> = ({ currentUser }) => {
             </div>
           </div>
 
-          {seesTeam && data.counsellors.length > 0 && (
+          {seesTeam && (
             <section className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
               <header className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                 <Users size={15} className="text-gray-400" />
                 <h3 className="font-bold text-sm text-gray-900">Counsellor scorecard</h3>
+                <span className="text-[11px] text-gray-400 ml-auto">{data.windowDescription}</span>
               </header>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50/60">
-                      {['Counsellor', 'Active', 'Enrolled', 'Conversion', 'Overdue', 'No next step', 'Lost unworked']
-                        .map(h => (
-                          <th key={h} className="px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                            {h}
-                          </th>
-                        ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {data.counsellors.map(c => (
-                      <tr key={c.userId} className="hover:bg-gray-50/50">
-                        <td className="px-5 py-3 font-bold text-sm text-gray-900">{c.name}</td>
-                        <td className="px-5 py-3 text-sm text-gray-600 tabular-nums">{c.activeLeads}</td>
-                        <td className="px-5 py-3 text-sm text-gray-600 tabular-nums">{c.enrolled}</td>
-                        <td className="px-5 py-3 text-sm font-bold text-gray-900 tabular-nums">
-                          {c.conversionRate == null ? '—' : `${c.conversionRate}%`}
-                        </td>
-                        <td className="px-5 py-3">
-                          <Count n={c.overdueTouches} />
-                        </td>
-                        <td className="px-5 py-3">
-                          <Count n={c.blankNextTouch} />
-                        </td>
-                        <td className="px-5 py-3">
-                          <Count n={c.lostUnworked} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="p-5">
+                <CounsellorTable counsellors={data.counsellors} />
               </div>
-              <p className="px-5 py-3 text-[11px] text-gray-400 border-t border-gray-50">
-                “Lost unworked” counts leads that ran out of follow-ups without ever really being
-                contacted. Those are follow-up failures, not students who said no.
-              </p>
             </section>
           )}
 
@@ -343,13 +358,5 @@ const AdminDashboard: React.FC<Props> = ({ currentUser }) => {
   );
 };
 
-/** A count where zero is the good answer, so it is stated rather than coloured. */
-const Count: React.FC<{ n: number }> = ({ n }) => (
-  <span className={`inline-flex items-center gap-1 text-xs font-bold tabular-nums ${
-    n > 0 ? 'text-red-600' : 'text-gray-400'}`}>
-    {n > 0 ? <AlertTriangle size={12} /> : <Minus size={12} />}
-    {n}
-  </span>
-);
 
 export default AdminDashboard;

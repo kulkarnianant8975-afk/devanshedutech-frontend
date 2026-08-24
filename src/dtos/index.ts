@@ -473,6 +473,15 @@ export interface CounsellorScoreDTO {
   overdueTouches: number;
   blankNextTouch: number;
   lostUnworked: number;
+  /** Contacts actually made in the window — the work, as distinct from the caseload. */
+  followUpsDone: number;
+  demosBooked: number;
+}
+
+/** New enquiries on one day, including the days nobody enquired. */
+export interface DailyCountDTO {
+  day: string;
+  leads: number;
 }
 
 export interface PipelineMetricsDTO {
@@ -481,7 +490,13 @@ export interface PipelineMetricsDTO {
   sources: SourcePerformanceDTO[];
   weekly: WeeklyCountDTO[];
   counsellors: CounsellorScoreDTO[];
+  daily: DailyCountDTO[];
   totalLeads: number;
+  newLeadsInWindow: number;
+  demosBookedInWindow: number;
+  enrolmentsInWindow: number;
+  followUpsInWindow: number;
+  missedFollowUps: number;
   windowDescription: string;
 }
 
