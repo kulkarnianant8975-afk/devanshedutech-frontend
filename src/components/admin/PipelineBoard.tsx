@@ -26,6 +26,7 @@ import {
 const STAGE_ACCENT: Record<StageName, string> = {
   NEW: 'bg-gray-400',
   CONTACTED: 'bg-sky-500',
+  VISITED: 'bg-teal-500',
   DEMO_BOOKED: 'bg-orange-500',
   DEMO_DONE: 'bg-amber-500',
   FEE_DISCUSSION: 'bg-purple-500',

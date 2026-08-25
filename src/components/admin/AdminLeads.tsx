@@ -33,6 +33,7 @@ const GRADE_STYLES: Record<GradeName, string> = {
 const STAGE_STYLES: Record<StageName, string> = {
   NEW: 'text-gray-600',
   CONTACTED: 'text-sky-700',
+  VISITED: 'text-teal-700',
   DEMO_BOOKED: 'text-orange-700',
   DEMO_DONE: 'text-amber-700',
   FEE_DISCUSSION: 'text-purple-700',

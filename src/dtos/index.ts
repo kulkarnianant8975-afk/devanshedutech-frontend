@@ -57,14 +57,14 @@ export interface LeadResponseDTO {
 }
 
 export type StageName =
-  | 'NEW' | 'CONTACTED' | 'DEMO_BOOKED' | 'DEMO_DONE'
+  | 'NEW' | 'CONTACTED' | 'VISITED' | 'DEMO_BOOKED' | 'DEMO_DONE'
   | 'FEE_DISCUSSION' | 'ENROLLED' | 'LOST';
 
 export type GradeName = 'HOT' | 'WARM' | 'COLD';
 
 export type OutcomeName =
   | 'CONNECTED' | 'NO_ANSWER' | 'THINKING' | 'PARENTS' | 'FEE_OBJECTION'
-  | 'COMPARING' | 'SILENT' | 'DEMO_BOOKED' | 'DEMO_ATTENDED'
+  | 'COMPARING' | 'SILENT' | 'VISITED' | 'DEMO_BOOKED' | 'DEMO_ATTENDED'
   | 'READY_TO_ENROL' | 'NOT_INTERESTED' | 'WRONG_NUMBER';
 
 export interface LeadDTO {
