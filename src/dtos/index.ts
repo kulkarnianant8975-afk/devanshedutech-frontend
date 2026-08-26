@@ -192,6 +192,12 @@ export interface AssetOpenDTO {
 }
 
 export interface LeadPatchDTO {
+  /** The student's own details — correctable, which they were not before. */
+  fullName?: string;
+  mobileNumber?: string;
+  email?: string;
+  cityName?: string;
+
   grade?: GradeName;
   stage?: StageName;
   source?: string;

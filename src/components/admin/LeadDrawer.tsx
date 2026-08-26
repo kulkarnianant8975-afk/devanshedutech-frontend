@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Phone, Mail, MapPin, GraduationCap, CalendarClock, Loader2, AlertCircle,
   MessageSquare, PhoneCall, ArrowRightLeft, Sparkles, StickyNote,
-  Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks, CalendarPlus, Eye, GraduationCap as Cap
-} from 'lucide-react';
+  Ban, Save, Clock, PauseCircle, PlayCircle, ListChecks, CalendarPlus, Eye, GraduationCap as Cap, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../lib/toast';
 import { leadService, demoService, errorMessage } from '../../services/api';
@@ -13,6 +12,7 @@ import AssistantPanel from './AssistantPanel';
 import { can } from '../../lib/permissions';
 import { FOLLOW_UP_CHOICES, dateInDays, formatBooked, isoDate } from '../../lib/followUp';
 import FollowUpFlow from './FollowUpFlow';
+import LeadDetailsForm from './LeadDetailsForm';
 import {
   LeadDTO, LeadDetailDTO, LeadActivityDTO, LeadOptionsDTO, OptionDTO, LadderStepDTO, BatchDTO,
   AssetOpenDTO,
@@ -104,6 +104,7 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
   const [notes, setNotes] = useState('');
   const [notesDirty, setNotesDirty] = useState(false);
   const [nextTouch, setNextTouch] = useState('');
+  const [editing, setEditing] = useState(false);
 
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -738,6 +739,31 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
 
                   {/* Contact details */}
                   <section className="py-5 border-b border-gray-100">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        Details
+                      </p>
+                      {canEdit && !lead.optedOut && (
+                        <button
+                          onClick={() => setEditing(v => !v)}
+                          className="text-xs font-bold text-primary hover:text-orange-700 inline-flex items-center gap-1">
+                          <Pencil size={12} />
+                          {editing ? 'Cancel' : 'Edit details'}
+                        </button>
+                      )}
+                    </div>
+
+                    {editing ? (
+                      <LeadDetailsForm
+                        lead={lead}
+                        saving={saving}
+                        onCancel={() => setEditing(false)}
+                        onSave={async changes => {
+                          await patch(changes, 'Details updated.');
+                          setEditing(false);
+                        }}
+                      />
+                    ) : (
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <a href={`tel:${lead.mobileNumber}`} className="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
                         <Phone size={15} className="text-gray-400" />{lead.mobileNumber}
@@ -759,6 +785,7 @@ const LeadDrawer: React.FC<Props> = ({ leadId, currentUser, options, staff, onCl
                           : 'Not replied yet'}
                       </span>
                     </div>
+                    )}
                   </section>
 
                   {/* Notes */}
