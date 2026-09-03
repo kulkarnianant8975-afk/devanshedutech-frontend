@@ -64,11 +64,23 @@
     return ok;
   }
 
-  /* Apps Script has no CORS headers, so we post opaquely (no-cors) and
-     rely on the timeout rather than a response body. */
+  /* Apps Script has no CORS headers, so we post opaquely and cannot read a reply.
+     sendBeacon is the right tool: the browser takes ownership of the POST and
+     delivers it even after the page navigates away, so the person is not held
+     for Apps Script's 302 redirect chain - which measured ~6s on mobile and is
+     exactly where paid traffic gives up. fetch stays as the fallback. */
   function save(data) {
     if (!CFG.scriptUrl || CFG.scriptUrl.indexOf("PASTE_") === 0) return Promise.resolve("skipped");
     var body = new URLSearchParams(data);
+
+    if (navigator.sendBeacon) {
+      try {
+        var blob = new Blob([body.toString()],
+          { type: "application/x-www-form-urlencoded;charset=UTF-8" });
+        if (navigator.sendBeacon(CFG.scriptUrl, blob)) return Promise.resolve("queued");
+      } catch (ignore) { /* fall through to fetch */ }
+    }
+
     var net = fetch(CFG.scriptUrl, {
       method: "POST", mode: "no-cors", body: body,
       headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" }

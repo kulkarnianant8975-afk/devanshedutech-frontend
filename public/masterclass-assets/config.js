@@ -13,7 +13,7 @@ window.DEVANSH_CONFIG = {
   /* 2. Google Apps Script web-app URL that writes to your Sheet.
         Follow SETUP-GOOGLE-SHEET.md, then paste the /exec URL here.
         Leave as-is to skip saving and go straight to the group. */
-  scriptUrl: "PASTE_YOUR_APPS_SCRIPT_EXEC_URL",
+  scriptUrl: "https://script.google.com/macros/s/AKfycbxfBiKVSQYUcUbSBicP9JHY2LODYidsAn2EC1njBjhi-2b9sHvyggm0vWCIykehE2D1Nw/exec",
 
   /* 3. Your WhatsApp number for direct questions (no +, with country code) */
   whatsappNumber: "917972217407",
