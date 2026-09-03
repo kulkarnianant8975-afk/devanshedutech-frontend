@@ -142,12 +142,11 @@ html[lang="mr"] .lcard .ld{line-height:1.7;}
 /* ---- instructor ---- */
 .inst{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:20px;padding:26px 22px;text-align:center;}
 section.light .inst{background:#fff;border-color:var(--line-dk);box-shadow:0 4px 20px rgba(17,17,17,.05);}
-.photo{display:inline-block;padding:3px;background:var(--grad);border-radius:18px;
-  margin:0 auto 6px;line-height:0;max-width:100%;}
-.photo img{max-width:100%;max-height:440px;width:auto;height:auto;border-radius:15px;display:block;}
-.photo span{display:flex;align-items:center;justify-content:center;min-width:200px;min-height:150px;
+.photo{display:block;width:100%;max-width:300px;margin:0 auto 6px;
+  padding:3px;background:var(--grad);border-radius:18px;line-height:0;}
+.photo img{width:100%;height:auto;border-radius:15px;display:block;}
+.photo span{display:flex;align-items:center;justify-content:center;aspect-ratio:4/5;
   border-radius:15px;background:var(--ink);color:var(--slate);font-size:11.5px;text-align:center;padding:16px;line-height:1.45;}
-section.light .photo span{background:var(--paper);color:#94a3b8;}
 .inst .role{color:var(--orange);font-weight:600;font-size:14px;margin-top:12px;}
 .inst p{font-size:15.5px;color:#475569;margin-top:12px;line-height:1.65;}
 html[lang="mr"] .inst p{line-height:1.8;}
