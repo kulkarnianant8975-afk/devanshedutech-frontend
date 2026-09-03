@@ -158,11 +158,14 @@ html[lang="mr"] .inst p{line-height:1.8;}
 .stat .l{font-size:11.5px;color:#64748b;margin-top:7px;line-height:1.4;}
 
 /* ---- proof / gallery ---- */
-.gallery{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:26px;}
-.gslot{aspect-ratio:4/3;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.16);border-radius:14px;
-  display:flex;align-items:center;justify-content:center;color:var(--slate);font-size:13px;text-align:center;padding:12px;line-height:1.45;overflow:hidden;}
-.gslot img{width:100%;height:100%;object-fit:cover;}
-.gslot.wide{grid-column:1 / -1;aspect-ratio:16/7;}
+.gallery{display:flex;flex-direction:column;gap:12px;margin-bottom:26px;}
+.gshot{border-radius:14px;overflow:hidden;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);line-height:0;margin:0;}
+/* Photos are shown whole - no cropping. The landscape shot is already 16:9 so it
+   fills the width exactly; the portrait one is capped by height and centred. */
+.gshot img{width:100%;height:auto;display:block;}
+.gshot.tall{display:flex;justify-content:center;}
+.gshot.tall img{width:auto;max-height:430px;}
 .quote{background:rgba(255,255,255,.04);border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:14px;padding:18px 20px;margin-bottom:12px;}
 .quote p{font-size:15.5px;color:#e2e8f0;line-height:1.6;}
 html[lang="mr"] .quote p{line-height:1.75;}
