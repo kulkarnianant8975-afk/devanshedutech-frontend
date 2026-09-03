@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/englishlandingpage",
+      "destination": "/englishlandingpage/index.html"
+    },
+    {
+      "source": "/marathilandingpage",
+      "destination": "/marathilandingpage/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
