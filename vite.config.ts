@@ -23,6 +23,11 @@ export default defineConfig(() => {
           // is a blank screen with no obvious cause.
           navigateFallbackDenylist: [
             /^\/admin/, /^\/api/, /^\/auth/, /^\/oauth2/, /^\/login/,
+            // The masterclass landing pages are plain files in public/, not React routes.
+            // Without these, a returning visitor with the service worker already installed
+            // gets the cached SPA shell instead of the landing page - and the ad links point
+            // at the extensionless path, which the precache does not match.
+            /^\/englishlandingpage/, /^\/marathilandingpage/, /^\/masterclass-assets/,
           ],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
