@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/dien",
+      "destination": "/dien/index.html"
+    },
+    {
+      "source": "/dima",
+      "destination": "/dima/index.html"
+    },
+    {
       "source": "/englishlandingpage",
       "destination": "/englishlandingpage/index.html"
     },
