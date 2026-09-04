@@ -19,6 +19,7 @@
     en: {
       name:    "Please enter your name",
       phone:   "Enter a valid 10-digit mobile number",
+      email:   "Enter a valid email address",
       pick:    "Please choose an option",
       city:    "Please enter your city or area",
       saving:  "Saving your seat…",
@@ -29,6 +30,7 @@
     mr: {
       name:    "कृपया तुमचं नाव लिहा",
       phone:   "10 अंकी मोबाइल नंबर बरोबर लिहा",
+      email:   "बरोबर email लिहा",
       pick:    "कृपया एक पर्याय निवडा",
       city:    "कृपया तुमचं शहर किंवा भाग लिहा",
       saving:  "तुमची जागा राखून ठेवत आहोत…",
@@ -63,10 +65,18 @@
     return /^[6-9]\d{9}$/.test(d) ? d : "";
   }
 
+  /* Loose on purpose: anything shaped like user@host.tld. Strict RFC checks
+     reject real addresses more often than they catch typos. */
+  function validEmail(raw) {
+    var v = (raw || "").trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+  }
+
   function validate() {
     var f = form.elements, ok = true;
     ok = fieldError(f.name,   f.name.value.trim().length >= 2 ? "" : T.name) && ok;
     ok = fieldError(f.phone,  cleanPhone(f.phone.value)        ? "" : T.phone) && ok;
+    ok = fieldError(f.email,  validEmail(f.email.value)        ? "" : T.email) && ok;
     ok = fieldError(f.status, f.status.value                   ? "" : T.pick) && ok;
     ok = fieldError(f.city,   f.city.value.trim().length >= 2  ? "" : T.city) && ok;
     return ok;
@@ -133,7 +143,7 @@
     }, { threshold: 0.3 }).observe(form);
   }
 
-  ["name", "phone", "status", "city"].forEach(function (n) {
+  ["name", "phone", "email", "status", "city"].forEach(function (n) {
     var el = form.elements[n];
     if (el) el.addEventListener("input", function () { if (el.classList.contains("bad")) validate(); });
   });
@@ -154,6 +164,7 @@
     save({
       name:     form.elements.name.value.trim(),
       phone:    cleanPhone(form.elements.phone.value),
+      email:    form.elements.email.value.trim().toLowerCase(),
       status:   form.elements.status.value,
       city:     form.elements.city.value.trim(),
       source:   form.elements.source ? form.elements.source.value : "",

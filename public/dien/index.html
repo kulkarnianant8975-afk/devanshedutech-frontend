@@ -42,7 +42,7 @@ fbq('track','PageView');
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/masterclass-assets/shared.css?v=6">
+<link rel="stylesheet" href="/masterclass-assets/shared.css?v=7">
 </head>
 <body>
 
@@ -213,6 +213,12 @@ src="https://www.facebook.com/tr?id=1753021132490840&ev=PageView&noscript=1"/></
       </div>
 
       <div class="field">
+        <label for="f-email">Email</label>
+        <input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="e.g. rahul@gmail.com" aria-describedby="emailErr" required>
+        <div class="err" id="emailErr" hidden></div>
+      </div>
+
+      <div class="field">
         <label for="f-status">You are currently</label>
         <select id="f-status" name="status" aria-describedby="statusErr" required>
           <option value="">Choose one</option>
@@ -321,8 +327,8 @@ src="https://www.facebook.com/tr?id=1753021132490840&ev=PageView&noscript=1"/></
   </div>
 </div>
 
-<script src="/masterclass-assets/config.js?v=6"></script>
-<script src="/masterclass-assets/register.js?v=6"></script>
+<script src="/masterclass-assets/config.js?v=7"></script>
+<script src="/masterclass-assets/register.js?v=7"></script>
 
 </body>
 </html>
