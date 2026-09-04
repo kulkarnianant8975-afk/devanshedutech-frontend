@@ -79,6 +79,7 @@
     ok = fieldError(f.email,  validEmail(f.email.value)        ? "" : T.email) && ok;
     ok = fieldError(f.status, f.status.value                   ? "" : T.pick) && ok;
     ok = fieldError(f.city,   f.city.value.trim().length >= 2  ? "" : T.city) && ok;
+    ok = fieldError(f.source, f.source.value                   ? "" : T.pick) && ok;
     return ok;
   }
 
@@ -143,7 +144,7 @@
     }, { threshold: 0.3 }).observe(form);
   }
 
-  ["name", "phone", "email", "status", "city"].forEach(function (n) {
+  ["name", "phone", "email", "status", "city", "source"].forEach(function (n) {
     var el = form.elements[n];
     if (el) el.addEventListener("input", function () { if (el.classList.contains("bad")) validate(); });
   });
