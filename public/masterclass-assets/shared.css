@@ -317,3 +317,6 @@ html[lang="mr"] .inst .bio li{line-height:1.75;}
 .vid{margin:0;}
 .vid video{width:100%;height:auto;aspect-ratio:9/16;display:block;
   border-radius:14px;border:1px solid var(--line);background:#000;}
+
+/* "Book your slot" lands on the form, with a little air above it. */
+#book{scroll-margin-top:16px;}
