@@ -38,6 +38,14 @@
     }
   }[lang];
 
+  /* Tracking. fbq is the Meta Pixel; dataLayer is GTM. Both are guarded, so
+     the page works identically with an ad-blocker or if a tag never loads. */
+  function track(pixelEvent, dlEvent, data) {
+    try { if (typeof fbq === "function") fbq("track", pixelEvent, data || {}); } catch (e) {}
+    try { (window.dataLayer = window.dataLayer || []).push(Object.assign({ event: dlEvent }, data || {})); } catch (e) {}
+  }
+  var EV = { content_name: "Digital Marketing Masterclass 11 Sept", content_category: "masterclass", lang: lang };
+
   /* ---------- helpers ---------- */
   function fieldError(el, msg) {
     var box = document.getElementById(el.name + "Err");
@@ -90,6 +98,7 @@
   }
 
   function finish(result) {
+    track("Lead", "registration_complete", EV);
     var link  = CFG.groupLink || "";
     var ready = link && link.indexOf("PASTE_") === -1;
 
@@ -118,6 +127,12 @@
   }
 
   /* ---------- wiring ---------- */
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (en) { if (en.isIntersecting) { track("ViewContent", "form_view", EV); obs.disconnect(); } });
+    }, { threshold: 0.3 }).observe(form);
+  }
+
   ["name", "phone", "status", "city"].forEach(function (n) {
     var el = form.elements[n];
     if (el) el.addEventListener("input", function () { if (el.classList.contains("bad")) validate(); });
