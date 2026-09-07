@@ -276,13 +276,29 @@ const ReelCard: React.FC<{ review: Review; index: number; onPlay?: () => void }>
 
 const Lightbox: React.FC<{ review: Review; onClose: () => void }> = ({ review, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [muted, setMuted] = useState(false);
+  // Muted, because that is the only way a browser will autoplay at all. Starting unmuted
+  // meant Chrome refused to play and the reader saw a grey box; the unmute control below
+  // is one tap away, which is the trade every video on the web makes.
+  const [muted, setMuted] = useState(true);
 
   // Escape closes it, because a full-screen overlay that traps somebody is worse than no
   // overlay at all.
   const onKey = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
   }, [onClose]);
+
+  // React does not always have `muted` set on the element by the time autoplay is evaluated,
+  // and an unmuted play() is rejected. Setting it here, then playing, removes that race. A
+  // refusal is swallowed: the controls are already on screen, so the reader can just press play.
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = true;
+    // play() returns a promise in current browsers but undefined in older ones and in
+    // jsdom, so the result is checked before it is treated as one.
+    const started = el.play();
+    if (started && typeof started.catch === 'function') started.catch(() => {});
+  }, []);
 
   useEffect(() => {
     document.addEventListener('keydown', onKey);
@@ -321,9 +337,11 @@ const Lightbox: React.FC<{ review: Review; onClose: () => void }> = ({ review, o
           autoPlay
           playsInline
           muted={muted}
-          // The whole file is 9:16 and over a hundred megabytes. Letting the browser stream it
-          // rather than preload keeps the first frame quick on a phone connection.
-          preload="none"
+          // "metadata", not "none". This element also carries autoPlay, and the two flatly
+          // contradict each other — "none" tells the browser to fetch nothing, so there was no
+          // duration, no first frame and no playback: a grey box reading 0:00. Metadata is a
+          // small ranged read now that the file is faststart, and the rest still streams.
+          preload="metadata"
           className="w-full aspect-[9/16] rounded-2xl bg-black object-cover shadow-2xl"
         />
 
