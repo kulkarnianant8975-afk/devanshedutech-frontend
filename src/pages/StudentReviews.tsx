@@ -4,6 +4,7 @@ import { Play, X, Quote, Volume2, VolumeX, Loader2, MessageCircle } from 'lucide
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
+import { resolveImageUrl } from '../utils/imageUtils';
 
 /**
  * The students, in their own words.
@@ -20,9 +21,15 @@ import api from '../services/api';
  */
 
 interface Review {
-  url: string;
+  id: string;
   name: string;
-  sizeLabel?: string;
+  course?: string | null;
+  /** What the student wrote. Absent on a video-only review. */
+  text?: string | null;
+  imageUrl?: string | null;
+  /** Absent on a written review. */
+  videoUrl?: string | null;
+  rating?: number | null;
 }
 
 /** Poster frames, matched to a review by the name it was given in the Media Library. */
@@ -32,7 +39,15 @@ const POSTERS: Record<string, string> = {
   MSReel6: '/images/reviews/MSReel6.jpg',
 };
 
+/**
+ * The still shown before a video plays.
+ *
+ * <p>A student's own photograph if there is one — it is a better thumbnail than any frame we
+ * could pull, because it is the picture they chose. Otherwise a generated poster, matched by the
+ * name the video carries.</p>
+ */
 const posterFor = (review: Review): string | undefined => {
+  if (review.imageUrl) return resolveImageUrl(review.imageUrl, 600);
   const match = Object.keys(POSTERS).find(k => review.name.includes(k));
   return match ? POSTERS[match] : undefined;
 };
@@ -112,10 +127,10 @@ const StudentReviews: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {reviews.map((review, index) => (
                 <ReelCard
-                  key={review.url}
+                  key={review.id}
                   review={review}
                   index={index}
-                  onPlay={() => setPlaying(review)}
+                  onPlay={review.videoUrl ? () => setPlaying(review) : undefined}
                 />
               ))}
             </div>
@@ -151,10 +166,64 @@ const StudentReviews: React.FC = () => {
 
 /* ────────────────────────────────────────────────────────────────────────── */
 
-const ReelCard: React.FC<{ review: Review; index: number; onPlay: () => void }> = ({
+/**
+ * A review made of words.
+ *
+ * <p>Given the same portrait proportion as the video cards so a mixed wall still reads as one
+ * grid rather than two designs sharing a page — but light where those are dark, so the eye can
+ * tell at a glance which ones will play and which are to be read.</p>
+ */
+const QuoteCard: React.FC<{ review: Review; index: number }> = ({ review, index }) => (
+  <motion.figure
+    initial={{ opacity: 0, y: 24 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: '-60px' }}
+    transition={{ duration: 0.45, delay: Math.min(index, 5) * 0.06 }}
+    className="relative flex flex-col w-full aspect-[9/16] rounded-3xl overflow-hidden bg-white
+      border border-gray-100 shadow-sm p-6 m-0">
+
+    <Quote size={28} className="text-primary/20 shrink-0" aria-hidden="true" />
+
+    <blockquote className="flex-1 mt-3 overflow-hidden">
+      <p className="text-gray-700 leading-relaxed text-[15px]">
+        &ldquo;{review.text}&rdquo;
+      </p>
+    </blockquote>
+
+    <figcaption className="flex items-center gap-3 pt-4 border-t border-gray-100 mt-3">
+      {review.imageUrl ? (
+        <img src={resolveImageUrl(review.imageUrl, 120)} alt=""
+          loading="lazy" decoding="async"
+          className="w-10 h-10 rounded-full object-cover shrink-0" />
+      ) : (
+        <span className="w-10 h-10 rounded-full bg-orange-50 text-primary font-bold
+          grid place-items-center shrink-0">
+          {review.name.trim().charAt(0).toUpperCase()}
+        </span>
+      )}
+      <div className="min-w-0">
+        <p className="font-bold text-sm text-gray-900 truncate">{review.name}</p>
+        {review.course && <p className="text-xs text-gray-500 truncate">{review.course}</p>}
+      </div>
+      {review.rating != null && (
+        <span className="ml-auto text-amber-500 text-xs shrink-0"
+          aria-label={`${review.rating} out of 5`}>
+          {'★'.repeat(review.rating)}
+        </span>
+      )}
+    </figcaption>
+  </motion.figure>
+);
+
+const ReelCard: React.FC<{ review: Review; index: number; onPlay?: () => void }> = ({
   review, index, onPlay,
 }) => {
   const poster = posterFor(review);
+
+  // Most reviews are words. Rendering one as a play button that does nothing would be a lie
+  // about what the card does, so a written review gets its own quiet card and stays a div —
+  // a button nobody can usefully press is worse than no button.
+  if (!review.videoUrl) return <QuoteCard review={review} index={index} />;
 
   return (
     <motion.button
@@ -246,7 +315,7 @@ const Lightbox: React.FC<{ review: Review; onClose: () => void }> = ({ review, o
 
         <video
           ref={videoRef}
-          src={review.url}
+          src={review.videoUrl ?? undefined}
           poster={posterFor(review)}
           controls
           autoPlay

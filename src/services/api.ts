@@ -13,6 +13,7 @@ import {
   LeadDTO,
   LeadDetailDTO,
   ContactLogDTO,
+  ReviewDTO,
   LeadPatchDTO,
   LeadQueryParams,
   LeadOptionsDTO,
@@ -220,6 +221,16 @@ export const errorMessage = (err: any, fallback = 'Something went wrong. Please 
     case 500: return 'Something broke on the server. It has been logged — tell an administrator if it keeps happening.';
     default:  return fallback;
   }
+};
+
+/** Student reviews shown on the public site. */
+export const reviewService = {
+  list: () => api.get<ReviewDTO[]>('/reviews').then(res => res.data),
+  create: (review: Partial<ReviewDTO>) =>
+    api.post<ReviewDTO>('/reviews', review).then(res => res.data),
+  update: (id: string, changes: Partial<ReviewDTO>) =>
+    api.put<ReviewDTO>(`/reviews/${id}`, changes).then(res => res.data),
+  remove: (id: string) => api.delete(`/reviews/${id}`).then(res => res.data),
 };
 
 /** Demo classes and campus visits. */

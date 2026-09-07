@@ -23,6 +23,7 @@ import {
   FolderOpen,
   UserPlus,
   History,
+  Star,
 } from 'lucide-react';
 import { authService } from '../services/api';
 import { UserResponseDTO as User } from '../dtos';
@@ -47,6 +48,7 @@ import AdminBatches from '../components/admin/AdminBatches';
 import AdminSchedule from '../components/admin/AdminSchedule';
 import AdminMedia from '../components/admin/AdminMedia';
 import AdminActivity from '../components/admin/AdminActivity';
+import AdminReviews from '../components/admin/AdminReviews';
 import AdminScripts from '../components/admin/AdminScripts';
 import LeadDrawer from '../components/admin/LeadDrawer';
 
@@ -252,6 +254,7 @@ const Admin = () => {
     { id: 'hiring',          label: 'Hiring Posts',    icon: Briefcase,       show: can(user, 'CONTENT_MANAGE') },
     { id: 'mentors',         label: 'Mentors',         icon: Users,           show: can(user, 'CONTENT_MANAGE') },
     { id: 'placed_students', label: 'Success Stories', icon: Award,           show: can(user, 'CONTENT_MANAGE') },
+    { id: 'reviews',         label: 'Student Reviews', icon: Star,           show: can(user, 'CONTENT_MANAGE') },
     { id: 'team',            label: 'Team & Access',   icon: Shield,          show: can(user, 'USER_VIEW') },
     { id: 'schedule',        label: 'Hours & Duty',    icon: Clock,           show: canAny(user, 'LEAD_VIEW_ALL', 'LEAD_VIEW_OWN') },
     { id: 'media',           label: 'Media Library',   icon: FolderOpen,      show: canAny(user, 'LEAD_VIEW_ALL', 'LEAD_VIEW_OWN') },
@@ -421,6 +424,7 @@ const Admin = () => {
             {currentTab === 'hiring' && <AdminHiring />}
             {currentTab === 'mentors' && <AdminMentors />}
             {currentTab === 'placed_students' && <AdminPlacedStudents />}
+            {currentTab === 'reviews' && <AdminReviews currentUser={user} />}
             {currentTab === 'team' && <AdminTeam currentUser={user} />}
             {currentTab === 'scripts' && <AdminScripts currentUser={user} />}
             {currentTab === 'settings' && <AdminSettings currentUser={user} />}

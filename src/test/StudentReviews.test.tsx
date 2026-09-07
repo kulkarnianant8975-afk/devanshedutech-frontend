@@ -45,8 +45,14 @@ vi.mock('framer-motion', async () => {
  */
 
 const reviews = [
-  { url: '/api/assets/a1/download', name: 'Priya — MSReel4' },
-  { url: '/api/assets/a2/download', name: 'Sneha Kulkarni' },
+  { id: 'r1', name: 'Priya — MSReel4', videoUrl: '/api/assets/a1/download' },
+  { id: 'r2', name: 'Sneha Kulkarni', videoUrl: '/api/assets/a2/download' },
+];
+
+/** A review that is words rather than film — which most of them are. */
+const written = [
+  { id: 'r3', name: 'Rohit Jadhav', course: 'Data Analytics', rating: 5,
+    text: 'The evening batch fitted around my job and the placement help was real.' },
 ];
 
 const page = () => {
@@ -92,6 +98,26 @@ describe('Student Reviews', () => {
     expect(document.querySelectorAll('video')).toHaveLength(1);
 
     await user.keyboard('{Escape}');
+    expect(document.querySelectorAll('video')).toHaveLength(0);
+  });
+
+  it('shows a written review as words, not as a play button', async () => {
+    // Most reviews are a paragraph a student sent on WhatsApp. Rendering one as a play button
+    // that does nothing would be a lie about what the card does.
+    vi.mocked(api.get).mockResolvedValue({ data: written } as never);
+    page();
+
+    expect(await screen.findByText(/evening batch fitted around my job/i)).toBeInTheDocument();
+    expect(screen.getByText('Rohit Jadhav')).toBeInTheDocument();
+    expect(screen.getByText('Data Analytics')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /play the review/i })).not.toBeInTheDocument();
+  });
+
+  it('loads no video for a written review either', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: written } as never);
+    page();
+    await screen.findByText(/evening batch fitted/i);
+
     expect(document.querySelectorAll('video')).toHaveLength(0);
   });
 

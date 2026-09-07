@@ -484,6 +484,33 @@ export interface CounsellorScoreDTO {
   demosBooked: number;
 }
 
+/** A student review as the public page receives it. */
+export interface PublicReviewDTO {
+  id: string;
+  name: string;
+  course?: string | null;
+  /** What the student wrote. Absent on a video-only review. */
+  text?: string | null;
+  imageUrl?: string | null;
+  /** Absent on a written review. */
+  videoUrl?: string | null;
+  rating?: number | null;
+}
+
+/** A review as the office manages it, published or not. */
+export interface ReviewDTO {
+  id: string;
+  studentName: string;
+  courseName?: string | null;
+  reviewText?: string | null;
+  imageUrl?: string | null;
+  videoUrl?: string | null;
+  rating?: number | null;
+  published: boolean;
+  sortOrder: number;
+  createdAt?: string;
+}
+
 /** New enquiries on one day, including the days nobody enquired. */
 export interface DailyCountDTO {
   day: string;
