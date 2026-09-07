@@ -6,7 +6,7 @@ import {
 import { leadService, userService, errorMessage } from '../../services/api';
 import { can } from '../../lib/permissions';
 import { dateInDays, LOCALE } from '../../lib/followUp';
-import { ContactLogDTO, UserResponseDTO } from '../../dtos';
+import { ContactLogDTO, StaffUserDTO, UserResponseDTO } from '../../dtos';
 import LeadDrawer from './LeadDrawer';
 import SearchBar from './SearchBar';
 import SectionIntro from './SectionIntro';
@@ -54,7 +54,10 @@ interface Props { currentUser?: UserResponseDTO | null; }
 
 const AdminActivity: React.FC<Props> = ({ currentUser }) => {
   const [log, setLog] = useState<ContactLogDTO[]>([]);
-  const [staff, setStaff] = useState<UserResponseDTO[]>([]);
+  // StaffUserDTO, not UserResponseDTO: a colleague in a dropdown may have no photograph,
+  // where the signed-in user always does. They are close enough to conflate by accident and
+  // different enough that the compiler was right to object.
+  const [staff, setStaff] = useState<StaffUserDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [days, setDays] = useState(6);

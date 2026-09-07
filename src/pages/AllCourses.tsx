@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, X, BookOpen } from 'lucide-react';
 import CourseCard from '../components/CourseCard';
+import { Course } from '../data/courses';
 import api from '../services/api';
 
 import { useQuery } from '@tanstack/react-query';
@@ -11,7 +12,11 @@ const AllCourses = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   // Courses come from the API only — no hardcoded fallback. See Home.tsx.
-  const { data: courses = [], isLoading: loading, isError: coursesFailed } = useQuery({
+  // Typed at the query rather than at each use. Without it the data is unknown, and every
+  // downstream use — a key, a label, a state setter — silently accepted something React cannot
+  // render. This is the type CourseCard already requires, so the compiler now checks the two
+  // agree instead of taking it on trust.
+  const { data: courses = [], isLoading: loading, isError: coursesFailed } = useQuery<Course[]>({
     queryKey: ['all-courses'],
     queryFn: async () => {
       const response = await api.get('/courses');
@@ -24,10 +29,17 @@ const AllCourses = () => {
     staleTime: 1000 * 60 * 15, // Cache for 15 minutes
   });
 
-  const categories = ['All', ...new Set(courses.map(c => c.category))];
+  // Typed rather than inferred: courses arrive from the API as any[], so a bare Set of their
+  // categories is a Set<unknown> and every use of it downstream — a key, a label, a state
+  // setter — silently accepted something React cannot render.
+  const categories: string[] = ['All', ...new Set(
+    courses.map(c => c.category).filter((c): c is string => Boolean(c)),
+  )];
 
   const filteredCourses = courses.filter(course => {
-    const name = course.name || course.title || '';
+    // Only `name`. The API has never sent `title` — the fallback was dead code that
+    // survived because the list was typed `any`.
+    const name = course.name || '';
     const description = course.description || '';
     const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          description.toLowerCase().includes(searchTerm.toLowerCase());

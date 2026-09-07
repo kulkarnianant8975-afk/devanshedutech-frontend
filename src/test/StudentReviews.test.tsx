@@ -26,10 +26,10 @@ vi.mock('framer-motion', async () => {
     return rest;
   };
   return {
-    AnimatePresence: ({ children }: { children?: unknown }) => children,
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
     motion: new Proxy({}, {
       get: (_t, tag: string) =>
-        ({ children, ...props }: { children?: unknown } & Record<string, unknown>) =>
+        ({ children, ...props }: { children?: React.ReactNode } & Record<string, unknown>) =>
           React.createElement(tag, strip(props), children),
     }),
   };
