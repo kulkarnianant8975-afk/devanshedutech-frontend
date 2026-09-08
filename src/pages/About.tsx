@@ -51,7 +51,7 @@ const About = () => {
             About <span className="text-primary">Us</span>
           </motion.h1>
           <p className="text-gray-500 max-w-2xl mx-auto">
-            Learn more about our mission, vision, and the team behind Devansh Edu-Tech Classes.
+            Learn more about our mission, vision, and the team behind Devansh Edu-Tech.
           </p>
         </div>
       </section>
@@ -79,7 +79,7 @@ const About = () => {
             >
               <h2 className="text-3xl font-bold mb-6">Empowering the Next Generation of Tech Leaders</h2>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Devansh Edu-Tech Classes is a professional training institute dedicated to delivering high-quality technical education and skill development. Our goal is to prepare students for real-world industry challenges through practical learning and expert mentorship.
+                Devansh Edu-Tech is a professional training institute dedicated to delivering high-quality technical education and skill development. Our goal is to prepare students for real-world industry challenges through practical learning and expert mentorship.
               </p>
               <p className="text-gray-600 mb-8 leading-relaxed">
                 Founded with a vision to bridge the gap between traditional education and industry requirements, we have helped hundreds of students transition into successful tech careers.

@@ -103,7 +103,7 @@ const Home = () => {
                 Welcome to the Future of Learning
               </span>
               <h1 className="text-5xl md:text-7xl font-bold leading-tight mb-6 text-white">
-                Devansh <span className="text-primary">Edu-Tech</span> Classes
+                Devansh <span className="text-primary">Edu-Tech</span>
               </h1>
               <p className="text-lg text-white/90 mb-10 max-w-lg leading-relaxed">
                 Building Future Tech Professionals through expert-led training, practical projects, and industry-aligned curriculum.

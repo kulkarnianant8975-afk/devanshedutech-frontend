@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const WhatsAppButton = () => {
   const phoneNumber = "917972217407"; // Standardized format for WhatsApp
-  const message = "Hello! I'm interested in Devansh Edu-Tech Classes. Can I get more information?";
+  const message = "Hello! I'm interested in Devansh Edu-Tech. Can I get more information?";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
   return (

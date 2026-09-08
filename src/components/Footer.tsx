@@ -82,7 +82,7 @@ const Footer = () => {
 
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-gray-500 text-xs text-center">
-            © 2026 Devansh Edu-Tech Classes. All Rights Reserved.
+            © 2026 Devansh Edu-Tech. All Rights Reserved.
           </p>
           <div className="flex space-x-6 text-xs text-gray-500">
             <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
