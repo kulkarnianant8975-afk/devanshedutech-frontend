@@ -1,46 +1,36 @@
-# Registrations Apps Script
+# Apps Script — registrations
 
-`registrations.gs` is the script behind the `scriptUrl` in
-`public/masterclass-assets/config.js` and `config-python.js`.
+The landing-page forms POST to a Google Apps Script web app, which appends a
+row to a spreadsheet. The scripts live in Google; these copies exist so the
+code is reviewable and does not vanish with a Google account.
 
-It lives in Google, not here — this copy exists so the code is reviewable and
-does not vanish with a Google account.
+## Two separate scripts
 
-## Where registrations go
+| Workshop | Pages | Script | Spreadsheet |
+|---|---|---|---|
+| Python + Job Hunt, 19 Sept | `/pyen`, `/pyma` | "Python workshop" — `python-workshop.gs` | [Python Workshop](https://docs.google.com/spreadsheets/d/1PZ3pGWVCLeX_qdGHonldxA1OaUSidg_JPJzN5CnmOeA/edit) |
+| Digital Marketing, 11 Sept | `/dien`, `/dima` | its own, unchanged | the original sheet |
 
-| Page | sends `sheet` | lands in |
-|---|---|---|
-| `/pyen`, `/pyma` | `Python 19 Sept` | **Python + Job Hunt Workshop Registrations** spreadsheet, `Registrations` tab |
-| `/dien`, `/dima` | nothing | the spreadsheet the script is bound to, first tab — as before |
+Each page points at its own script through `scriptUrl` in
+`public/masterclass-assets/config.js` / `config-python.js`. Nothing is
+shared, so a change to one workshop cannot disturb the other.
 
-Python spreadsheet:
-<https://docs.google.com/spreadsheets/d/12DLTTMO74-y-a66cbuUooD9TNIyIOopIY3HVDOXbD-E/edit>
+## Deploying the Python script
 
-The spreadsheet id is in the script, not on the landing page: the page is
-public and anyone can read its config file.
+1. Paste `python-workshop.gs` into the project's `Code.gs`, replacing all of it.
+2. **Deploy → New deployment** → gear icon → **Web app**.
+3. Execute as: **Me**. Who has access: **Anyone** — the pages post without
+   credentials, and "Anyone with Google account" would reject them.
+4. **Deploy**, authorise when asked, and copy the **/exec** URL.
+5. Put that URL in `scriptUrl` in `public/masterclass-assets/config-python.js`.
 
-## Updating it
-
-1. Open the **existing** registrations spreadsheet → **Extensions → Apps Script**.
-2. Replace the existing `doPost` with everything in `registrations.gs`.
-3. **Deploy → Manage deployments** → pencil → **Version: New version** → **Deploy**.
-4. Google will ask to re-authorise, because the script now opens a second
-   spreadsheet. Accept it. Keep "Who has access" as **Anyone** — the pages post
-   without credentials.
-
-The `/exec` URL does not change, so no page needs editing.
+After any later code change: **Deploy → Manage deployments → New version**.
+Saving alone changes nothing — the /exec URL keeps serving the last deployed
+version.
 
 ## Check it before running ads
 
-In the Apps Script editor, select `testPythonRouting` and press **Run**. Then
-open the Python spreadsheet: a row named "TEST — delete me" should be on the
-`Registrations` tab. Delete it.
+In the editor pick `testRegistration` and press **Run**. A row reading
+"TEST — delete me" should appear on the `Registrations` tab. Delete it.
 
-If the `note` field in the log is not empty, the script could not open the
-Python spreadsheet — almost always because it was created by a different
-Google account. Share that spreadsheet with the account that owns the Apps
-Script, as **Editor**, and run the test again.
-
-**Registrations are never dropped on that failure.** The row falls back to the
-bound spreadsheet rather than being lost, so a permissions mistake costs you a
-tidy sheet, not a student.
+Then register once on the live page and confirm a second row arrives.
