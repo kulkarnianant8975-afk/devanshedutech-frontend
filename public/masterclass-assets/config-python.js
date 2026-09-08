@@ -18,7 +18,7 @@ window.DEVANSH_CONFIG = {
         Until you replace it, registration still works and still
         saves — the page just shows "message us on WhatsApp"
         instead of sending people to a group that isn't made yet. */
-  groupLink: "PASTE_PYTHON_WHATSAPP_GROUP_LINK_HERE",
+  groupLink: "https://chat.whatsapp.com/KkXKLuJpuK06M4cepNmDmU",
 
   /* 2. Google Apps Script web-app URL that writes to the Sheet.
         Same sheet as the other masterclass: every row carries a
