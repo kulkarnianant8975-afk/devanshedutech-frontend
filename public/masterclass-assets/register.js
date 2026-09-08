@@ -172,7 +172,10 @@
       city:     form.elements.city.value.trim(),
       source:   form.elements.source ? form.elements.source.value : "",
       language: lang,
-      page:     location.href
+      page:     location.href,
+      /* Names the tab to append to. Absent on the Digital Marketing pages,
+         whose rows keep going to the first tab exactly as before. */
+      sheet:    CFG.sheetTab || ""
     }).then(finish);
   });
 })();

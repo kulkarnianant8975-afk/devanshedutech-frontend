@@ -26,23 +26,30 @@ window.DEVANSH_CONFIG = {
         /pyen and /pyma without needing a second script. */
   scriptUrl: "https://script.google.com/macros/s/AKfycbxfBiKVSQYUcUbSBicP9JHY2LODYidsAn2EC1njBjhi-2b9sHvyggm0vWCIykehE2D1Nw/exec",
 
-  /* 3. WhatsApp number for direct questions (no +, with country code) */
+  /* 3. Which TAB of that spreadsheet these registrations land in.
+        Same sheet as the Digital Marketing masterclass, separate tab, so the
+        two workshops do not interleave in one list. The Apps Script creates
+        the tab on the first registration if it does not exist yet.
+        Leave it out and rows go to the first tab, as they always have. */
+  sheetTab: "Python 19 Sept",
+
+  /* 4. WhatsApp number for direct questions (no +, with country code) */
   whatsappNumber: "917972217407",
 
-  /* 4. Seats */
+  /* 5. Seats */
   totalSeats: 50,
 
-  /* 5. Name this workshop carries into Meta Pixel and GTM. Without it
+  /* 6. Name this workshop carries into Meta Pixel and GTM. Without it
         both workshops report as one campaign and you cannot tell which
         ad filled which room. */
   eventName: "Python + Job Hunt Workshop 19 Sept",
 
-  /* 6. The opening offer. The page shows originalPrice struck through beside
+  /* 7. The opening offer. The page shows originalPrice struck through beside
         FREE, and counts down offerMinutes from the visitor's first arrival.
         Set offerMinutes to 0 to remove the band entirely. */
   originalPrice: 499,
   offerMinutes: 10,
 
-  /* 7. How long to wait for the Sheet before continuing anyway. */
+  /* 8. How long to wait for the Sheet before continuing anyway. */
   saveTimeoutMs: 6000
 };
