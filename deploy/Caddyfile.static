@@ -1,0 +1,24 @@
+{
+	admin off
+	auto_https off
+}
+
+:80 {
+	root * /srv/site
+	file_server {
+		precompressed br gzip
+	}
+
+	# SPA fallback: unknown paths are client-side routes, not 404s.
+	try_files {path} {path}/ /index.html
+
+	# Hashed build assets are immutable and safe to cache forever.
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	# Everything that decides which build the browser loads next must never be
+	# cached, or returning visitors keep booting the previous release. This must
+	# match the bare "/" too, not just "/index.html".
+	@nocache path / /index.html /sw.js /registerSW.js /manifest.webmanifest /englishlandingpage /englishlandingpage/ /marathilandingpage /marathilandingpage/ /dien /dien/ /dima /dima/ /pyen /pyen/ /pyma /pyma/
+	header @nocache Cache-Control "no-cache, must-revalidate"
+}
