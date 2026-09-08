@@ -37,6 +37,12 @@ window.DEVANSH_CONFIG = {
         ad filled which room. */
   eventName: "Python + Job Hunt Workshop 19 Sept",
 
-  /* 6. How long to wait for the Sheet before continuing anyway. */
+  /* 6. The opening offer. The page shows originalPrice struck through beside
+        FREE, and counts down offerMinutes from the visitor's first arrival.
+        Set offerMinutes to 0 to remove the band entirely. */
+  originalPrice: 499,
+  offerMinutes: 10,
+
+  /* 7. How long to wait for the Sheet before continuing anyway. */
   saveTimeoutMs: 6000
 };

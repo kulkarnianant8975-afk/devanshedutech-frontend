@@ -352,3 +352,28 @@ section.light .lcard .ld{color:#475569;}
 /* Short labels do not need the 19px of a card that carries a paragraph. At 390px
    that size wraps "Data Science Roadmap" onto three lines and the boxes go ragged. */
 .learn.two .lt{font-size:16px;line-height:1.3;}
+
+/* ── Offer band ─────────────────────────────────────────────────────────────
+   The struck-through price next to FREE, with the countdown under it. Sits in
+   the hero and again above the form, which is where the decision is actually
+   made.
+
+   `min-width` on the clock stops the band twitching a pixel wider every time
+   the seconds tick from 9 to 10 — the layout must not move while someone is
+   reading it. */
+.offer{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 12px;
+  background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.38);
+  border-radius:14px;padding:14px 16px;margin:0 0 18px;}
+.offer .was{font-family:var(--font-display);font-weight:600;font-size:19px;
+  color:var(--slate);text-decoration:line-through;text-decoration-thickness:2px;}
+.offer .now{font-family:var(--font-display);font-weight:800;font-size:23px;
+  color:var(--emerald);letter-spacing:-.2px;}
+.offer .cd{flex:1 1 100%;font-size:14.5px;color:#d4d4d8;font-variant-numeric:tabular-nums;
+  min-width:18ch;}
+.offer .cd b{color:#fff;font-weight:700;}
+section.light .offer .cd{color:#475569;}
+section.light .offer .cd b{color:var(--ink);}
+.offer[data-state="over"]{background:rgba(255,106,0,.10);border-color:rgba(255,106,0,.38);}
+.offer[data-state="over"] .cd{color:var(--orange);font-weight:600;}
+html[lang="mr"] .offer .cd{line-height:1.65;}
+@media (max-width:380px){.offer .now{font-size:21px;} .offer .cd{font-size:13.5px;}}
