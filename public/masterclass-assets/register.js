@@ -46,7 +46,9 @@
     try { if (typeof fbq === "function") fbq("track", pixelEvent, data || {}); } catch (e) {}
     try { (window.dataLayer = window.dataLayer || []).push(Object.assign({ event: dlEvent }, data || {})); } catch (e) {}
   }
-  var EV = { content_name: "Digital Marketing Masterclass 11 Sept", content_category: "masterclass", lang: lang };
+  // Named per workshop from config. The fallback keeps the Digital Marketing pages
+  // reporting exactly as before, since their config.js does not set eventName.
+  var EV = { content_name: CFG.eventName || "Digital Marketing Masterclass 11 Sept", content_category: "masterclass", lang: lang };
 
   /* ---------- helpers ---------- */
   function fieldError(el, msg) {
