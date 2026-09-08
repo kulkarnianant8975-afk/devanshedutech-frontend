@@ -320,3 +320,35 @@ html[lang="mr"] .inst .bio li{line-height:1.75;}
 
 /* "Book your slot" lands on the form, with a little air above it. */
 #book{scroll-margin-top:16px;}
+
+/* ── Light-section variants ─────────────────────────────────────────────────
+   `details` and `.lcard` were written for the dark sections and hardcode
+   white text. Dropped into a section.light they render white on near-white
+   and the content vanishes — which is exactly what happened to the FAQ on
+   the Python pages: the questions were in the markup and unreadable.
+
+   Every rule here is scoped to section.light, so the pages that keep these
+   components on dark sections are untouched. */
+section.light details{background:#fff;border-color:var(--line-dk);}
+section.light details summary{color:var(--ink);}
+section.light details[open]{border-color:rgba(255,106,0,.45);}
+section.light details .a{color:#475569;}
+section.light .lcard{background:#fff;border-color:var(--line-dk);}
+section.light .lcard .lt{color:var(--ink);}
+section.light .lcard .ld{color:#475569;}
+
+/* ── Two-up boxes ───────────────────────────────────────────────────────────
+   .learn stacks one card per row, which is right for cards carrying a
+   sentence of explanation. For short labels that wastes the width and makes
+   a list of seven feel endless. `.two` sets them in pairs.
+
+   An odd last card spans the full row rather than leaving a hole beside it,
+   which is what a list of seven would otherwise do. Below 380px the pair
+   becomes a single column: two columns there wrap almost every label. */
+.learn.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:stretch;}
+.learn.two > :last-child:nth-child(odd){grid-column:1 / -1;}
+.learn.two .lt .tick{color:var(--emerald);font-weight:700;margin-right:7px;}
+@media (max-width:380px){.learn.two{grid-template-columns:1fr;}}
+/* Short labels do not need the 19px of a card that carries a paragraph. At 390px
+   that size wraps "Data Science Roadmap" onto three lines and the boxes go ragged. */
+.learn.two .lt{font-size:16px;line-height:1.3;}
