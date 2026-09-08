@@ -20,18 +20,17 @@ window.DEVANSH_CONFIG = {
         instead of sending people to a group that isn't made yet. */
   groupLink: "https://chat.whatsapp.com/KkXKLuJpuK06M4cepNmDmU",
 
-  /* 2. Google Apps Script web-app URL that writes to the Sheet.
-        Same sheet as the other masterclass: every row carries a
-        `page` column, so Python registrations are told apart by
-        /pyen and /pyma without needing a second script. */
-  scriptUrl: "https://script.google.com/macros/s/AKfycbxfBiKVSQYUcUbSBicP9JHY2LODYidsAn2EC1njBjhi-2b9sHvyggm0vWCIykehE2D1Nw/exec",
+  /* 2. Google Apps Script web-app URL for THIS workshop.
+        Its own script and its own spreadsheet ("Python Workshop"), separate
+        from the Digital Marketing one, so a change to either cannot disturb
+        the other. The script is in docs/apps-script/python-workshop.gs. */
+  scriptUrl: "https://script.google.com/macros/s/AKfycbzDOUmbuj2k0UEapHlKr1zgF4eAu-5tM1frmWlnXRLa7KY7lGfssG0MtB_BkPyOp9wJ/exec",
 
-  /* 3. Which TAB of that spreadsheet these registrations land in.
-        Same sheet as the Digital Marketing masterclass, separate tab, so the
-        two workshops do not interleave in one list. The Apps Script creates
-        the tab on the first registration if it does not exist yet.
-        Leave it out and rows go to the first tab, as they always have. */
-  sheetTab: "Python 19 Sept",
+  /* 3. Which TAB of the Python Workshop spreadsheet rows land on. The whole
+        spreadsheet belongs to this workshop, so one tab is enough — and it
+        must match the tab the script's own test writes to, or live
+        registrations and test rows end up on two different tabs. */
+  sheetTab: "Registrations",
 
   /* 4. WhatsApp number for direct questions (no +, with country code) */
   whatsappNumber: "917972217407",
