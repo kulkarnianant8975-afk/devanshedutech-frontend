@@ -23,3 +23,11 @@ Confirmed pricing: regular INR 5,999, offer INR 3,999, saving INR 2,000. INR 500
 ## Verification
 
 Local production build, lint/typecheck and the existing test suite passed (52 existing lint warnings; 137 tests). Browser-check desktop/mobile layout, anchor navigation and FAQs. Before launch verify route/headers via GitHub Actions, enable the real payment URL, and perform an authorized Razorpay test-mode payment including cancellation/failure. No payment or production deployment was attempted while the link is pending.
+
+## Conversion-focused page update
+
+The page now leads with beginner outcomes, contains keyboard-accessible project preview tabs, audience-specific use cases, curriculum details, the existing founder photo and identity from public/pyen, a real institute review-page link, a batch-date banner and a final admission CTA. No trainer assignment, review quote, student count or seat scarcity is claimed.
+
+The optional name/audience form opens a WhatsApp draft for the visitor to review and send. It does not submit a lead, store details or mark enrollment complete. Project mockups are explicitly labelled illustrative and are not represented as student work or live AI generation. The scripts and CSS URLs were version-bumped.
+
+Additional verification: all preview tabs and arrow-key navigation, mobile layout with no horizontal overflow, founder image loading, unique HTML IDs/internal anchors, payment-host allowlist and malformed URLs, optional/Unicode enquiry draft encoding. The course payment link is still pending.
