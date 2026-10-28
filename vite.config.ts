@@ -27,7 +27,7 @@ export default defineConfig(() => {
             // Without these, a returning visitor with the service worker already installed
             // gets the cached SPA shell instead of the landing page - and the ad links point
             // at the extensionless path, which the precache does not match.
-            /^\/dien/, /^\/dima/, /^\/pyen/, /^\/pyma/,
+            /^\/ai-crash-course/, /^\/dien/, /^\/dima/, /^\/pyen/, /^\/pyma/,
             /^\/englishlandingpage/, /^\/marathilandingpage/, /^\/masterclass-assets/,
           ],
           cleanupOutdatedCaches: true,
