@@ -19,6 +19,6 @@
 	# Everything that decides which build the browser loads next must never be
 	# cached, or returning visitors keep booting the previous release. This must
 	# match the bare "/" too, not just "/index.html".
-	@nocache path / /index.html /sw.js /registerSW.js /manifest.webmanifest /englishlandingpage /englishlandingpage/ /marathilandingpage /marathilandingpage/ /dien /dien/ /dima /dima/ /pyen /pyen/ /pyma /pyma/
+	@nocache path /ai-crash-course /ai-crash-course/ /ai-crash-course/* / /index.html /sw.js /registerSW.js /manifest.webmanifest /englishlandingpage /englishlandingpage/ /marathilandingpage /marathilandingpage/ /dien /dien/ /dima /dima/ /pyen /pyen/ /pyma /pyma/
 	header @nocache Cache-Control "no-cache, must-revalidate"
 }
