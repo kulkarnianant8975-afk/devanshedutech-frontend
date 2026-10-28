@@ -31,3 +31,7 @@ The page now leads with beginner outcomes, contains keyboard-accessible project 
 The optional name/audience form opens a WhatsApp draft for the visitor to review and send. It does not submit a lead, store details or mark enrollment complete. Project mockups are explicitly labelled illustrative and are not represented as student work or live AI generation. The scripts and CSS URLs were version-bumped.
 
 Additional verification: all preview tabs and arrow-key navigation, mobile layout with no horizontal overflow, founder image loading, unique HTML IDs/internal anchors, payment-host allowlist and malformed URLs, optional/Unicode enquiry draft encoding. The course payment link is still pending.
+
+## November workshop visual direction
+
+Replaces the generic hero mockup grid with a full orange typographic poster and custom perforated admission-ticket composition. The founder photo now appears on that ticket, labelled as founder rather than course instructor. Numbered sections, ruled audience rows, an editorial curriculum layout, local institute/address panel and restrained square controls replace repeated rounded cards. The admission form, preview tabs, confirmed fees and payment fallback retain their behaviour. Mobile type and ticket layout were checked for overflow; no production deployment was performed.
