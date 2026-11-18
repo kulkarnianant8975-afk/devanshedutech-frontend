@@ -90,7 +90,32 @@
      delivers it even after the page navigates away, so the person is not held
      for Apps Script's 302 redirect chain - which measured ~6s on mobile and is
      exactly where paid traffic gives up. fetch stays as the fallback. */
+  function saveToBackend(data) {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var leadPayload = {
+        fullName: data.name,
+        email: data.email,
+        mobileNumber: data.phone,
+        education: data.status,
+        cityName: data.city,
+        courseInterested: CFG.eventName || "Workshop Registration",
+        source: "WEBSITE_FORM",
+        sourceDetail: (data.source ? data.source + " | " : "") + (data.page || window.location.href),
+        utmSource: params.get("utm_source") || "meta_ads",
+        utmMedium: params.get("utm_medium") || "cpc",
+        utmCampaign: params.get("utm_campaign") || "workshop"
+      };
+      fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(leadPayload)
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   function save(data) {
+    saveToBackend(data);
     if (!CFG.scriptUrl || CFG.scriptUrl.indexOf("PASTE_") === 0) return Promise.resolve("skipped");
     var body = new URLSearchParams(data);
 

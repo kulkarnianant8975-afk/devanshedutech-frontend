@@ -9,6 +9,46 @@
       "destination": "/dima/index.html"
     },
     {
+      "source": "/pyen",
+      "destination": "/pyen/index.html"
+    },
+    {
+      "source": "/pyma",
+      "destination": "/pyma/index.html"
+    },
+    {
+      "source": "/aimlen",
+      "destination": "/aimlen/index.html"
+    },
+    {
+      "source": "/aimlma",
+      "destination": "/aimlma/index.html"
+    },
+    {
+      "source": "/dsen",
+      "destination": "/dsen/index.html"
+    },
+    {
+      "source": "/dsma",
+      "destination": "/dsma/index.html"
+    },
+    {
+      "source": "/daen",
+      "destination": "/daen/index.html"
+    },
+    {
+      "source": "/dama",
+      "destination": "/dama/index.html"
+    },
+    {
+      "source": "/aiengen",
+      "destination": "/aiengen/index.html"
+    },
+    {
+      "source": "/aiengma",
+      "destination": "/aiengma/index.html"
+    },
+    {
       "source": "/englishlandingpage",
       "destination": "/englishlandingpage/index.html"
     },

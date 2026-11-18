@@ -128,6 +128,8 @@ section.light .lede{color:#64748b;}
 .foryou li{list-style:none;display:flex;gap:13px;align-items:flex-start;font-size:16.5px;line-height:1.5;}
 html[lang="mr"] .foryou li{line-height:1.65;}
 .foryou li .tick{color:var(--emerald);font-weight:700;font-size:17px;flex-shrink:0;margin-top:2px;}
+.foryou li > span:not(.tick){color:#cbd5e1;flex:1;min-width:0;}
+.foryou li > span:not(.tick) b{color:#fff;font-weight:600;}
 
 /* ---- learn cards ---- */
 .learn{display:flex;flex-direction:column;gap:12px;margin-bottom:28px;}
@@ -377,3 +379,175 @@ section.light .offer .cd b{color:var(--ink);}
 .offer[data-state="over"] .cd{color:var(--orange);font-weight:600;}
 html[lang="mr"] .offer .cd{line-height:1.65;}
 @media (max-width:380px){.offer .now{font-size:21px;} .offer .cd{font-size:13.5px;}}
+
+/* ── Tech-stack pills & Masterclass Certificate card ─────────────────────── */
+.stack{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px;}
+.stack span{font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;
+  background:rgba(255,106,0,.12);color:var(--orange-lt);border:1px solid rgba(255,106,0,.32);}
+section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;}
+
+.cert{margin:20px 0 22px;padding:22px 20px;border-radius:16px;
+  background:linear-gradient(145deg,#18181b,#09090b);color:#fff;
+  border:1.5px solid rgba(255,106,0,.45);position:relative;overflow:hidden;}
+.cert::before{content:"";position:absolute;inset:8px;border:1px dashed rgba(255,106,0,.28);
+  border-radius:10px;pointer-events:none;}
+.cert .c-top{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--orange-lt);margin-bottom:6px;}
+.cert .c-title{font-family:var(--font-display);font-size:20px;font-weight:800;line-height:1.3;margin-bottom:6px;}
+.cert .c-sub{font-size:14px;color:#cbd5e1;line-height:1.55;margin-bottom:14px;}
+.cert .c-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;
+  gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);font-size:12.5px;color:#94a3b8;}
+.cert .c-foot b{color:#fff;font-weight:600;}
+.cert .c-badge{background:rgba(16,185,129,.16);color:#34d399;border:1px solid rgba(16,185,129,.35);
+  padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;}
+
+/* ── Full-Screen Crisp Poster Hero (AI/ML, DS, DA, AI Engg pages) ────────── */
+.hero.hero-poster{
+  width:100%;min-height:100svh;padding:0;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;
+  background:radial-gradient(62% 82% at 50% 42%,#fee8da 0%,#f9c6a6 58%,#f3b28e 100%);
+  color:#061d3f;
+}
+.hero-poster .hp-bar{
+  width:100%;padding:16px 28px 0;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  position:relative;z-index:5;
+}
+.hero-poster .hp-pill{
+  font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:#061d3f;background:rgba(255,255,255,.55);border:1px solid rgba(6,29,63,.16);
+  padding:6px 14px;border-radius:999px;backdrop-filter:blur(6px);
+}
+.hero-poster .lang{border-color:rgba(6,29,63,.22);background:rgba(255,255,255,.55);}
+.hero-poster .lang a{color:#061d3f;}
+.hero-poster .lang a:hover{color:#ff6a00;}
+.hero-poster .lang a[aria-current="page"]{background:var(--orange);color:#fff;}
+
+.hero-poster .hp-grid{
+  width:100%;flex:1;display:grid;
+  grid-template-columns:minmax(260px,1fr) minmax(380px,1.25fr) minmax(260px,1fr);
+  align-items:end;position:relative;
+}
+
+/* Center column — 100% vector SVG & crisp Poppins typography */
+.hero-poster .hp-center{
+  align-self:center;text-align:center;
+  padding:16px 16px 34px;z-index:3;
+  display:flex;flex-direction:column;align-items:center;
+}
+.hero-poster .hp-logo{color:#061d3f;margin-bottom:8px;display:inline-flex;}
+.hero-poster .hp-logo svg{height:clamp(54px,5.6vw,78px);width:auto;display:block;}
+.hero-poster .hp-kicker{
+  font-size:clamp(14px,1.5vw,21px);font-weight:700;letter-spacing:.36em;
+  text-transform:uppercase;color:#d96210;margin-bottom:4px;padding-left:.36em;
+}
+.hero-poster h1.hp-title{
+  font-family:var(--font-display);font-weight:800;color:#061d3f;
+  font-size:clamp(34px,4.4vw,66px);line-height:1.08;letter-spacing:-.02em;
+  margin:2px 0 10px;
+}
+.hero-poster .hp-tagline{
+  font-size:clamp(16px,1.65vw,24px);font-weight:500;color:#0b2347;
+  line-height:1.35;margin:0;
+}
+.hero-poster .hp-rule{
+  width:min(360px,82%);height:1.5px;background:rgba(6,29,63,.45);
+  margin:16px auto 14px;border:0;
+}
+.hero-poster .hp-when{
+  font-size:clamp(15px,1.45vw,21px);font-weight:700;color:#061d3f;
+  letter-spacing:-.01em;margin:0 0 6px;
+}
+.hero-poster .hp-when span{color:#d96210;margin:0 8px;}
+.hero-poster .hp-contact{
+  font-size:clamp(17px,1.6vw,23px);font-weight:800;color:#061d3f;
+  text-decoration:none;margin-bottom:20px;display:inline-block;
+}
+.hero-poster .hp-contact:hover{color:#d96210;}
+
+/* Offer & CTA inside the light peach hero */
+.hero-poster .hp-actions{width:100%;max-width:440px;}
+.hero-poster .offer{
+  background:rgba(6,29,63,.92);border:1px solid rgba(255,106,0,.45);
+  padding:11px 16px;margin:0 0 12px;justify-content:center;text-align:center;
+  box-shadow:0 10px 26px rgba(6,29,63,.18);
+}
+.hero-poster .offer .was{color:#94a3b8;font-size:17px;}
+.hero-poster .offer .now{color:#34d399;font-size:21px;}
+.hero-poster .offer .cd{color:#e2e8f0;font-size:13.5px;}
+.hero-poster .offer .cd b{color:#fff;}
+.hero-poster .offer[data-state="over"]{background:rgba(6,29,63,.95);border-color:var(--orange);}
+.hero-poster .offer[data-state="over"] .cd{color:#fb923c;}
+.hero-poster .btn.grad{
+  box-shadow:0 12px 28px rgba(230,92,0,.38);
+  padding:15px 22px;font-size:17.5px;
+}
+
+/* Left & Right Speakers anchored to bottom edges */
+.hero-poster .hp-sp{
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+  position:relative;height:100%;
+}
+.hero-poster .hp-sp img{
+  width:min(100%,460px);height:auto;display:block;
+  margin-bottom:-2px;position:relative;z-index:2;
+  filter:drop-shadow(0 10px 22px rgba(6,29,63,.16));
+}
+.hero-poster .hp-sp-left img{margin-right:auto;}
+.hero-poster .hp-sp-right img{margin-left:auto;}
+
+/* Angled Navy Nameplates with Crisp Orange Top Accent */
+.hero-poster .hp-plate{
+  width:100%;position:relative;z-index:3;
+  background:#071f42;color:#fff;text-align:center;
+  padding:16px 26px 18px;
+  border-top:3px solid #f07d1a;
+}
+.hero-poster .hp-sp-left .hp-plate{
+  clip-path:polygon(0 0,88% 0,100% 100%,0 100%);
+  padding-right:14%;
+}
+.hero-poster .hp-sp-right .hp-plate{
+  clip-path:polygon(12% 0,100% 0,100% 100%,0 100%);
+  padding-left:14%;
+}
+.hero-poster .hp-plate .pn{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(18px,1.75vw,26px);line-height:1.2;color:#fff;
+}
+.hero-poster .hp-plate .pl{
+  width:72%;height:2px;background:#f07d1a;margin:7px auto 7px;border-radius:2px;
+}
+.hero-poster .hp-plate .pr{
+  font-size:clamp(12px,1.05vw,15px);font-weight:500;color:#e2e8f0;line-height:1.4;
+}
+.hero-poster .hp-plate .pe{
+  font-size:clamp(11.5px,1vw,14px);font-weight:400;color:#cbd5e1;line-height:1.4;
+}
+
+/* Tablet & Mobile — Crisp Stacked Poster + 2-up Speaker Row */
+@media (max-width:960px){
+  .hero.hero-poster{min-height:auto;}
+  .hero-poster .hp-bar{padding:12px 16px 0;}
+  .hero-poster .hp-grid{
+    grid-template-columns:1fr 1fr;
+    grid-template-areas:"center center" "left right";
+    align-items:end;
+  }
+  .hero-poster .hp-center{grid-area:center;padding:18px 18px 16px;}
+  .hero-poster .hp-sp-left{grid-area:left;}
+  .hero-poster .hp-sp-right{grid-area:right;}
+  .hero-poster .hp-sp img{width:100%;max-width:260px;margin:0 auto -2px;}
+  .hero-poster .hp-plate{padding:12px 10px 14px;}
+  .hero-poster .hp-sp-left .hp-plate{clip-path:polygon(0 0,94% 0,100% 100%,0 100%);padding-right:14px;}
+  .hero-poster .hp-sp-right .hp-plate{clip-path:polygon(6% 0,100% 0,100% 100%,0 100%);padding-left:14px;}
+  .hero-poster .hp-plate .pn{font-size:15.5px;}
+  .hero-poster .hp-plate .pr{font-size:11.5px;}
+  .hero-poster .hp-plate .pe{font-size:11px;}
+}
+@media (max-width:440px){
+  .hero-poster .hp-pill{font-size:10.5px;padding:5px 10px;}
+  .hero-poster h1.hp-title{font-size:32px;}
+  .hero-poster .hp-plate .pn{font-size:14px;}
+  .hero-poster .hp-plate .pr,.hero-poster .hp-plate .pe{font-size:10.5px;}
+}

@@ -41,7 +41,7 @@ window.DEVANSH_CONFIG = {
   /* 6. Name this workshop carries into Meta Pixel and GTM. Without it
         both workshops report as one campaign and you cannot tell which
         ad filled which room. */
-  eventName: "Python + Job Hunt Workshop 19 Sept",
+  eventName: "Python Masterclass 6 Dec",
 
   /* 7. The opening offer. The page shows originalPrice struck through beside
         FREE, and counts down offerMinutes from the visitor's first arrival.

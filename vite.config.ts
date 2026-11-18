@@ -28,6 +28,8 @@ export default defineConfig(() => {
             // gets the cached SPA shell instead of the landing page - and the ad links point
             // at the extensionless path, which the precache does not match.
             /^\/dien/, /^\/dima/, /^\/pyen/, /^\/pyma/,
+            /^\/aimlen/, /^\/aimlma/, /^\/dsen/, /^\/dsma/,
+            /^\/daen/, /^\/dama/, /^\/aiengen/, /^\/aiengma/,
             /^\/englishlandingpage/, /^\/marathilandingpage/, /^\/masterclass-assets/,
           ],
           cleanupOutdatedCaches: true,
