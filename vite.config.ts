@@ -33,6 +33,7 @@ export default defineConfig(() => {
             /^\/englishlandingpage/, /^\/marathilandingpage/, /^\/masterclass-assets/,
           ],
           cleanupOutdatedCaches: true,
+          skipWaiting: true,
           clientsClaim: true,
         },
         manifest: {

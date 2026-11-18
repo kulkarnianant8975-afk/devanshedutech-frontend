@@ -21,8 +21,20 @@ captureAttribution();
  */
 if ('serviceWorker' in navigator) {
   const isAdmin = window.location.pathname.startsWith('/admin');
+  const isStaticLanding = /^\/(dien|dima|pyen|pyma|aimlen|aimlma|dsen|dsma|daen|dama|aiengen|aiengma|englishlandingpage|marathilandingpage)(\/|$)/.test(window.location.pathname);
 
-  if (isAdmin) {
+  if (isStaticLanding) {
+    // A stale service worker from an earlier build intercepted a static landing page
+    // and served the React SPA shell instead. Unregister it and reload once into the real page.
+    navigator.serviceWorker.getRegistrations()
+      .then(regs => Promise.all(regs.map(r => r.unregister())))
+      .finally(() => {
+        if (!sessionStorage.getItem('landing_sw_reloaded')) {
+          sessionStorage.setItem('landing_sw_reloaded', '1');
+          window.location.reload();
+        }
+      });
+  } else if (isAdmin) {
     navigator.serviceWorker.getRegistrations()
       .then(regs => regs.forEach(r => r.unregister()))
       .catch(() => { /* nothing useful to do if the browser refuses */ });
