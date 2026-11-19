@@ -492,6 +492,16 @@ section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;
   width:min(100%,460px);height:auto;display:block;
   margin-bottom:-2px;position:relative;z-index:2;
   filter:drop-shadow(0 10px 22px rgba(6,29,63,.16));
+  image-rendering:-webkit-optimize-contrast;
+  image-rendering:crisp-edges;
+  transform:translateZ(0);
+  backface-visibility:hidden;
+}
+@media (min-width:1440px){
+  .hero-poster .hp-sp img{width:min(100%,520px);}
+}
+@media (min-width:1920px){
+  .hero-poster .hp-sp img{width:min(100%,600px);}
 }
 .hero-poster .hp-sp-left img{margin-right:auto;}
 .hero-poster .hp-sp-right img{margin-left:auto;}
