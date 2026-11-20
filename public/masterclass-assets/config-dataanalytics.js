@@ -7,7 +7,7 @@ window.DEVANSH_CONFIG = {
 
   /* 1. WhatsApp GROUP invite link for the Data Analytics workshop.
         WhatsApp > Data Analytics Workshop Group > Group info > Invite via link > Copy link */
-  groupLink: "https://chat.whatsapp.com/LGKHLoWM28E13nxYXoSMph",
+  groupLink: "https://chat.whatsapp.com/Il0PzP7CPXAJEYun2fOsNv",
 
   /* 2. Google Apps Script web-app URL for registrations. */
   scriptUrl: "https://script.google.com/macros/s/AKfycby2ZGMClqgLI1DSjxs1cEwyCgqHRyIsoPWPzw6RQJGXMpybXoxEfbVPMu25fvgO7UI/exec",
