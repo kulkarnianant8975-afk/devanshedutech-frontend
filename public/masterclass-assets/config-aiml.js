@@ -7,7 +7,7 @@ window.DEVANSH_CONFIG = {
 
   /* 1. WhatsApp GROUP invite link for the AI/ML workshop.
         WhatsApp > AI/ML Workshop Group > Group info > Invite via link > Copy link */
-  groupLink: "https://chat.whatsapp.com/LGKHLoWM28E13nxYXoSMph",
+  groupLink: "https://chat.whatsapp.com/J2lkeatAhgo0eaAZhqjuMe",
 
   /* 2. Google Apps Script web-app URL for registrations. */
   scriptUrl: "https://script.google.com/macros/s/AKfycby2ZGMClqgLI1DSjxs1cEwyCgqHRyIsoPWPzw6RQJGXMpybXoxEfbVPMu25fvgO7UI/exec",
