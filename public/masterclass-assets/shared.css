@@ -488,8 +488,12 @@ section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;
   display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
   position:relative;height:100%;
 }
-.hero-poster .hp-sp img{
-  width:min(100%,460px);height:auto;display:block;
+.hero-poster .hp-sp picture{
+  display:block;width:min(100%,460px);line-height:0;
+}
+.hero-poster .hp-sp picture img,
+.hero-poster .hp-sp > img{
+  width:100%;height:auto;display:block;
   margin-bottom:-2px;position:relative;z-index:2;
   filter:drop-shadow(0 10px 22px rgba(6,29,63,.16));
   image-rendering:-webkit-optimize-contrast;
@@ -498,13 +502,13 @@ section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;
   backface-visibility:hidden;
 }
 @media (min-width:1440px){
-  .hero-poster .hp-sp img{width:min(100%,520px);}
+  .hero-poster .hp-sp picture{width:min(100%,520px);}
 }
 @media (min-width:1920px){
-  .hero-poster .hp-sp img{width:min(100%,600px);}
+  .hero-poster .hp-sp picture{width:min(100%,600px);}
 }
-.hero-poster .hp-sp-left img{margin-right:auto;}
-.hero-poster .hp-sp-right img{margin-left:auto;}
+.hero-poster .hp-sp-left picture{margin-right:auto;}
+.hero-poster .hp-sp-right picture{margin-left:auto;}
 
 /* Angled Navy Nameplates with Crisp Orange Top Accent */
 .hero-poster .hp-plate{
@@ -547,7 +551,9 @@ section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;
   .hero-poster .hp-center{grid-area:center;padding:18px 18px 16px;}
   .hero-poster .hp-sp-left{grid-area:left;}
   .hero-poster .hp-sp-right{grid-area:right;}
-  .hero-poster .hp-sp img{width:100%;max-width:260px;margin:0 auto -2px;}
+  .hero-poster .hp-sp picture{width:100%;max-width:260px;margin:0 auto;}
+  .hero-poster .hp-sp picture img,
+  .hero-poster .hp-sp > img{width:100%;max-width:260px;margin:0 auto -2px;}
   .hero-poster .hp-plate{padding:12px 10px 14px;}
   .hero-poster .hp-sp-left .hp-plate{clip-path:polygon(0 0,94% 0,100% 100%,0 100%);padding-right:14px;}
   .hero-poster .hp-sp-right .hp-plate{clip-path:polygon(6% 0,100% 0,100% 100%,0 100%);padding-left:14px;}

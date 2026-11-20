@@ -16,6 +16,10 @@
 	@assets path /assets/*
 	header @assets Cache-Control "public, max-age=31536000, immutable"
 
+	# Masterclass images & media: cache for 7 days with stale-while-revalidate for instant repeat loads
+	@masterclass_media path /masterclass-assets/*.webp /masterclass-assets/*.png /masterclass-assets/*.jpg /masterclass-assets/*.mp4
+	header @masterclass_media Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
+
 	# Everything that decides which build the browser loads next must never be
 	# cached, or returning visitors keep booting the previous release. This must
 	# match the bare "/" too, not just "/index.html".
