@@ -269,6 +269,35 @@ src="https://www.facebook.com/tr?id=1753021132490840&ev=PageView&noscript=1"/></
       </div>
 
       <div class="field">
+        <label for="f-currentYear">चालू वर्ष किंवा सेमिस्टर</label>
+        <select id="f-currentYear" name="currentYear" aria-describedby="currentYearErr" required>
+          <option value="">तुमचे वर्ष / सेमिस्टर निवडा</option>
+          <option>१ ले वर्ष (Sem 1 / 2)</option>
+          <option>२ रे वर्ष (Sem 3 / 4)</option>
+          <option>३ रे वर्ष (Sem 5 / 6)</option>
+          <option>अंतिम वर्ष / Final Year (Sem 7 / 8)</option>
+          <option>शिक्षण पूर्ण / Passout</option>
+        </select>
+        <div class="err" id="currentYearErr" hidden></div>
+      </div>
+
+      <div class="field">
+        <label for="f-passoutYear">पासआउट वर्ष (Passout Year)</label>
+        <select id="f-passoutYear" name="passoutYear" aria-describedby="passoutYearErr" required>
+          <option value="">पासआउट वर्ष निवडा</option>
+          <option>२०२९</option>
+          <option>२०२८</option>
+          <option>२०२७</option>
+          <option>२०२६</option>
+          <option>२०२५</option>
+          <option>२०२४</option>
+          <option>२०२३ किंवा आधी</option>
+        </select>
+        <div class="err" id="passoutYearErr" hidden></div>
+      </div>
+
+
+      <div class="field">
         <label for="f-city">शहर किंवा गाव</label>
         <input id="f-city" name="city" type="text" autocomplete="address-level2" placeholder="उदा. परभणी" aria-describedby="cityErr" required>
         <div class="err" id="cityErr" hidden></div>

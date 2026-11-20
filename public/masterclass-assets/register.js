@@ -76,12 +76,18 @@
 
   function validate() {
     var f = form.elements, ok = true;
-    ok = fieldError(f.name,   f.name.value.trim().length >= 2 ? "" : T.name) && ok;
-    ok = fieldError(f.phone,  cleanPhone(f.phone.value)        ? "" : T.phone) && ok;
-    ok = fieldError(f.email,  validEmail(f.email.value)        ? "" : T.email) && ok;
-    ok = fieldError(f.status, f.status.value                   ? "" : T.pick) && ok;
-    ok = fieldError(f.city,   f.city.value.trim().length >= 2  ? "" : T.city) && ok;
-    ok = fieldError(f.source, f.source.value                   ? "" : T.pick) && ok;
+    ok = fieldError(f.name,        f.name.value.trim().length >= 2 ? "" : T.name) && ok;
+    ok = fieldError(f.phone,       cleanPhone(f.phone.value)        ? "" : T.phone) && ok;
+    ok = fieldError(f.email,       validEmail(f.email.value)        ? "" : T.email) && ok;
+    ok = fieldError(f.status,      f.status.value                   ? "" : T.pick) && ok;
+    if (f.currentYear) {
+      ok = fieldError(f.currentYear, f.currentYear.value            ? "" : T.pick) && ok;
+    }
+    if (f.passoutYear) {
+      ok = fieldError(f.passoutYear, f.passoutYear.value            ? "" : T.pick) && ok;
+    }
+    ok = fieldError(f.city,        f.city.value.trim().length >= 2  ? "" : T.city) && ok;
+    ok = fieldError(f.source,      f.source.value                   ? "" : T.pick) && ok;
     return ok;
   }
 
@@ -93,11 +99,14 @@
   function saveToBackend(data) {
     try {
       var params = new URLSearchParams(window.location.search);
+      var edu = data.status || "";
+      if (data.currentYear) edu += " | " + data.currentYear;
+      if (data.passoutYear) edu += " | Passout: " + data.passoutYear;
       var leadPayload = {
         fullName: data.name,
         email: data.email,
         mobileNumber: data.phone,
-        education: data.status,
+        education: edu,
         cityName: data.city,
         courseInterested: CFG.eventName || "Workshop Registration",
         source: "WEBSITE_FORM",
@@ -171,7 +180,7 @@
     }, { threshold: 0.3 }).observe(form);
   }
 
-  ["name", "phone", "email", "status", "city", "source"].forEach(function (n) {
+  ["name", "phone", "email", "status", "currentYear", "passoutYear", "city", "source"].forEach(function (n) {
     var el = form.elements[n];
     if (el) el.addEventListener("input", function () { if (el.classList.contains("bad")) validate(); });
   });
@@ -190,17 +199,19 @@
     if (status) status.textContent = T.saving;
 
     save({
-      name:     form.elements.name.value.trim(),
-      phone:    cleanPhone(form.elements.phone.value),
-      email:    form.elements.email.value.trim().toLowerCase(),
-      status:   form.elements.status.value,
-      city:     form.elements.city.value.trim(),
-      source:   form.elements.source ? form.elements.source.value : "",
-      language: lang,
-      page:     location.href,
+      name:        form.elements.name.value.trim(),
+      phone:       cleanPhone(form.elements.phone.value),
+      email:       form.elements.email.value.trim().toLowerCase(),
+      status:      form.elements.status.value,
+      currentYear: form.elements.currentYear ? form.elements.currentYear.value : "",
+      passoutYear: form.elements.passoutYear ? form.elements.passoutYear.value : "",
+      city:        form.elements.city.value.trim(),
+      source:      form.elements.source ? form.elements.source.value : "",
+      language:    lang,
+      page:        location.href,
       /* Names the tab to append to. Absent on the Digital Marketing pages,
          whose rows keep going to the first tab exactly as before. */
-      sheet:    CFG.sheetTab || ""
+      sheet:       CFG.sheetTab || ""
     }).then(finish);
   });
 })();
