@@ -567,3 +567,138 @@ section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;
   .hero-poster .hp-plate .pn{font-size:14px;}
   .hero-poster .hp-plate .pr,.hero-poster .hp-plate .pe{font-size:10.5px;}
 }
+
+/* ============================================================
+   REGISTRATION MODAL POPUP & IN-PAGE CTA CARD
+   ============================================================ */
+.reg-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.reg-modal[hidden] {
+  display: none !important;
+}
+.reg-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 29, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1;
+}
+.reg-modal-dialog {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 480px;
+  margin: auto;
+  animation: regModalIn .22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes regModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.reg-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line-dk, #e2e8f0);
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .15s ease;
+  padding: 0;
+}
+.reg-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: rotate(90deg);
+}
+.reg-modal-dialog .regcard {
+  margin-bottom: 0;
+  max-height: min(88vh, 720px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 24px 20px;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.45);
+  border: 1.5px solid var(--line-dk);
+}
+.reg-modal-dialog .regcard h3 {
+  padding-right: 36px;
+}
+.reg-modal-dialog .success {
+  max-height: min(88vh, 720px);
+  overflow-y: auto;
+  padding: 32px 22px;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.45);
+}
+body.modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+/* In-page CTA box for Schedule & Venue section */
+.book-cta-card {
+  background: #fff;
+  border: 2px solid var(--orange);
+  border-radius: 20px;
+  padding: 28px 22px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(255, 106, 0, 0.10);
+  margin-bottom: 14px;
+}
+.book-cta-card .bcta-badge {
+  display: inline-block;
+  background: rgba(255, 106, 0, 0.12);
+  color: var(--orange);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+.book-cta-card h3 {
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.book-cta-card p {
+  font-size: 14.5px;
+  color: #64748b;
+  margin-bottom: 18px;
+  line-height: 1.55;
+}
+.book-cta-card .bcta-sub {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+

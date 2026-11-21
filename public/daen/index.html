@@ -44,7 +44,7 @@ fbq('track','PageView');
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/masterclass-assets/shared.css?v=17">
+<link rel="stylesheet" href="/masterclass-assets/shared.css?v=20261206_v5">
 </head>
 <body>
 
@@ -227,6 +227,68 @@ src="https://www.facebook.com/tr?id=1753021132490840&ev=PageView&noscript=1"/></
     </div>
 
     <div id="book" class="reg">
+      <div class="book-cta-card">
+        <span class="bcta-badge">🔴 100% Free Live Masterclass</span>
+        <h3>Reserve Your Free Data Analytics Seat</h3>
+        <p>Takes 20 seconds. Instant confirmation and WhatsApp group access for dashboards, venue pin, and certificate.</p>
+        <button type="button" class="btn grad" data-open-modal style="width:100%; border:none; cursor:pointer;">Claim My Free Seat &amp; Certificate &rarr;</button>
+        <div class="bcta-sub">🔒 Free · No payment required · Only 50 seats</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOLD 7 — FAQ ============ -->
+<section>
+  <div class="wrap">
+    <h2>Frequently Asked Questions</h2>
+    <p class="lede">&nbsp;</p>
+    <details><summary>I am from B.Com / BBA / non-coding background — is Data Analytics right for me?</summary><div class="a">Yes! Data Analytics is one of the best IT entry roles for non-coders. You primarily work with Excel, SQL, Power BI dashboards, and business KPIs.</div></details>
+    <details><summary>Will I get a Certificate of Participation?</summary><div class="a">Yes — every attendee who completes the live session receives an official Devansh Edu-Tech Masterclass Certificate you can share on LinkedIn and your resume.</div></details>
+    <details><summary>Do I need a laptop?</summary><div class="a">Optional. You will watch the entire dashboard built live on screen and receive the Power BI file, SQL sheets, and datasets on the WhatsApp group.</div></details>
+    <details><summary>Is it really free?</summary><div class="a">Yes — 100% free with zero hidden charges.</div></details>
+    <details><summary>Can students from outside Parbhani attend?</summary><div class="a">Yes! Students from Nanded, Latur, Hingoli, and Jalna regularly join us.</div></details>
+    <a class="btn" href="#book" style="margin-top:20px;">Register Free — Takes 20 Seconds</a>
+  </div>
+</section>
+
+<!-- ============ FOLD 8 — FINAL CTA ============ -->
+<section class="final">
+  <div class="wrap">
+    <h2>50 seats. One Sunday. <span class="hi">Free Data Analytics Masterclass.</span></h2>
+    <p class="sub">Sunday, 6 December · 11:00 AM · Offline, Parbhani.<br>When 50 seats fill, registration closes.</p>
+    <a class="btn grad" href="#book">Register Now — 6 December<small>20 seconds to register · Instant WhatsApp group link</small></a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="https://www.devanshedutech.com/" aria-label="Devansh Edu-Tech">
+      <svg viewBox="0 0 220 70" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Devansh Edu-Tech">
+        <path d="M15 25L5 35L15 45" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="22" y="46" fill="#FF6A00" font-family="Poppins,sans-serif" font-weight="900" font-size="42" font-style="italic" letter-spacing="-.84">DEV</text>
+        <line x1="112" y1="18" x2="92" y2="58" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+        <text x="112" y="46" fill="#FF6A00" font-family="Poppins,sans-serif" font-weight="500" font-size="36" letter-spacing="-.36">ansh</text>
+        <text x="115" y="62" fill="currentColor" opacity=".8" font-family="Poppins,sans-serif" font-weight="800" font-size="15" letter-spacing=".75">EDU-TECH</text>
+        <path d="M205 25L215 35L205 45" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <div class="fm">
+      Mantri Complex, 2nd floor, Basmat Road, Parbhani<br>
+      <a href="tel:+917972217407">+91 79722 17407</a> ·
+      <a href="mailto:dceca.pbn@gmail.com">dceca.pbn@gmail.com</a><br>
+      <a href="https://www.instagram.com/madhav_sharma0508/" target="_blank" rel="noopener">Instagram</a> ·
+      <a href="https://www.devanshedutech.com/" target="_blank" rel="noopener">devanshedutech.com</a><br>
+      <a href="/dama/" lang="mr" hreflang="mr">हे पान मराठीत वाचा</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ REGISTRATION MODAL POPUP ============ -->
+<div id="regModal" class="reg-modal" aria-hidden="true" role="dialog" aria-modal="true" hidden>
+  <div class="reg-modal-backdrop" data-close-modal></div>
+  <div class="reg-modal-dialog">
+    <button type="button" class="reg-modal-close" data-close-modal aria-label="Close registration form">&times;</button>
     <form id="regForm" class="regcard" novalidate>
       <h3>Reserve your free Data Analytics seat</h3>
       <p class="rsub">Takes 20 seconds. You'll join the WhatsApp group right after.</p>
@@ -296,7 +358,6 @@ src="https://www.facebook.com/tr?id=1753021132490840&ev=PageView&noscript=1"/></
         <div class="err" id="passoutYearErr" hidden></div>
       </div>
 
-
       <div class="field">
         <label for="f-city">City or area</label>
         <input id="f-city" name="city" type="text" autocomplete="address-level2" placeholder="e.g. Parbhani" aria-describedby="cityErr" required>
@@ -332,55 +393,8 @@ src="https://www.facebook.com/tr?id=1753021132490840&ev=PageView&noscript=1"/></
       <a class="btn wa" id="joinGroupBtn" href="#" data-fallback="Message us on WhatsApp">Join the WhatsApp Group</a>
       <p class="note">Sunday, 6 December · 11:00 AM · Mantri Complex, 2nd floor, Basmat Road, Parbhani</p>
     </div>
-    </div>
   </div>
-</section>
-
-<!-- ============ FOLD 7 — FAQ ============ -->
-<section>
-  <div class="wrap">
-    <h2>Frequently Asked Questions</h2>
-    <p class="lede">&nbsp;</p>
-    <details><summary>I am from B.Com / BBA / non-coding background — is Data Analytics right for me?</summary><div class="a">Yes! Data Analytics is one of the best IT entry roles for non-coders. You primarily work with Excel, SQL, Power BI dashboards, and business KPIs.</div></details>
-    <details><summary>Will I get a Certificate of Participation?</summary><div class="a">Yes — every attendee who completes the live session receives an official Devansh Edu-Tech Masterclass Certificate you can share on LinkedIn and your resume.</div></details>
-    <details><summary>Do I need a laptop?</summary><div class="a">Optional. You will watch the entire dashboard built live on screen and receive the Power BI file, SQL sheets, and datasets on the WhatsApp group.</div></details>
-    <details><summary>Is it really free?</summary><div class="a">Yes — 100% free with zero hidden charges.</div></details>
-    <details><summary>Can students from outside Parbhani attend?</summary><div class="a">Yes! Students from Nanded, Latur, Hingoli, and Jalna regularly join us.</div></details>
-    <a class="btn" href="#book" style="margin-top:20px;">Register Free — Takes 20 Seconds</a>
-  </div>
-</section>
-
-<!-- ============ FOLD 8 — FINAL CTA ============ -->
-<section class="final">
-  <div class="wrap">
-    <h2>50 seats. One Sunday. <span class="hi">Free Data Analytics Masterclass.</span></h2>
-    <p class="sub">Sunday, 6 December · 11:00 AM · Offline, Parbhani.<br>When 50 seats fill, registration closes.</p>
-    <a class="btn grad" href="#book">Register Now — 6 December<small>20 seconds to register · Instant WhatsApp group link</small></a>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <a class="brand" href="https://www.devanshedutech.com/" aria-label="Devansh Edu-Tech">
-      <svg viewBox="0 0 220 70" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Devansh Edu-Tech">
-        <path d="M15 25L5 35L15 45" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="22" y="46" fill="#FF6A00" font-family="Poppins,sans-serif" font-weight="900" font-size="42" font-style="italic" letter-spacing="-.84">DEV</text>
-        <line x1="112" y1="18" x2="92" y2="58" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
-        <text x="112" y="46" fill="#FF6A00" font-family="Poppins,sans-serif" font-weight="500" font-size="36" letter-spacing="-.36">ansh</text>
-        <text x="115" y="62" fill="currentColor" opacity=".8" font-family="Poppins,sans-serif" font-weight="800" font-size="15" letter-spacing=".75">EDU-TECH</text>
-        <path d="M205 25L215 35L205 45" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </a>
-    <div class="fm">
-      Mantri Complex, 2nd floor, Basmat Road, Parbhani<br>
-      <a href="tel:+917972217407">+91 79722 17407</a> ·
-      <a href="mailto:dceca.pbn@gmail.com">dceca.pbn@gmail.com</a><br>
-      <a href="https://www.instagram.com/madhav_sharma0508/" target="_blank" rel="noopener">Instagram</a> ·
-      <a href="https://www.devanshedutech.com/" target="_blank" rel="noopener">devanshedutech.com</a><br>
-      <a href="/dama/" lang="mr" hreflang="mr">हे पान मराठीत वाचा</a>
-    </div>
-  </div>
-</footer>
+</div>
 
 <!-- ============ STICKY BOOKING BAR ============ -->
 <div class="sticky">
@@ -393,9 +407,9 @@ src="https://www.facebook.com/tr?id=1753021132490840&ev=PageView&noscript=1"/></
   </div>
 </div>
 
-<script src="/masterclass-assets/config-dataanalytics.js?v=20261206_v3"></script>
-<script src="/masterclass-assets/register.js?v=20261206_v3"></script>
-<script src="/masterclass-assets/offer-timer.js?v=20261206_v3"></script>
+<script src="/masterclass-assets/config-dataanalytics.js?v=20261206_v5"></script>
+<script src="/masterclass-assets/register.js?v=20261206_v5"></script>
+<script src="/masterclass-assets/offer-timer.js?v=20261206_v5"></script>
 
 </body>
 </html>

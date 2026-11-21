@@ -153,8 +153,11 @@
     if (panel) {
       panel.hidden = false;
       panel.setAttribute("tabindex", "-1");
-      panel.focus();
-      panel.scrollIntoView({ block: "center", behavior: "smooth" });
+      try { panel.focus(); } catch (e) {}
+      var scrollParent = panel.closest(".regcard, .reg-modal-dialog, .reg-modal");
+      if (scrollParent) {
+        scrollParent.scrollTop = 0;
+      }
     }
 
     if (!ready) {
@@ -171,6 +174,65 @@
     /* Same-tab navigation: never blocked by a pop-up blocker.
        The button above stays as the manual fallback. */
     setTimeout(function () { window.location.href = link; }, 1400);
+  }
+
+  /* ---------- Modal open / close logic ---------- */
+  var modal = document.getElementById("regModal");
+
+  function openModal(ev) {
+    if (ev) {
+      if (typeof ev.preventDefault === "function") ev.preventDefault();
+      if (typeof ev.stopPropagation === "function") ev.stopPropagation();
+    }
+    if (!modal) return;
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+
+    track("ViewContent", "form_view", EV);
+
+    var firstInput = modal.querySelector("input:not([type=hidden]):not([disabled])");
+    if (firstInput) {
+      setTimeout(function () {
+        try { firstInput.focus(); } catch (e) {}
+      }, 120);
+    }
+  }
+
+  function closeModal(ev) {
+    if (ev && typeof ev.preventDefault === "function") ev.preventDefault();
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+  }
+
+  // Intercept any click on links/buttons pointing to #book or with data-open-modal
+  document.addEventListener("click", function (e) {
+    var trigger = e.target.closest('a[href="#book"], [data-open-modal], .open-reg-modal');
+    if (trigger) {
+      openModal(e);
+      return;
+    }
+    var closeTrigger = e.target.closest('[data-close-modal]');
+    if (closeTrigger) {
+      closeModal(e);
+      return;
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" || e.keyCode === 27) {
+      if (modal && !modal.hidden) {
+        closeModal();
+      }
+    }
+  });
+
+  // Auto-open if visitor navigated directly to #book or #register in URL hash
+  if (window.location.hash === "#book" || window.location.hash === "#register") {
+    setTimeout(openModal, 300);
   }
 
   /* ---------- wiring ---------- */
