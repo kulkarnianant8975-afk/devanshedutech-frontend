@@ -480,7 +480,8 @@ section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;
 .hero-poster .offer[data-state="over"] .cd{color:#fb923c;}
 .hero-poster .btn.grad{
   box-shadow:0 12px 28px rgba(230,92,0,.38);
-  padding:15px 22px;font-size:17.5px;
+  padding:16px 26px;font-size:18px;
+  border-radius:9999px;
 }
 
 /* Left & Right Speakers anchored to bottom edges */
@@ -489,7 +490,7 @@ section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;
   position:relative;height:100%;
 }
 .hero-poster .hp-sp picture{
-  display:block;width:min(100%,460px);line-height:0;
+  display:block;width:min(100%,380px);line-height:0;
 }
 .hero-poster .hp-sp picture img,
 .hero-poster .hp-sp > img{
@@ -502,10 +503,10 @@ section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;
   backface-visibility:hidden;
 }
 @media (min-width:1440px){
-  .hero-poster .hp-sp picture{width:min(100%,520px);}
+  .hero-poster .hp-sp picture{width:min(100%,440px);}
 }
 @media (min-width:1920px){
-  .hero-poster .hp-sp picture{width:min(100%,600px);}
+  .hero-poster .hp-sp picture{width:min(100%,500px);}
 }
 .hero-poster .hp-sp-left picture{margin-right:auto;}
 .hero-poster .hp-sp-right picture{margin-left:auto;}
@@ -551,9 +552,9 @@ section.light .stack span{background:#fff7ed;color:#c2410c;border-color:#fed7aa;
   .hero-poster .hp-center{grid-area:center;padding:18px 18px 16px;}
   .hero-poster .hp-sp-left{grid-area:left;}
   .hero-poster .hp-sp-right{grid-area:right;}
-  .hero-poster .hp-sp picture{width:100%;max-width:260px;margin:0 auto;}
+  .hero-poster .hp-sp picture{width:100%;max-width:240px;margin:0 auto;}
   .hero-poster .hp-sp picture img,
-  .hero-poster .hp-sp > img{width:100%;max-width:260px;margin:0 auto -2px;}
+  .hero-poster .hp-sp > img{width:100%;max-width:240px;margin:0 auto -2px;}
   .hero-poster .hp-plate{padding:12px 10px 14px;}
   .hero-poster .hp-sp-left .hp-plate{clip-path:polygon(0 0,94% 0,100% 100%,0 100%);padding-right:14px;}
   .hero-poster .hp-sp-right .hp-plate{clip-path:polygon(6% 0,100% 0,100% 100%,0 100%);padding-left:14px;}
