@@ -10,10 +10,10 @@ window.DEVANSH_CONFIG = {
   groupLink: "https://chat.whatsapp.com/LGKHLoWM28E13nxYXoSMph",
 
   /* 2. Google Apps Script web-app URL for registrations. */
-  scriptUrl: "https://script.google.com/macros/s/AKfycby2ZGMClqgLI1DSjxs1cEwyCgqHRyIsoPWPzw6RQJGXMpybXoxEfbVPMu25fvgO7UI/exec",
+  scriptUrl: "https://script.google.com/macros/s/AKfycbwIY-yQeKbaQ6FRx3vGCWX0aFs5Civ1e2-x3XPPw0XWXWXx7laf-9cU1Jig0fJoOsY/exec",
 
   /* 3. Dedicated spreadsheet tab for Data Science leads. */
-  sheetTab: "Sheet1",
+  sheetTab: "DataScience",
 
   /* 4. WhatsApp number for direct questions (no +, with country code). */
   whatsappNumber: "917972217407",

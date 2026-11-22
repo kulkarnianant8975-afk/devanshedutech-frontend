@@ -10,7 +10,7 @@ window.DEVANSH_CONFIG = {
   groupLink: "https://chat.whatsapp.com/J2lkeatAhgo0eaAZhqjuMe",
 
   /* 2. Google Apps Script web-app URL for registrations. */
-  scriptUrl: "https://script.google.com/macros/s/AKfycby2ZGMClqgLI1DSjxs1cEwyCgqHRyIsoPWPzw6RQJGXMpybXoxEfbVPMu25fvgO7UI/exec",
+  scriptUrl: "https://script.google.com/macros/s/AKfycbwIY-yQeKbaQ6FRx3vGCWX0aFs5Civ1e2-x3XPPw0XWXWXx7laf-9cU1Jig0fJoOsY/exec",
 
   /* 3. Dedicated spreadsheet tab for AI/ML leads. */
   sheetTab: "AIML",
